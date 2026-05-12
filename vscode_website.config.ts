@@ -2,9 +2,9 @@ import { type OpenFolderPluginOptions } from "./src/services/FilesConverterServi
 
 export const configuration: OpenFolderPluginOptions = {
   folderPath: "./open_folder",
-  rootFolderName: "WEBSITE",
+  rootFolderName: "TOM WEISE",
   searchBarText: "$website_title - $open_file",
-  websiteTitle: "VSCode Website Template",
+  websiteTitle: "Tom Weise",
   faviconPath: "./blue_dot.svg",
   foldersFirst: false,
   windowsDesktop: true,
