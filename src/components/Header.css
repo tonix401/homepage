@@ -1,0 +1,120 @@
+.vscode-header {
+  display: flex;
+  align-items: center;
+  height: 35px;
+  background: var(--bg-header);
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+.vscode-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.vscode-appicon {
+  width: 16px;
+  height: 16px;
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+
+.vscode-menu-bar {
+  display: flex;
+  align-items: center;
+}
+
+.vscode-menu-item {
+  color: var(--fg);
+  font-size: 12px;
+  padding: 0 8px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  cursor: default;
+  -webkit-app-region: no-drag;
+}
+
+.vscode-menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.vscode-header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 12px;
+  min-width: 0;
+  -webkit-app-region: no-drag;
+}
+
+.vscode-title-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 0 10px;
+  width: 100%;
+  max-width: 400px;
+  cursor: text;
+}
+
+.vscode-title-search:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.vscode-title-search-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  color: var(--fg-muted);
+}
+
+.vscode-title-search-text {
+  color: var(--fg-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vscode-header-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.vscode-winbtn {
+  width: 46px;
+  height: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vscode-winbtn svg {
+  width: 12px;
+  height: 12px;
+}
+
+.vscode-winbtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.vscode-winbtn--close:hover {
+  background: #e81123;
+  color: #fff;
+}

@@ -1,0 +1,58 @@
+:root {
+  --bg-editor: #1e1e1e;
+  --bg-sidebar: #252526;
+  --bg-header: #3c3c3c;
+  --bg-activity: #333333;
+  --bg-footer: #007acc;
+  --bg-tab-active: #1e1e1e;
+  --bg-tab-inactive: #2d2d2d;
+  --bg-tab-bar: #252526;
+  --fg: #cccccc;
+  --fg-muted: #858585;
+  --fg-dim: #6a6a6a;
+  --accent: #094771;
+  --hover: #2a2d2e;
+  --border: #3c3c3c;
+  --activity-active-border: #007acc;
+  --font-mono: "JetBrains Mono", monospace;
+  --line-h: 19px;
+  --font-editor: 13px;
+}
+
+/* ── Layout ────────────────────────────────────────────── */
+
+.vscode-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.vscode-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Panel placeholder ─────────────────────────────────── */
+
+.vscode-panel-placeholder {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.vscode-panel-placeholder-msg {
+  color: var(--fg-muted);
+  font-size: 12px;
+  padding: 8px 14px;
+  margin: 0;
+}
+
+/* ── Shared icon size ──────────────────────────────────── */
+
+.vscode-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}

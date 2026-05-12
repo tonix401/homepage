@@ -1,0 +1,23 @@
+.vscode-footer {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  background: var(--bg-footer);
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.vscode-footer-item {
+  color: #ffffff;
+  font-size: 12px;
+  padding: 0 8px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  cursor: default;
+  user-select: none;
+}
+
+.vscode-footer-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+}

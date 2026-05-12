@@ -1,0 +1,75 @@
+.vscode-activity-bar {
+  width: 48px;
+  flex-shrink: 0;
+  background: var(--bg-activity);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.vscode-activity-bar-top,
+.vscode-activity-bar-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.vscode-activity-btn {
+  width: 48px;
+  height: 48px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--fg-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 0;
+}
+
+.vscode-activity-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.vscode-activity-btn img {
+  width: 24px;
+  height: 24px;
+  filter: invert(1) opacity(0.4);
+}
+
+.vscode-activity-btn:hover {
+  color: var(--fg);
+}
+
+.vscode-activity-btn:hover img {
+  filter: invert(1) opacity(0.8);
+}
+
+.vscode-activity-btn--active {
+  color: var(--fg);
+}
+
+.vscode-activity-btn--active img {
+  filter: invert(1);
+}
+
+.vscode-activity-btn .codicon {
+  font-size: 24px;
+  color: inherit;
+}
+
+.vscode-activity-btn--active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 24px;
+  background: var(--activity-active-border);
+  border-radius: 0 2px 2px 0;
+}
