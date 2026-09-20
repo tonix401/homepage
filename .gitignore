@@ -23,8 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 
-# Claude Code worktrees and session state
-.claude/
+# Claude Code worktrees, if one is ever created in here. Worktrees belong in
+# ~/git/claude-worktrees: a second checkout inside the repo makes vitest and
+# eslint collect every file twice. Only this subdirectory is ignored, so
+# project-level Claude config under .claude/ can still be committed.
+.claude/worktrees/
 
 # Upstream weights for the semantic search model; the pruned, quantized table
 # in public/semantic/ is what gets committed and shipped.
