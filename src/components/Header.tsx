@@ -16,7 +16,7 @@ interface HeaderProps {
   fileName?: string;
   filePath?: string;
   files: FileNode[];
-  onOpen: (file: FileNode, line?: number) => void;
+  onOpen: (file: FileNode) => void;
   focusSignal: number;
   onClose?: () => void;
   onMinimize?: () => void;

@@ -24,8 +24,7 @@ import { SetiIcon } from "./SetiIcon";
 interface QuickOpenProps {
   files: FileNode[];
   placeholder: string;
-  /** `line` is set when the hit points at a specific place in the file. */
-  onOpen: (file: FileNode, line?: number) => void;
+  onOpen: (file: FileNode) => void;
   /** Incremented by a Ctrl/Cmd+P elsewhere in the app to focus the input. */
   focusSignal: number;
 }
@@ -112,7 +111,7 @@ export function QuickOpen({ files, placeholder, onOpen, focusSignal }: QuickOpen
 
   const open = useCallback(
     (hit: SearchHit) => {
-      onOpen(hit.file, hit.kind === "name" ? undefined : hit.line);
+      onOpen(hit.file);
       setIsOpen(false);
       inputRef.current?.blur();
     },

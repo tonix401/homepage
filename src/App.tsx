@@ -53,8 +53,6 @@ function App() {
     () => fileFromHash() ?? findFirstFile(folderFiles)
   );
   const [activePanel, setActivePanel] = useState<Panel>("explorer");
-  /** Line to reveal and highlight after a search hit opens a file. */
-  const [highlightLine, setHighlightLine] = useState<number | null>(null);
   /** Bumped by Ctrl/Cmd+P; QuickOpen focuses its input when it changes. */
   const [focusSignal, setFocusSignal] = useState(0);
   const [isWindowClosed, setIsWindowClosed] = useState(false);
@@ -65,20 +63,12 @@ function App() {
   const handleSelect = useCallback((file: FileNode) => {
     window.location.hash = encodeURIComponent(file.path);
     setSelectedFile(file);
-    setHighlightLine(null);
-  }, []);
-
-  const handleSearchOpen = useCallback((file: FileNode, line?: number) => {
-    window.location.hash = encodeURIComponent(file.path);
-    setSelectedFile(file);
-    setHighlightLine(line ?? null);
   }, []);
 
   useEffect(() => {
     const handler = () => {
       const file = fileFromHash() ?? findFirstFile(folderFiles);
       setSelectedFile(file);
-      setHighlightLine(null);
     };
     window.addEventListener("hashchange", handler);
     return () => window.removeEventListener("hashchange", handler);
@@ -117,7 +107,7 @@ function App() {
         fileName={selectedFile?.name}
         filePath={selectedFile?.path}
         files={files}
-        onOpen={handleSearchOpen}
+        onOpen={handleSelect}
         focusSignal={focusSignal}
         onClose={handleWindowClose}
         onMinimize={handleWindowClose}
@@ -140,12 +130,7 @@ function App() {
             <CustomPanel title={activeActivity.title} text={activeActivity.text} />
           )}
         </Sidebar>
-        <Content
-          file={selectedFile}
-          highlightLine={highlightLine}
-          onNavigate={handleNavigate}
-          resolveFile={resolveFile}
-        />
+        <Content file={selectedFile} onNavigate={handleNavigate} resolveFile={resolveFile} />
       </div>
       <Footer file={selectedFile} />
     </div>

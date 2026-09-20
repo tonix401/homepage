@@ -13,8 +13,6 @@ import rehypeRaw from "rehype-raw";
 
 interface ContentProps {
   file: FileNode | null;
-  /** 1-based line a search hit pointed at, revealed and highlighted in source view. */
-  highlightLine?: number | null;
   onNavigate?: (href: string) => void;
   resolveFile?: (fromPath: string, href: string) => FileNode | null;
 }
@@ -129,11 +127,10 @@ function tokenStyle(token: ThemedToken): React.CSSProperties {
   return style;
 }
 
-export function Content({ file, highlightLine, onNavigate, resolveFile }: ContentProps) {
+export function Content({ file, onNavigate, resolveFile }: ContentProps) {
   const [tokenLines, setTokenLines] = useState<ThemedToken[][] | null>(null);
   const [viewMode, setViewMode] = useState<"preview" | "code">("preview");
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const matchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!file) {
@@ -158,16 +155,9 @@ export function Content({ file, highlightLine, onNavigate, resolveFile }: Conten
     };
   }, [file]);
 
-  // A line number only means anything in source view, so a search hit that
-  // points at one switches away from the rendered preview.
   useEffect(() => {
-    setViewMode(highlightLine != null ? "code" : "preview");
-  }, [file, highlightLine]);
-
-  useEffect(() => {
-    if (highlightLine == null || viewMode !== "code") return;
-    matchRef.current?.scrollIntoView({ block: "center" });
-  }, [file, highlightLine, viewMode, tokenLines]);
+    setViewMode("preview");
+  }, [file]);
 
   // Listen for navigation postMessages from the HTML iframe.
   // Validates source so only our iframe can trigger navigation.
@@ -225,13 +215,8 @@ export function Content({ file, highlightLine, onNavigate, resolveFile }: Conten
       <div className="vscode-code-area" style={tokenLines ? undefined : { opacity: 0.35 }}>
         {lines.map((line, i) => {
           const tokens = tokenLines?.[i];
-          const isMatch = highlightLine === i + 1;
           return (
-            <div
-              key={i}
-              ref={isMatch ? matchRef : undefined}
-              className={`vscode-line${isMatch ? " vscode-line--match" : ""}`}
-            >
+            <div key={i} className="vscode-line">
               {tokens && tokens.length > 0
                 ? tokens.map((token, j) => (
                     <span key={j} style={tokenStyle(token)}>{token.content}</span>
