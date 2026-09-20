@@ -1,5 +1,5 @@
 import "./Win11Desktop.css";
-import wallpaper from "/windowsbackground.jpg";
+import wallpaper from "/arch_background.svg";
 import vscodeIcon from "/blue_dot.svg";
 
 interface Win11DesktopProps {

@@ -2,7 +2,13 @@ import "./Header.css";
 import { searchBarText } from "virtual:open-folder-config";
 import { resolveSearchBarText } from "../utils/searchBarText";
 
-const MENU_ITEMS = ["File", "Edit", "Selection", "View", "Go", "Run", "Terminal", "Help"];
+const MENU_ITEMS: { label: string; href?: string }[] = [
+  { label: "Home", href: "/" },
+  { label: "Github", href: "https://github.com/tonix401" },
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Resume", href: "/resume" },
+  { label: "Impressum", href: "/#legal%2Fimpressum.md" },
+];
 
 interface HeaderProps {
   fileName?: string;
@@ -17,9 +23,21 @@ export function Header({ fileName, filePath, onClose, onMinimize }: HeaderProps)
       <div className="vscode-header-left">
         <svg className="vscode-appicon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5" fill="#007ACC" /></svg>
         <nav className="vscode-menu-bar">
-          {MENU_ITEMS.map((item) => (
-            <span key={item} className="vscode-menu-item">{item}</span>
-          ))}
+          {MENU_ITEMS.map(({ label, href }) =>
+            href ? (
+              <a
+                key={label}
+                className="vscode-menu-item"
+                href={href}
+                target={href.startsWith("http") ? "_blank" : undefined}
+                rel={href.startsWith("http") ? "noreferrer" : undefined}
+              >
+                {label}
+              </a>
+            ) : (
+              <span key={label} className="vscode-menu-item">{label}</span>
+            )
+          )}
         </nav>
       </div>
 
