@@ -277,3 +277,9 @@
   margin-right: 0.4em;
   accent-color: #4a9eff;
 }
+
+/* Line a search hit pointed at, in the spirit of VSCode's find highlight. */
+.vscode-line--match {
+  background: var(--bg-line-match);
+  box-shadow: inset 2px 0 0 var(--fg-match);
+}

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import "./App.css";
 import { type FileNode, type TreeNode } from "./services/types";
 import folderFiles from "virtual:open-folder-files";
@@ -11,6 +11,7 @@ import { Explorer } from "./components/Explorer";
 import { CustomPanel } from "./components/CustomPanel";
 import { Content } from "./components/Content";
 import { Footer } from "./components/Footer";
+import { flattenFiles } from "./utils/search";
 
 function findFirstFile(nodes: TreeNode[]): FileNode | null {
   for (const node of nodes) {
@@ -52,21 +53,45 @@ function App() {
     () => fileFromHash() ?? findFirstFile(folderFiles)
   );
   const [activePanel, setActivePanel] = useState<Panel>("explorer");
+  /** Line to reveal and highlight after a search hit opens a file. */
+  const [highlightLine, setHighlightLine] = useState<number | null>(null);
+  /** Bumped by Ctrl/Cmd+P; QuickOpen focuses its input when it changes. */
+  const [focusSignal, setFocusSignal] = useState(0);
   const [isWindowClosed, setIsWindowClosed] = useState(false);
   const handleWindowClose = windowsDesktop ? () => setIsWindowClosed(true) : undefined;
+
+  const files = useMemo(() => flattenFiles(folderFiles), []);
 
   const handleSelect = useCallback((file: FileNode) => {
     window.location.hash = encodeURIComponent(file.path);
     setSelectedFile(file);
+    setHighlightLine(null);
+  }, []);
+
+  const handleSearchOpen = useCallback((file: FileNode, line?: number) => {
+    window.location.hash = encodeURIComponent(file.path);
+    setSelectedFile(file);
+    setHighlightLine(line ?? null);
   }, []);
 
   useEffect(() => {
     const handler = () => {
       const file = fileFromHash() ?? findFirstFile(folderFiles);
       setSelectedFile(file);
+      setHighlightLine(null);
     };
     window.addEventListener("hashchange", handler);
     return () => window.removeEventListener("hashchange", handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== "p" || !(event.ctrlKey || event.metaKey)) return;
+      event.preventDefault();
+      setFocusSignal((signal) => signal + 1);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, []);
 
   const handleNavigate = useCallback((href: string) => {
@@ -91,6 +116,9 @@ function App() {
       <Header
         fileName={selectedFile?.name}
         filePath={selectedFile?.path}
+        files={files}
+        onOpen={handleSearchOpen}
+        focusSignal={focusSignal}
         onClose={handleWindowClose}
         onMinimize={handleWindowClose}
       />
@@ -112,7 +140,12 @@ function App() {
             <CustomPanel title={activeActivity.title} text={activeActivity.text} />
           )}
         </Sidebar>
-        <Content file={selectedFile} onNavigate={handleNavigate} resolveFile={resolveFile} />
+        <Content
+          file={selectedFile}
+          highlightLine={highlightLine}
+          onNavigate={handleNavigate}
+          resolveFile={resolveFile}
+        />
       </div>
       <Footer file={selectedFile} />
     </div>

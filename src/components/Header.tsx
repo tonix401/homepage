@@ -1,6 +1,8 @@
 import "./Header.css";
 import { searchBarText } from "virtual:open-folder-config";
 import { resolveSearchBarText } from "../utils/searchBarText";
+import { type FileNode } from "../services/types";
+import { QuickOpen } from "./QuickOpen";
 
 const MENU_ITEMS: { label: string; href?: string }[] = [
   { label: "Home", href: "/" },
@@ -13,11 +15,22 @@ const MENU_ITEMS: { label: string; href?: string }[] = [
 interface HeaderProps {
   fileName?: string;
   filePath?: string;
+  files: FileNode[];
+  onOpen: (file: FileNode, line?: number) => void;
+  focusSignal: number;
   onClose?: () => void;
   onMinimize?: () => void;
 }
 
-export function Header({ fileName, filePath, onClose, onMinimize }: HeaderProps) {
+export function Header({
+  fileName,
+  filePath,
+  files,
+  onOpen,
+  focusSignal,
+  onClose,
+  onMinimize,
+}: HeaderProps) {
   return (
     <header className="vscode-header">
       <div className="vscode-header-left">
@@ -42,15 +55,12 @@ export function Header({ fileName, filePath, onClose, onMinimize }: HeaderProps)
       </div>
 
       <div className="vscode-header-center">
-        <div className="vscode-title-search">
-          <svg className="vscode-title-search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-            <circle cx="6.5" cy="6.5" r="4.5" />
-            <line x1="10" y1="10" x2="14" y2="14" />
-          </svg>
-          <span className="vscode-title-search-text">
-            {resolveSearchBarText(searchBarText, fileName, filePath)}
-          </span>
-        </div>
+        <QuickOpen
+          files={files}
+          placeholder={resolveSearchBarText(searchBarText, fileName, filePath)}
+          onOpen={onOpen}
+          focusSignal={focusSignal}
+        />
       </div>
 
       <div className="vscode-header-right">

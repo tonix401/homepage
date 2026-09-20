@@ -25,3 +25,7 @@ dist-ssr
 
 # Claude Code worktrees and session state
 .claude/
+
+# Upstream weights for the semantic search model; the pruned, quantized table
+# in public/semantic/ is what gets committed and shipped.
+.model-cache
