@@ -1,6 +1,9 @@
 ## [DnDCLI](https://github.com/tonix401/dndcli)
 
-<video width="100%" controls poster="dndcli/thumbnail.png">
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
+![NodeJS](https://img.shields.io/badge/node.js-%236DA55F.svg?logo=node.js&logoColor=white)
+
+<video width="100%" controls loop muted poster="dndcli/thumbnail.png" key="dndcli">
   <source src="dndcli/demo.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>

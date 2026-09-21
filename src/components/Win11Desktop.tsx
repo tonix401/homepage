@@ -1,6 +1,7 @@
 import "./Win11Desktop.css";
 import wallpaper from "/arch_background.svg";
 import vscodeIcon from "/blue_dot.svg";
+import archLogo from "/white_arch.svg";
 
 interface Win11DesktopProps {
   onOpen: () => void;
@@ -29,75 +30,32 @@ export function Win11Desktop({ onOpen }: Win11DesktopProps) {
         <button
           className="win11-desktop-shortcut"
           onClick={onOpen}
-          title="Visual Studio Code"
+          title="Portfolio"
         >
           <span className="win11-shortcut-icon" aria-hidden="true">
-            <img src={vscodeIcon} alt="Visual Studio Code" />
+            <img src={vscodeIcon} alt="Portfolio" />
           </span>
-          <span className="win11-shortcut-label">Visual Studio Code</span>
+          <span className="win11-shortcut-label">Portfolio</span>
         </button>
       </div>
 
       <div className="win11-taskbar">
         <div className="win11-taskbar-center">
           <button className="win11-start" aria-label="Start">
-            <svg
-              viewBox="0 0 24 24"
-              width="28"
-              height="28"
-              fill="none"
-              aria-hidden="true"
-            >
-              <rect
-                x="2"
-                y="2"
-                width="9"
-                height="9"
-                rx="1"
-                fill="white"
-                opacity="1"
-              />
-              <rect
-                x="13"
-                y="2"
-                width="9"
-                height="9"
-                rx="1"
-                fill="white"
-                opacity="1"
-              />
-              <rect
-                x="2"
-                y="13"
-                width="9"
-                height="9"
-                rx="1"
-                fill="white"
-                opacity="1"
-              />
-              <rect
-                x="13"
-                y="13"
-                width="9"
-                height="9"
-                rx="1"
-                fill="white"
-                opacity="1"
-              />
-            </svg>
+            <img src={archLogo} width="60px" alt="Start" />
           </button>
           <button
             className="win11-app-btn"
             onClick={onOpen}
-            title="Visual Studio Code"
+            title="Portfolio"
           >
             <img
               src={vscodeIcon}
-              alt="Visual Studio Code"
+              alt="Portfolio"
               height={24}
               width={24}
             />
-            Visual Studio Code
+            Portfolio
           </button>
         </div>
 

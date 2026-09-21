@@ -1,7 +1,7 @@
 import { type Plugin } from "vite";
 import { readdirSync, readFileSync, existsSync, statSync } from "fs";
 import { resolve, extname } from "path";
-import { type FileType, type TreeNode } from "./types";
+import { type FileType, type MenuItem, type TreeNode } from "./types";
 import {
   KNOWN_PLACEHOLDERS,
   detectUnknownPlaceholders,
@@ -19,7 +19,7 @@ import {
   embed,
 } from "../utils/model2vec";
 
-export type { FileNode, FolderNode, TreeNode } from "./types";
+export type { FileNode, FolderNode, MenuItem, TreeNode } from "./types";
 
 export interface CustomActivityConfig {
   name: string;
@@ -36,6 +36,7 @@ export interface OpenFolderPluginOptions {
   websiteTitle?: string;
   faviconPath?: string;
   activities?: CustomActivityConfig[];
+  menuItems?: MenuItem[];
   windowsDesktop?: boolean;
   foldersFirst?: boolean;
 }
@@ -366,6 +367,7 @@ export function openFolderPlugin(
     websiteTitle,
     faviconPath,
     activities = [],
+    menuItems = [],
     windowsDesktop = false,
     foldersFirst = true,
   } = options;
@@ -492,6 +494,24 @@ export function openFolderPlugin(
         }
       }
 
+      for (const item of menuItems) {
+        if (item.label.trim() === "") {
+          this.warn(
+            `A menu item has an empty "label".\n` +
+              `  It will appear as a blank gap in the menu bar.\n` +
+              `  Fix: Set "label" to a non-empty string, e.g. label: "Home".`,
+          );
+        }
+
+        if (item.href !== undefined && item.href.trim() === "") {
+          this.warn(
+            `Menu item "${item.label.trim() || "(unnamed menu item)"}" has an empty "href".\n` +
+              `  It will render as plain text instead of a link.\n` +
+              `  Fix: Set "href" to a target, e.g. href: "/", or remove it entirely.`,
+          );
+        }
+      }
+
       const extensionless = findExtensionlessFiles(absFolder);
       if (extensionless.length > 0) {
         this.warn(
@@ -584,6 +604,7 @@ export function openFolderPlugin(
           `export const searchBarText = ${JSON.stringify(resolvedSearchBarText)};`,
           `export const rootFolderName = ${JSON.stringify(rootFolderName)};`,
           `export const activities = ${JSON.stringify(activities.map((a) => resolveActivityText(a, process.cwd())))};`,
+          `export const menuItems = ${JSON.stringify(menuItems)};`,
           `export const windowsDesktop = ${JSON.stringify(windowsDesktop)};`,
           `export const foldersFirst = ${JSON.stringify(foldersFirst)};`,
         ].join("\n");

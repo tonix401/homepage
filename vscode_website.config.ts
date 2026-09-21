@@ -8,6 +8,13 @@ export const configuration: OpenFolderPluginOptions = {
   faviconPath: "./blue_dot.svg",
   foldersFirst: false,
   windowsDesktop: true,
+  menuItems: [
+    { label: "Home", href: "/" },
+    { label: "Github", href: "https://github.com/tonix401" },
+    { label: "Resume", href: "/resume" },
+    { label: "Imprint", href: "/#legal%2Fimprint.html" },
+    { label: "Privacy Policy", href: "/#legal%2Fprivacy.html" },
+  ],
   activities: [
     {
       name: "Search", // The tooltip text for the activity button

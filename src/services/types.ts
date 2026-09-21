@@ -47,3 +47,8 @@ export interface CustomActivity {
   title: string;
   text: string;
 }
+
+export interface MenuItem {
+  label: string;
+  href?: string;
+}

@@ -9,7 +9,10 @@
 ![Rofi](https://img.shields.io/badge/Rofi-%23CFCF9E.svg)
 ![Kitty](https://img.shields.io/badge/Kitty-%23343434.svg?)
 
-<img src="arch/desktop.png" alt="VSCode Website thumbnail" class="md-image">
+<video width="100%" controls loop muted poster="arch/thumbnail.png" key="arch">
+  <source src="arch/demo.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
 ---
 

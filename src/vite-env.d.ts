@@ -29,10 +29,11 @@ declare module "virtual:open-folder-embeddings" {
 }
 
 declare module "virtual:open-folder-config" {
-  import { type CustomActivity } from "./services/types";
+  import { type CustomActivity, type MenuItem } from "./services/types";
   export const searchBarText: string;
   export const rootFolderName: string;
   export const activities: CustomActivity[];
+  export const menuItems: MenuItem[];
   export const windowsDesktop: boolean;
   export const foldersFirst: boolean;
 }
