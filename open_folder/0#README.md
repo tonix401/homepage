@@ -30,7 +30,6 @@ Behold! my stuff ...
 ![Entity Framework](https://custom-icon-badges.demolab.com/badge/Entity%20Framework-512BD4?logo=dotnet&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
 ![VS Code](https://custom-icon-badges.demolab.com/badge/VS%20Code-0078d7.svg?logo=vsc&logoColor=white)
-![Windows 11](https://img.shields.io/badge/Windows%2011-%230079d5.svg?logo=Windows%2011&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=fff)
 ![Arch](https://img.shields.io/badge/Arch%20Linux-1793D1?logo=arch-linux&logoColor=fff)
 ![C#](https://custom-icon-badges.demolab.com/badge/C%23-%23239120.svg?logo=cshrp&logoColor=white)

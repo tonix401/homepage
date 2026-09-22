@@ -7,7 +7,7 @@ export const configuration: OpenFolderPluginOptions = {
   websiteTitle: "Tom Weise",
   faviconPath: "./blue_dot.svg",
   foldersFirst: false,
-  windowsDesktop: true,
+  showDesktop: true,
   menuItems: [
     { label: "Home", href: "/" },
     { label: "Github", href: "https://github.com/tonix401" },

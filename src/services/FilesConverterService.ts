@@ -37,7 +37,7 @@ export interface OpenFolderPluginOptions {
   faviconPath?: string;
   activities?: CustomActivityConfig[];
   menuItems?: MenuItem[];
-  windowsDesktop?: boolean;
+  showDesktop?: boolean;
   foldersFirst?: boolean;
 }
 
@@ -368,7 +368,7 @@ export function openFolderPlugin(
     faviconPath,
     activities = [],
     menuItems = [],
-    windowsDesktop = false,
+    showDesktop = false,
     foldersFirst = true,
   } = options;
 
@@ -605,7 +605,7 @@ export function openFolderPlugin(
           `export const rootFolderName = ${JSON.stringify(rootFolderName)};`,
           `export const activities = ${JSON.stringify(activities.map((a) => resolveActivityText(a, process.cwd())))};`,
           `export const menuItems = ${JSON.stringify(menuItems)};`,
-          `export const windowsDesktop = ${JSON.stringify(windowsDesktop)};`,
+          `export const showDesktop = ${JSON.stringify(showDesktop)};`,
           `export const foldersFirst = ${JSON.stringify(foldersFirst)};`,
         ].join("\n");
       }

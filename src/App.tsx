@@ -2,9 +2,9 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import "./App.css";
 import { type FileNode, type TreeNode } from "./services/types";
 import folderFiles from "virtual:open-folder-files";
-import { activities, windowsDesktop } from "virtual:open-folder-config";
+import { activities, showDesktop } from "virtual:open-folder-config";
 import { Header } from "./components/Header";
-import { Win11Desktop } from "./components/Win11Desktop";
+import { ArchDesktop } from "./components/ArchDesktop";
 import { ActivityBar, type Panel } from "./components/ActivityBar";
 import { Sidebar } from "./components/Sidebar";
 import { Explorer } from "./components/Explorer";
@@ -56,7 +56,7 @@ function App() {
   /** Bumped by Ctrl/Cmd+P; QuickOpen focuses its input when it changes. */
   const [focusSignal, setFocusSignal] = useState(0);
   const [isWindowClosed, setIsWindowClosed] = useState(false);
-  const handleWindowClose = windowsDesktop ? () => setIsWindowClosed(true) : undefined;
+  const handleWindowClose = showDesktop ? () => setIsWindowClosed(true) : undefined;
 
   const files = useMemo(() => flattenFiles(folderFiles), []);
 
@@ -97,8 +97,8 @@ function App() {
 
   const activeActivity = typeof activePanel === "number" ? activities[activePanel] : null;
 
-  if (windowsDesktop && isWindowClosed) {
-    return <Win11Desktop onOpen={() => setIsWindowClosed(false)} />;
+  if (showDesktop && isWindowClosed) {
+    return <ArchDesktop onOpen={() => setIsWindowClosed(false)} />;
   }
 
   return (
