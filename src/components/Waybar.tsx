@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import "./Waybar.css";
 import { WORKSPACE_LANGUAGES, type WorkspaceLanguage } from "../utils/route";
 import { useSystemStats } from "../utils/systemStats";
@@ -14,6 +14,45 @@ interface WaybarProps {
 
 /** What the music module is "playing". */
 const RICKROLL_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+
+/** How long the bell segment stays lit and swinging after a click, in ms. */
+const RING_MS = 700;
+
+/**
+ * The notification chime, synthesised rather than shipped as an audio file so
+ * the site stays a pile of static text. Two sine partials an octave apart per
+ * note, two notes a fifth apart (G5 -> D6), each with a plucked exponential
+ * decay — a bell is a struck body, so the attack is immediate and only the
+ * tail is long.
+ *
+ * The context is created on the click that plays the first chime: browsers
+ * refuse to start one without a gesture, and a suspended context would stay
+ * silent for the rest of the page's life.
+ */
+let audioCtx: AudioContext | null = null;
+
+function playRing() {
+  audioCtx ??= new AudioContext();
+  const ctx = audioCtx;
+  // A context can be suspended again when the tab is backgrounded.
+  void ctx.resume();
+
+  const start = ctx.currentTime + 0.01;
+  for (const [note, freq] of [[0, 783.99], [1, 1174.66]] as const) {
+    const at = start + note * 0.12;
+    for (const [partial, gain] of [[1, 0.045], [2, 0.015]] as const) {
+      const osc = ctx.createOscillator();
+      const env = ctx.createGain();
+      osc.frequency.value = freq * partial;
+      env.gain.setValueAtTime(0, at);
+      env.gain.linearRampToValueAtTime(gain, at + 0.005);
+      env.gain.exponentialRampToValueAtTime(0.0001, at + 0.9);
+      osc.connect(env).connect(ctx.destination);
+      osc.start(at);
+      osc.stop(at + 0.95);
+    }
+  }
+}
 
 /**
  * Segment fills, mirroring ~/.config/waybar/style.css. Values are matugen
@@ -104,6 +143,8 @@ export function Waybar({
   onOpen,
 }: WaybarProps) {
   const [now, setNow] = useState(() => new Date());
+  const [ringing, setRinging] = useState(false);
+  const ringTimer = useRef<number | undefined>(undefined);
   const { cpu, cpuTitle, memory, memoryTitle } = useSystemStats();
 
   const cycleWsLanguage = () =>
@@ -112,6 +153,15 @@ export function Waybar({
         (WORKSPACE_LANGUAGES.indexOf(language) + 1) % WORKSPACE_LANGUAGES.length
       ],
     );
+
+  const ring = () => {
+    playRing();
+    setRinging(true);
+    clearTimeout(ringTimer.current);
+    ringTimer.current = window.setTimeout(() => setRinging(false), RING_MS);
+  };
+
+  useEffect(() => () => clearTimeout(ringTimer.current), []);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -201,11 +251,15 @@ export function Waybar({
 
       <div className="wb-side">
         <Arrow from={FILL.none} to={FILL.container} dir="l" />
-        <div className="wb-seg wb-on-surface">
-          <span className="wb-mod">
+        <button
+          className="wb-seg wb-on-surface wb-clickable"
+          onClick={ring}
+          title="Notifications"
+        >
+          <span className={`wb-mod wb-bell${ringing ? " wb-bell-ringing" : ""}`}>
             <Icon path={icons.bell} />
           </span>
-        </div>
+        </button>
 
         <Arrow from={FILL.container} to={FILL.containerHigh} dir="l" />
         <button

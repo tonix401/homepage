@@ -37,7 +37,7 @@
   position: relative;
   background: transparent;
   font-family: "JetBrains Mono", monospace;
-  font-size: 15px;
+  font-size: 14px;
   color: var(--wb-on-surface);
   user-select: none;
 }
@@ -78,12 +78,7 @@
 
 .wb-stat-value {
   display: inline-block;
-  min-width: 3ch;
   text-align: right;
-}
-
-.wb-stat-value-mem {
-  min-width: 5ch;
 }
 
 .wb-on-primary {
@@ -311,5 +306,34 @@ button.wb-clickable:focus-visible {
 @media (max-width: 1400px) {
   .wb-center {
     display: none;
+  }
+}
+
+/*
+ * The notification bell swings for the length of its chime (`RING_MS` in
+ * Waybar.tsx). The pivot is the top of the icon, where a real bell hangs, and
+ * the swing is damped, so it settles instead of stopping mid-air.
+ */
+.wb-bell .wb-icon {
+  transform-origin: 50% 10%;
+}
+
+.wb-bell-ringing .wb-icon {
+  animation: wb-bell-swing 0.7s ease-in-out;
+}
+
+@keyframes wb-bell-swing {
+  0% { transform: rotate(0deg); }
+  15% { transform: rotate(16deg); }
+  35% { transform: rotate(-13deg); }
+  55% { transform: rotate(9deg); }
+  75% { transform: rotate(-5deg); }
+  90% { transform: rotate(2deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wb-bell-ringing .wb-icon {
+    animation: none;
   }
 }

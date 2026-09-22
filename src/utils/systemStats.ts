@@ -113,7 +113,7 @@ export function useSystemStats(): SystemStats {
 
   const cores = navigator.hardwareConcurrency;
   const cpuTitle =
-    `CPU — ${Math.round(cpu * 100)}% of this tab's main thread; a page cannot see the machine's load` +
+    `CPU: ${Math.round(cpu * 100)}% of this tab's main thread` +
     (cores ? ` · ${cores} logical cores` : "");
 
   const heap = readHeap();
@@ -124,7 +124,7 @@ export function useSystemStats(): SystemStats {
       cpu,
       cpuTitle,
       memory: formatBytes(heapUsed),
-      memoryTitle: `Memory — ${formatBytes(heapUsed)} JS heap of a ${formatBytes(heap.jsHeapSizeLimit)} limit`,
+      memoryTitle: `Memory: ${formatBytes(heapUsed)} JS heap`,
     };
   }
 
@@ -133,7 +133,7 @@ export function useSystemStats(): SystemStats {
       cpu,
       cpuTitle,
       memory: `${deviceGb}GB`,
-      memoryTitle: `Memory — ${deviceGb} GB of device RAM; this browser does not report heap usage`,
+      memoryTitle: `Memory: ${deviceGb} GB of device RAM`,
     };
   }
 
