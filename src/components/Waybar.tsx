@@ -1,12 +1,19 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import "./Waybar.css";
+import { WORKSPACE_LANGUAGES, type WorkspaceLanguage } from "../utils/route";
+import { useSystemStats } from "../utils/systemStats";
 
 interface WaybarProps {
   workspace: number;
+  language: WorkspaceLanguage;
   occupiedWorkspaces: ReadonlySet<number>;
   onWorkspaceChange: (workspace: number) => void;
+  onLanguageChange: (language: WorkspaceLanguage) => void;
   onOpen: () => void;
 }
+
+/** What the music module is "playing". */
+const RICKROLL_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
 /**
  * Segment fills, mirroring ~/.config/waybar/style.css. Values are matugen
@@ -41,19 +48,17 @@ const icons = {
 } as const;
 
 /**
- * Workspace glyph sets, one glyph per workspace (see `WORKSPACE_COUNT`).
- * Clicking the keyboard segment — the real bar's layout switcher — cycles
- * between them; `label` is what that segment shows.
+ * Workspace glyph sets, one glyph per workspace (see `WORKSPACE_COUNT`), one
+ * entry per `WORKSPACE_LANGUAGES` name. Clicking the keyboard segment — the
+ * real bar's layout switcher — cycles between them, which is a route change,
+ * so the choice survives a reload and a shared link; `label` is what that
+ * segment shows.
  */
-const WS_LANGUAGES = {
+const WS_LANGUAGES: Record<WorkspaceLanguage, { label: string; glyphs: string[] }> = {
   en: { label: "Eng", glyphs: ["1", "2", "3", "4", "5"] },
   cn: { label: "中文", glyphs: ["一", "二", "三", "四", "五"] },
   roman: { label: "Rom", glyphs: ["I", "II", "III", "IV", "V"] },
-} as const;
-
-type WsLanguage = keyof typeof WS_LANGUAGES;
-
-const WS_LANGUAGE_ORDER = Object.keys(WS_LANGUAGES) as WsLanguage[];
+};
 
 /**
  * The Arch "A" from public/white_arch.svg, inlined so it can take the
@@ -92,16 +97,20 @@ function Cap({ fill, side }: { fill: Fill; side: "l" | "r" }) {
 
 export function Waybar({
   workspace,
+  language,
   occupiedWorkspaces,
   onWorkspaceChange,
+  onLanguageChange,
   onOpen,
 }: WaybarProps) {
-  const [wsLanguage, setWsLanguage] = useState<WsLanguage>("cn");
   const [now, setNow] = useState(() => new Date());
+  const { cpu, cpuTitle, memory, memoryTitle } = useSystemStats();
 
   const cycleWsLanguage = () =>
-    setWsLanguage(
-      (lang) => WS_LANGUAGE_ORDER[(WS_LANGUAGE_ORDER.indexOf(lang) + 1) % WS_LANGUAGE_ORDER.length],
+    onLanguageChange(
+      WORKSPACE_LANGUAGES[
+        (WORKSPACE_LANGUAGES.indexOf(language) + 1) % WORKSPACE_LANGUAGES.length
+      ],
     );
 
   useEffect(() => {
@@ -132,20 +141,30 @@ export function Waybar({
 
         <Arrow from={FILL.primary} to={FILL.secondary} dir="r" />
         <div className="wb-seg wb-on-secondary">
-          <span className="wb-mod">
-            <Icon path={icons.cpu} />5%
+          <span className="wb-mod wb-stat" title={cpuTitle}>
+            <Icon path={icons.cpu} />
+            <span className="wb-stat-value">{Math.round(cpu * 100)}%</span>
           </span>
-          <span className="wb-mod">
-            <Icon path={icons.memory} />2GB
-          </span>
+          {memory !== null && (
+            <span className="wb-mod wb-stat" title={memoryTitle}>
+              <Icon path={icons.memory} />
+              <span className="wb-stat-value wb-stat-value-mem">{memory}</span>
+            </span>
+          )}
         </div>
 
         <Arrow from={FILL.secondary} to={FILL.tertiary} dir="r" />
-        <div className="wb-seg wb-on-tertiary">
+        <button
+          className="wb-seg wb-on-tertiary wb-clickable"
+          onClick={() =>
+            window.open(RICKROLL_URL, "_blank", "noopener,noreferrer")
+          }
+          title="Never gonna give you up"
+        >
           <span className="wb-mod">
             <Icon path={icons.music} /> Never gonna …
           </span>
-        </div>
+        </button>
 
         <Arrow from={FILL.tertiary} to={FILL.containerHigh} dir="r" />
         <button
@@ -160,7 +179,7 @@ export function Waybar({
       </div>
 
       <div className="wb-center">
-        {WS_LANGUAGES[wsLanguage].glyphs.map((glyph, idx) => {
+        {WS_LANGUAGES[language].glyphs.map((glyph, idx) => {
           const ws = idx + 1;
           const state = ws === workspace
             ? "wb-ws-active"
@@ -196,7 +215,7 @@ export function Waybar({
         >
           <span className="wb-mod">
             <Icon path={icons.keyboard} />
-            {WS_LANGUAGES[wsLanguage].label}
+            {WS_LANGUAGES[language].label}
           </span>
         </button>
 

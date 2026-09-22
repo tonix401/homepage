@@ -37,6 +37,9 @@ Stylish terminal based role playing game:
     text-decoration:none;
     font-weight:600;
   }
+  .learnmore:hover{
+    background: #434343;
+  }
   .md-image {
     max-width: 680px
   }

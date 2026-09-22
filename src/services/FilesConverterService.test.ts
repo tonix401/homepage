@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { collectMdCodeFenceLangs } from "./FilesConverterService";
+import { mkdirSync, mkdtempSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import {
+  collectFolderPaths,
+  collectMdCodeFenceLangs,
+  normalizeFolderPath,
+} from "./FilesConverterService";
 
 describe("collectMdCodeFenceLangs", () => {
   it("returns empty array for empty string", () => {
@@ -86,5 +93,37 @@ describe("collectMdCodeFenceLangs", () => {
       "```",
     ].join("\n");
     expect(collectMdCodeFenceLangs(md)).toEqual(["ts", "py", "sh"]);
+  });
+});
+
+describe("normalizeFolderPath", () => {
+  it("leaves a plain path untouched", () => {
+    expect(normalizeFolderPath("work experience")).toBe("work experience");
+    expect(normalizeFolderPath("projects/demos")).toBe("projects/demos");
+  });
+
+  it("strips leading and trailing slashes", () => {
+    expect(normalizeFolderPath("/work experience/")).toBe("work experience");
+    expect(normalizeFolderPath("//projects//")).toBe("projects");
+  });
+});
+
+describe("collectFolderPaths", () => {
+  const fixture = mkdtempSync(join(tmpdir(), "open-folder-"));
+
+  mkdirSync(join(fixture, "2#work experience"), { recursive: true });
+  mkdirSync(join(fixture, "3#projects", "co#demos"), { recursive: true });
+  writeFileSync(join(fixture, "0#README.md"), "# hi");
+
+  it("reports folder paths as the explorer shows them", () => {
+    expect(collectFolderPaths(fixture).sort()).toEqual([
+      "projects",
+      "projects/demos",
+      "work experience",
+    ]);
+  });
+
+  it("returns nothing for a missing directory", () => {
+    expect(collectFolderPaths(join(fixture, "nope"))).toEqual([]);
   });
 });

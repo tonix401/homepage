@@ -44,6 +44,9 @@ A game of battleships in the form of a java desktop app with processing as the g
     text-decoration:none;
     font-weight:600;
   }
+  .learnmore:hover{
+    background: #434343;
+  }
   .md-image {
     max-width: 680px
   }

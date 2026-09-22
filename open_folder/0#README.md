@@ -10,6 +10,9 @@
     text-decoration:none;
     font-weight:600;
   }
+  .learnmore:hover{
+    background: #434343;
+  }
   .md-image {
     max-width: 680px
   }
@@ -44,3 +47,9 @@ In my free time I am also experimenting with different Linux distros. (ricing is
 <a href="projects/Arch Desktop.md" class="learnmore">Cool Projects</a>
 <a href="work experience/eschbach.md" class="learnmore">Exiting Experiences</a>
 <a href="legal/imprint.html" class="learnmore">Required Legal Stuff</a>
+
+---
+
+### THIS WEBSITE
+
+The website you are currently on is also one of my projects, based on the vscode_website and extended to work like my hyprland desktop environment. Try clicking around and exploring a bit. Start by getting this vs code simulation out of fullscreen by clicking the `button at the top right`.

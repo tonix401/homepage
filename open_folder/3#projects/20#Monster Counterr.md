@@ -33,6 +33,9 @@ A React web app (hence the extra _r_) for D&D game masters to manage combat enco
     text-decoration:none;
     font-weight:600;
   }
+  .learnmore:hover{
+    background: #434343;
+  }
   .md-image {
     max-width: 680px
   }

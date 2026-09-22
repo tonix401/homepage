@@ -39,6 +39,7 @@ export interface OpenFolderPluginOptions {
   menuItems?: MenuItem[];
   showDesktop?: boolean;
   foldersFirst?: boolean;
+  collapsedFolders?: string[];
 }
 
 const fileTypeToShikiLang: Partial<Record<FileType, string>> = {
@@ -108,18 +109,46 @@ function stripSortPrefix(name: string): string {
   return name.replace(SORT_PREFIX, "");
 }
 
+// A "co#"/"ex#" prefix on the folder itself is more specific than the
+// collapsedFolders config, so it wins; without one, explicitOpen is undefined
+// and the config decides.
 function parseFolderName(name: string): {
   displayName: string;
-  defaultOpen: boolean;
+  explicitOpen?: boolean;
 } {
   const withoutOrder = stripSortPrefix(name);
   if (withoutOrder.startsWith("co#")) {
-    return { displayName: withoutOrder.slice(3), defaultOpen: false };
+    return { displayName: withoutOrder.slice(3), explicitOpen: false };
   }
   if (withoutOrder.startsWith("ex#")) {
-    return { displayName: withoutOrder.slice(3), defaultOpen: true };
+    return { displayName: withoutOrder.slice(3), explicitOpen: true };
   }
-  return { displayName: withoutOrder, defaultOpen: true };
+  return { displayName: withoutOrder };
+}
+
+export function normalizeFolderPath(path: string): string {
+  return path.replace(/^\/+|\/+$/g, "");
+}
+
+export function collectFolderPaths(
+  dirPath: string,
+  prefix: string = "",
+): string[] {
+  const results: string[] = [];
+  let entries;
+  try {
+    entries = readdirSync(dirPath, { withFileTypes: true });
+  } catch {
+    return results;
+  }
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const { displayName } = parseFolderName(entry.name);
+    const path = prefix ? `${prefix}/${displayName}` : displayName;
+    results.push(path);
+    results.push(...collectFolderPaths(resolve(dirPath, entry.name), path));
+  }
+  return results;
 }
 
 function findExtensionlessFiles(
@@ -206,7 +235,11 @@ function findInvalidFolderStatePrefixOrder(
   return results;
 }
 
-function readTree(dirPath: string, prefix: string = ""): TreeNode[] {
+function readTree(
+  dirPath: string,
+  collapsedFolders: ReadonlySet<string>,
+  prefix: string = "",
+): TreeNode[] {
   try {
     const entries = readdirSync(dirPath, { withFileTypes: true });
     entries.sort((a, b) => a.name.localeCompare(b.name));
@@ -216,15 +249,15 @@ function readTree(dirPath: string, prefix: string = ""): TreeNode[] {
       const fullPath = resolve(dirPath, entry.name);
 
       if (entry.isDirectory()) {
-        const { displayName: folderName, defaultOpen } = parseFolderName(
+        const { displayName: folderName, explicitOpen } = parseFolderName(
           entry.name,
         );
         const folderPath = prefix ? `${prefix}/${folderName}` : folderName;
         nodes.push({
           kind: "folder",
           name: folderName,
-          defaultOpen,
-          children: readTree(fullPath, folderPath),
+          defaultOpen: explicitOpen ?? !collapsedFolders.has(folderPath),
+          children: readTree(fullPath, collapsedFolders, folderPath),
         });
       } else {
         const displayName = stripSortPrefix(entry.name);
@@ -370,7 +403,12 @@ export function openFolderPlugin(
     menuItems = [],
     showDesktop = false,
     foldersFirst = true,
+    collapsedFolders = [],
   } = options;
+
+  const collapsedFolderPaths = new Set(
+    collapsedFolders.map(normalizeFolderPath),
+  );
 
   const filesModuleId = "virtual:open-folder-files";
   const langsModuleId = "virtual:open-folder-langs";
@@ -512,6 +550,22 @@ export function openFolderPlugin(
         }
       }
 
+      if (collapsedFolderPaths.size > 0) {
+        const existing = new Set(collectFolderPaths(absFolder));
+        const unknown = [...collapsedFolderPaths].filter(
+          (p) => !existing.has(p),
+        );
+        if (unknown.length > 0) {
+          this.warn(
+            `collapsedFolders lists folder(s) that do not exist:\n` +
+              unknown.map((p) => `  ${p}`).join("\n") +
+              "\n" +
+              `  These entries have no effect.\n` +
+              `  Fix: Use the path as the explorer shows it, without sort or state prefixes, e.g. "work experience" or "projects/demos".`,
+          );
+        }
+      }
+
       const extensionless = findExtensionlessFiles(absFolder);
       if (extensionless.length > 0) {
         this.warn(
@@ -562,7 +616,7 @@ export function openFolderPlugin(
         );
       }
 
-      const tree = readTree(absFolder);
+      const tree = readTree(absFolder, collapsedFolderPaths);
 
       if (id === resolvedFilesId) {
         return `export default ${JSON.stringify(tree)};`;

@@ -7,11 +7,12 @@ export const configuration: OpenFolderPluginOptions = {
   websiteTitle: "Tom Weise",
   faviconPath: "./blue_dot.svg",
   foldersFirst: false,
+  collapsedFolders: ["work experience"],
   showDesktop: true,
   menuItems: [
     { label: "Home", href: "/" },
     { label: "Github", href: "https://github.com/tonix401" },
-    { label: "Resume", href: "/resume" },
+    { label: "Resume", href: "/?file=work%20experience/eschbach.md" },
     { label: "Imprint", href: "/?file=legal/imprint.html" },
     { label: "Privacy Policy", href: "/?file=legal/privacy.html" },
   ],

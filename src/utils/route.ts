@@ -5,6 +5,7 @@
  *   /?file=projects/Homelab.md                     that file, maximized
  *   /?file=projects/Homelab.md&state=window        the editor as a window
  *   /?state=desktop&workspace=3                    the bare desktop, workspace 3
+ *   /?state=desktop&lang=roman                     the desktop, workspaces as I..V
  *
  * Keeping every URL at the site root is what lets content in `open_folder/`
  * write its asset URLs relative to the root (`eschbach/logo.jpg`), and is why
@@ -19,8 +20,18 @@
 
 export type WindowState = "fullscreen" | "window";
 
+/**
+ * The numeral systems the Waybar can show workspaces in; `Waybar.tsx` has a
+ * glyph set for each, keyed by these names.
+ */
+export const WORKSPACE_LANGUAGES = ["en", "cn", "roman"] as const;
+
+export type WorkspaceLanguage = (typeof WORKSPACE_LANGUAGES)[number];
+
 export interface Route {
   workspace: number;
+  /** Which numerals the Waybar labels its workspaces with. */
+  language: WorkspaceLanguage;
   /** `null` when no window is open — the desktop by itself. */
   state: WindowState | null;
   filePath: string | null;
@@ -31,6 +42,7 @@ export const WORKSPACE_COUNT = 5;
 
 export const DEFAULT_WORKSPACE = 1;
 export const DEFAULT_STATE: WindowState = "fullscreen";
+export const DEFAULT_LANGUAGE: WorkspaceLanguage = "cn";
 
 /** `state` value standing for "no window on this workspace". */
 const DESKTOP = "desktop";
@@ -57,13 +69,16 @@ export function parseRoute(search: string): Route {
       ? rawWorkspace
       : DEFAULT_WORKSPACE;
 
+  const rawLanguage = params.get("lang");
+  const language = WORKSPACE_LANGUAGES.find((lang) => lang === rawLanguage) ?? DEFAULT_LANGUAGE;
+
   // A closed window has no file to show, so `file` only counts alongside a state.
   const filePath = state ? params.get("file") || null : null;
 
-  return { workspace, state, filePath };
+  return { workspace, language, state, filePath };
 }
 
-export function formatRoute({ workspace, state, filePath }: Route): string {
+export function formatRoute({ workspace, language, state, filePath }: Route): string {
   const params: string[] = [];
   if (!state) params.push(`state=${DESKTOP}`);
   else {
@@ -71,5 +86,6 @@ export function formatRoute({ workspace, state, filePath }: Route): string {
     if (state !== DEFAULT_STATE) params.push(`state=${state}`);
   }
   if (workspace !== DEFAULT_WORKSPACE) params.push(`workspace=${workspace}`);
+  if (language !== DEFAULT_LANGUAGE) params.push(`lang=${language}`);
   return params.length ? `/?${params.join("&")}` : "/";
 }

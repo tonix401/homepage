@@ -29,6 +29,9 @@ My phone and laptop connect to my homelab using `tailscale` tunneling
     text-decoration:none;
     font-weight:600;
   }
+  .learnmore:hover{
+    background: #434343;
+  }
   .md-image {
     max-width: 680px
   }

@@ -18,6 +18,7 @@ import {
   DEFAULT_STATE,
   type Route,
   type WindowState,
+  type WorkspaceLanguage,
 } from "./utils/route";
 
 function findFirstFile(nodes: TreeNode[]): FileNode | null {
@@ -165,11 +166,12 @@ function App() {
     (file: FileNode) => {
       navigate({
         workspace: route.workspace,
+        language: route.language,
         state: route.state ?? lastWindow.current.state,
         filePath: file.path,
       });
     },
-    [navigate, route.workspace, route.state],
+    [navigate, route.workspace, route.language, route.state],
   );
 
   const handleNavigate = useCallback(
@@ -189,10 +191,11 @@ function App() {
     const { state, filePath } = lastWindow.current;
     navigate({
       workspace: route.workspace,
+      language: route.language,
       state,
       filePath: filePath ?? findFirstFile(folderFiles)?.path ?? null,
     });
-  }, [navigate, route.workspace]);
+  }, [navigate, route.workspace, route.language]);
 
   const handleCloseWindow = useCallback(() => {
     setWindows((prev) => {
@@ -201,8 +204,8 @@ function App() {
       next.delete(route.workspace);
       return next;
     });
-    navigate({ workspace: route.workspace, state: null, filePath: null });
-  }, [navigate, route.workspace]);
+    navigate({ workspace: route.workspace, language: route.language, state: null, filePath: null });
+  }, [navigate, route.workspace, route.language]);
 
   const handleToggleFullscreen = useCallback(() => {
     if (!route.state) return;
@@ -215,11 +218,19 @@ function App() {
       const open = windows.get(workspace);
       navigate({
         workspace,
+        language: route.language,
         state: open?.state ?? null,
         filePath: open?.filePath ?? null,
       });
     },
-    [navigate, route.workspace, windows],
+    [navigate, route.workspace, route.language, windows],
+  );
+
+  // The numerals are a property of the bar, not of any one workspace, so the
+  // window layout is left exactly as it is.
+  const handleLanguageChange = useCallback(
+    (language: WorkspaceLanguage) => navigate({ ...route, language }),
+    [navigate, route],
   );
 
   const occupiedWorkspaces = useMemo(() => new Set(windows.keys()), [windows]);
@@ -267,8 +278,10 @@ function App() {
   return (
     <ArchDesktop
       workspace={route.workspace}
+      language={route.language}
       occupiedWorkspaces={occupiedWorkspaces}
       onWorkspaceChange={handleWorkspaceChange}
+      onLanguageChange={handleLanguageChange}
       onOpen={handleOpenWindow}
     >
       {route.state === "window" && <div className="arch-window">{editor}</div>}

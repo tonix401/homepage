@@ -39,7 +39,14 @@ App
 is derived from the route. Everything is passed down as props — no context,
 router library or global store.
 
-`Explorer` manages its own `openFolders: Set<string>` state (folder paths as keys). All folders start expanded. Clicking a folder toggles it; clicking a file calls `onSelect`.
+`Explorer` manages its own `openFolders: Set<string>` state (folder paths as keys). Clicking a folder toggles it; clicking a file calls `onSelect`.
+
+Which folders start expanded is decided at build time and carried on each
+`FolderNode` as `defaultOpen`. Folders are open by default; the
+`collapsedFolders` option lists paths (as the explorer shows them, so without
+sort prefixes — `"work experience"`, `"projects/demos"`) that start closed
+instead. A `co#`/`ex#` prefix on the folder name is more specific and overrides
+the option. Selecting a file still expands its ancestors.
 
 ### Routing
 
@@ -53,16 +60,21 @@ router library:
 | `/?file=projects/Homelab.md` | that file, maximized |
 | `/?file=projects/Homelab.md&state=window` | the editor as a floating window over the desktop (`.arch-window`) |
 | `/?state=desktop&workspace=3` | the bare desktop, workspace 3 |
+| `/?state=desktop&lang=roman` | the desktop, workspaces numbered `I`–`V` |
 
-Defaults (`state=fullscreen`, `workspace=1`, the first file) are left out, so
-the home page stays `/`. Parsing is forgiving by design: order does not
+Defaults (`state=fullscreen`, `workspace=1`, `lang=cn`, the first file) are
+left out, so the home page stays `/`. Parsing is forgiving by design: order does not
 matter, an unknown or missing value takes its default, and the address bar is
 rewritten to the canonical form with `replaceState` — which is also how a
 legacy `/#projects%2FHomelab.md` link and a file that has left the tree are
 absorbed. `file` is only read alongside an open window; the desktop has none.
 
 Workspaces are 1-based, matching the numbers the Waybar shows
-(`WORKSPACE_COUNT` there and the glyph sets in `Waybar.tsx` must agree). A
+(`WORKSPACE_COUNT` there and the glyph sets in `Waybar.tsx` must agree).
+`lang` picks which numerals those are — `WORKSPACE_LANGUAGES` in `route.ts`
+names them and `WS_LANGUAGES` in `Waybar.tsx` supplies a glyph set per name,
+so adding one means touching both. It is a property of the bar rather than of
+a workspace, so the keyboard segment that cycles it changes nothing else. A
 file path keeps its slashes in the URL and escapes everything else, because
 slashes are legal in a query value and `%2F` is unreadable.
 
@@ -81,6 +93,36 @@ so switching away and back restores it; closing the window drops that entry.
 The header's maximize button flips `fullscreen` ⇄ `window`; close and minimize
 both dismiss the window to the desktop. With `showDesktop: false` every route
 collapses onto `fullscreen` and the window buttons do nothing.
+
+### Waybar
+
+Most of the bar's modules are decoration with a fixed value. The cpu and
+memory ones are real measurements, taken by `src/utils/systemStats.ts`.
+
+Both are the *tab's* numbers, not the machine's, because nothing a page can
+call reports what other processes are doing. The modules' tooltips say so.
+
+`cpu` is main-thread busyness: the event loop is checked in on ten times a
+second and the lag it accumulates over a window is the share of that second
+it spent running something else. It reads a few percent idle and climbs when
+the page actually works. Do not try to infer the machine's load by timing a
+fixed arithmetic probe against its fastest-ever run — that was the first
+attempt here and it measures CPU frequency scaling, since an idle core clocks
+down and runs the probe *slower*; it sat at ~57% on a machine idling at 4%.
+
+Memory is `performance.memory.usedJSHeapSize`, so it reads in the tens of MB
+rather than anything like the system figure a real bar shows; there is no
+browser API for system RAM usage, and `navigator.deviceMemory` (the fallback)
+is device *total*, rounded to a power of two and capped at 8. Both APIs are
+Chromium-only, and the module hides itself when neither answers.
+
+Samples taken while the tab is hidden, and the first one after it comes back,
+are discarded — a throttled timer's lag is the browser's, not the machine's,
+and would otherwise read as 100%.
+
+The readings change every second, so `.wb-stat-value` in `Waybar.css`
+reserves the width of the widest value; without it every segment to the right
+shifts along the bar on each sample.
 
 ### Search
 
@@ -151,6 +193,8 @@ When changing any of the following, update **all** listed locations together:
 - `src/services/FilesConverterService.ts` — validation warnings/errors in `buildStart()`
 - `documentation/CONFIGURATION.md` — the Options section (add/remove/update the option's entry)
 
+Note: `documentation/CONFIGURATION.md` does not exist in this fork; skip it.
+
 ### The embedding model (`minishlab/potion-base-4M`, vocab size, quantization)
 - `scripts/prepare-semantic-model.ts` — `MODEL_ID`, `VOCAB_LIMIT`
 - `src/utils/model2vec.fixture.json` — regenerate if the tokenizer or vocabulary
@@ -159,7 +203,7 @@ When changing any of the following, update **all** listed locations together:
 - `CLAUDE.md` — the Search section above
 
 ### The URL scheme (`/?file=…&state=…&workspace=…`)
-- `src/utils/route.ts` — `parseRoute()`/`formatRoute()`, the defaults, `WORKSPACE_COUNT`
+- `src/utils/route.ts` — `parseRoute()`/`formatRoute()`, the defaults, `WORKSPACE_COUNT`, `WORKSPACE_LANGUAGES`
 - `src/utils/route.test.ts` — the round-trip and rejection cases
 - `vscode_website.config.ts` — `menuItems` hrefs that point at a file
 - `CLAUDE.md` — the Routing section above

@@ -37,7 +37,7 @@
   position: relative;
   background: transparent;
   font-family: "JetBrains Mono", monospace;
-  font-size: 16px;
+  font-size: 15px;
   color: var(--wb-on-surface);
   user-select: none;
 }
@@ -64,6 +64,26 @@
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/*
+ * The cpu/memory readings change every second. Tabular figures keep the digits
+ * from dancing, and the min-width reserves room for the widest value each one
+ * can reach ("100%", "1.2GB") so a new sample never shoves the segments to its
+ * right along the bar.
+ */
+.wb-stat {
+  font-variant-numeric: tabular-nums;
+}
+
+.wb-stat-value {
+  display: inline-block;
+  min-width: 3ch;
+  text-align: right;
+}
+
+.wb-stat-value-mem {
+  min-width: 5ch;
 }
 
 .wb-on-primary {
@@ -129,6 +149,20 @@ button.wb-clickable:hover {
   filter: brightness(1.12);
 }
 
+/*
+ * A clickable segment does not end at its own box: the separators on either
+ * side carry its fill — the flat half on one, the triangle on the other, which
+ * of the two depending on which way the arrow points — and so light up with it.
+ */
+button.wb-clickable:hover + .wb-arrow-r::after,
+button.wb-clickable:hover + .wb-arrow-l::before,
+button.wb-clickable:hover + .wb-cap,
+.wb-arrow-r:has(+ button.wb-clickable:hover)::before,
+.wb-arrow-l:has(+ button.wb-clickable:hover)::after,
+.wb-cap:has(+ button.wb-clickable:hover) {
+  filter: brightness(1.12);
+}
+
 button.wb-clickable:focus-visible {
   outline: 1px solid var(--wb-on-surface);
   outline-offset: -2px;
@@ -136,9 +170,13 @@ button.wb-clickable:focus-visible {
 
 /*
  * Powerline separators, standing in for the Nerd Font glyphs the real bar uses
- * (U+E0B0 / U+E0B2 arrows, U+E0B6 / U+E0B4 round caps). The element is filled
- * with the segment it butts against and the triangle is drawn over it in the
- * colour of the segment it points into.
+ * (U+E0B0 / U+E0B2 arrows, U+E0B6 / U+E0B4 round caps). Both halves are
+ * pseudo-elements — ::before is the flat fill of the segment the arrow butts
+ * against, ::after the triangle painted over it (later in tree order, so no
+ * z-index is needed) in the colour of the segment it points into. Keeping the
+ * halves apart is what lets one of them light up alone on hover; a background
+ * on the element itself could not, since a filter there would take the
+ * triangle with it.
  */
 .wb-arrow {
   width: 16px;
@@ -147,26 +185,27 @@ button.wb-clickable:focus-visible {
   flex-shrink: 0;
 }
 
-.wb-arrow::before {
+.wb-arrow::before,
+.wb-arrow::after {
   content: "";
   position: absolute;
   inset: 0;
 }
 
-.wb-arrow-r {
+.wb-arrow-r::before {
   background: var(--wb-to);
 }
 
-.wb-arrow-r::before {
+.wb-arrow-r::after {
   background: var(--wb-from);
   clip-path: polygon(0 0, 100% 50%, 0 100%);
 }
 
-.wb-arrow-l {
+.wb-arrow-l::before {
   background: var(--wb-from);
 }
 
-.wb-arrow-l::before {
+.wb-arrow-l::after {
   background: var(--wb-to);
   clip-path: polygon(100% 0, 0 50%, 100% 100%);
 }
@@ -178,16 +217,16 @@ button.wb-clickable:focus-visible {
  * here or it would intersect with the bevel instead of being replaced by it.
  */
 @supports (corner-shape: bevel) {
-  .wb-arrow::before {
+  .wb-arrow::after {
     corner-shape: bevel;
     clip-path: none;
   }
 
-  .wb-arrow-r::before {
+  .wb-arrow-r::after {
     border-radius: 0 100% 100% 0 / 0 50% 50% 0;
   }
 
-  .wb-arrow-l::before {
+  .wb-arrow-l::after {
     border-radius: 100% 0 0 100% / 50% 0 0 50%;
   }
 }
@@ -251,6 +290,21 @@ button.wb-clickable:focus-visible {
 .wb-ws-active {
   background: var(--wb-primary);
   color: var(--wb-on-primary);
+}
+
+/*
+ * The shared brightness lift does nothing to a transparent pill, so the two
+ * unselected states pick up a wash of the bar's foreground on hover instead —
+ * the empty one also lifts its glyph out of the outline colour. The active
+ * pill is bright enough for the filter alone to read.
+ */
+.wb-ws-empty:hover {
+  background: color-mix(in srgb, var(--wb-on-surface) 10%, transparent);
+  color: color-mix(in srgb, var(--wb-on-surface) 55%, var(--wb-outline-variant));
+}
+
+.wb-ws-occupied:hover {
+  background: color-mix(in srgb, var(--wb-surface-container-highest), var(--wb-on-surface) 12%);
 }
 
 /* Below this the side clusters would collide with the workspace pill */

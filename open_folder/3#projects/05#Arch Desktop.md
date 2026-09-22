@@ -41,6 +41,9 @@ All of this is of **inspired** by other peoples linux ricing but fully **custom*
     text-decoration:none;
     font-weight:600;
   }
+  .learnmore:hover{
+    background: #434343;
+  }
   .md-image {
     max-width: 680px
   }
