@@ -38,6 +38,20 @@ const icons = {
 } as const;
 
 /**
+ * Workspace glyph sets. Clicking the keyboard segment — the real bar's layout
+ * switcher — cycles between them; `label` is what that segment shows.
+ */
+const WS_LANGUAGES = {
+  en: { label: "Eng", glyphs: ["1", "2", "3", "4", "5"] },
+  cn: { label: "中文", glyphs: ["一", "二", "三", "四", "五"] },
+  roman: { label: "Rom", glyphs: ["I", "II", "III", "IV", "V"] },
+} as const;
+
+type WsLanguage = keyof typeof WS_LANGUAGES;
+
+const WS_LANGUAGE_ORDER = Object.keys(WS_LANGUAGES) as WsLanguage[];
+
+/**
  * The Arch "A" from public/white_arch.svg, inlined so it can take the
  * segment's on_* colour — the asset itself is white and vanishes on the
  * light primary fill.
@@ -73,9 +87,14 @@ function Cap({ fill, side }: { fill: Fill; side: "l" | "r" }) {
 }
 
 export function Waybar({ onOpen }: WaybarProps) {
-  const WORKSPACES = ["一", "二", "三", "四", "五"];
-  const [activeWorkspace, setActiveWorkspace] = useState("一");
+  const [wsLanguage, setWsLanguage] = useState<WsLanguage>("cn");
+  const [currWsIdx, setCurrWsIdx] = useState(0);
   const [now, setNow] = useState(() => new Date());
+
+  const cycleWsLanguage = () =>
+    setWsLanguage(
+      (lang) => WS_LANGUAGE_ORDER[(WS_LANGUAGE_ORDER.indexOf(lang) + 1) % WS_LANGUAGE_ORDER.length],
+    );
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -133,13 +152,13 @@ export function Waybar({ onOpen }: WaybarProps) {
       </div>
 
       <div className="wb-center">
-        {WORKSPACES.map((ws) => (
+        {WS_LANGUAGES[wsLanguage].glyphs.map((glyph, idx) => (
           <span
-            key={ws}
-            className={ws === activeWorkspace ? "wb-ws wb-ws-active" : "wb-ws wb-ws-empty"}
-            onClick={() => setActiveWorkspace(ws)}
+            key={idx}
+            className={idx === currWsIdx ? "wb-ws wb-ws-active" : "wb-ws wb-ws-empty"}
+            onClick={() => setCurrWsIdx(idx)}
           >
-            {ws}
+            {glyph}
           </span>
         ))}
       </div>
@@ -153,11 +172,16 @@ export function Waybar({ onOpen }: WaybarProps) {
         </div>
 
         <Arrow from={FILL.container} to={FILL.containerHigh} dir="l" />
-        <div className="wb-seg wb-on-surface wb-kbd">
+        <button
+          className="wb-seg wb-on-surface wb-kbd wb-clickable"
+          onClick={cycleWsLanguage}
+          title="Change workspace numerals"
+        >
           <span className="wb-mod">
-            <Icon path={icons.keyboard} />Eng
+            <Icon path={icons.keyboard} />
+            {WS_LANGUAGES[wsLanguage].label}
           </span>
-        </div>
+        </button>
 
         <Arrow from={FILL.containerHigh} to={FILL.tertiary} dir="l" />
         <div className="wb-seg wb-on-tertiary">

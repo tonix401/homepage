@@ -92,6 +92,12 @@
   background: var(--wb-surface-container-highest);
 }
 
+/* Fixed width so cycling the workspace numerals doesn't shift the cluster */
+.wb-kbd {
+  justify-content: center;
+  min-width: 76px;
+}
+
 .wb-window {
   min-width: 0;
   overflow: hidden;
