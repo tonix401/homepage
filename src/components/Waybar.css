@@ -302,6 +302,33 @@ button.wb-clickable:focus-visible {
   background: color-mix(in srgb, var(--wb-surface-container-highest), var(--wb-on-surface) 12%);
 }
 
+/*
+ * Changing the numerals spins each glyph a full turn and shrinks it to nothing
+ * at the halfway point, which is where Waybar.tsx swaps the character — so the
+ * exchange happens behind the one frame where there is nothing to see.
+ * Rotation is 2D on purpose: a flip on X or Y would show the glyph mirrored
+ * through half its travel.
+ */
+.wb-ws-glyph {
+  display: inline-block;
+}
+
+.wb-ws-spinning .wb-ws-glyph {
+  animation: wb-ws-spin 0.42s ease-in-out;
+}
+
+@keyframes wb-ws-spin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(0); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wb-ws-spinning .wb-ws-glyph {
+    animation: none;
+  }
+}
+
 /* Below this the side clusters would collide with the workspace pill */
 @media (max-width: 1400px) {
   .wb-center {

@@ -39,6 +39,7 @@ export function ArchDesktop({
           src={wallpaper}
           alt=""
           className="arch-wallpaper-img"
+          draggable={false}
         />
       </div>
       {children}

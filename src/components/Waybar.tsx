@@ -93,6 +93,13 @@ const icons = {
  * so the choice survives a reload and a shared link; `label` is what that
  * segment shows.
  */
+/**
+ * How long a workspace glyph spins when the numerals change, in ms — must
+ * match `wb-ws-spin` in Waybar.css, since the glyphs are swapped at the
+ * halfway mark, where the animation has scaled them to nothing.
+ */
+const WS_SPIN_MS = 420;
+
 const WS_LANGUAGES: Record<WorkspaceLanguage, { label: string; glyphs: string[] }> = {
   en: { label: "Eng", glyphs: ["1", "2", "3", "4", "5"] },
   cn: { label: "中文", glyphs: ["一", "二", "三", "四", "五"] },
@@ -144,6 +151,8 @@ export function Waybar({
 }: WaybarProps) {
   const [now, setNow] = useState(() => new Date());
   const [ringing, setRinging] = useState(false);
+  const [shownLanguage, setShownLanguage] = useState(language);
+  const wsRef = useRef<HTMLDivElement>(null);
   const ringTimer = useRef<number | undefined>(undefined);
   const { cpu, cpuTitle, memory, memoryTitle } = useSystemStats();
 
@@ -162,6 +171,22 @@ export function Waybar({
   };
 
   useEffect(() => () => clearTimeout(ringTimer.current), []);
+
+  /*
+   * A language change spins every glyph once and exchanges it mid-spin. The
+   * class is taken off and put back around a forced reflow rather than keyed
+   * onto the element, so a change arriving during a spin restarts it, and so
+   * nothing spins on mount or on the clock's re-render every second.
+   */
+  useEffect(() => {
+    if (language === shownLanguage) return;
+    const el = wsRef.current;
+    el?.classList.remove("wb-ws-spinning");
+    void el?.offsetWidth;
+    el?.classList.add("wb-ws-spinning");
+    const id = window.setTimeout(() => setShownLanguage(language), WS_SPIN_MS / 2);
+    return () => clearTimeout(id);
+  }, [language, shownLanguage]);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -228,8 +253,8 @@ export function Waybar({
         <Arrow from={FILL.containerHigh} to={FILL.none} dir="r" />
       </div>
 
-      <div className="wb-center">
-        {WS_LANGUAGES[language].glyphs.map((glyph, idx) => {
+      <div className="wb-center" ref={wsRef}>
+        {WS_LANGUAGES[shownLanguage].glyphs.map((glyph, idx) => {
           const ws = idx + 1;
           const state = ws === workspace
             ? "wb-ws-active"
@@ -243,7 +268,7 @@ export function Waybar({
               onClick={() => onWorkspaceChange(ws)}
               title={`Workspace ${ws}`}
             >
-              {glyph}
+              <span className="wb-ws-glyph">{glyph}</span>
             </button>
           );
         })}

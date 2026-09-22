@@ -18,6 +18,9 @@
   z-index: 1;
 }
 
+/* A real desktop has nothing to select, and a stray drag across it should not
+   leave the wallpaper highlighted. The window is a sibling, so the editor's
+   text stays selectable. */
 .arch-wallpaper {
   width: 100%;
   height: 100%;
@@ -25,6 +28,7 @@
   overflow: hidden;
   display: flex;
   position: relative;
+  user-select: none;
 }
 
 .arch-wallpaper-img {
