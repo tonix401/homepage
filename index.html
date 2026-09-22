@@ -2,6 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      Content in open_folder/ writes its asset URLs relative to the site root
+      ("eschbach/logo.jpg"). Routing keeps every URL at `/`, so that already
+      holds; this pins it for the one case that does not, a mistyped deep path
+      served by the 404.html fallback. Vite substitutes its `base` here.
+    -->
+    <base href="%BASE_URL%" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

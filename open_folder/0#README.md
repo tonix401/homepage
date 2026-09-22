@@ -41,6 +41,6 @@ In my free time I am also experimenting with different Linux distros. (ricing is
 
 ---
 
-<a href="/#projects/Arch Desktop.md" class="learnmore">Cool Projects</a>
-<a href="/#work%20experience/eschbach.md" class="learnmore">Exiting Experiences</a>
-<a href="/#legal" class="learnmore">Required Legal Stuff</a>
+<a href="projects/Arch Desktop.md" class="learnmore">Cool Projects</a>
+<a href="work experience/eschbach.md" class="learnmore">Exiting Experiences</a>
+<a href="legal/imprint.html" class="learnmore">Required Legal Stuff</a>

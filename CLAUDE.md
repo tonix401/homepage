@@ -35,9 +35,52 @@ App
 └── Footer          — status bar (file type, line count, encoding)
 ```
 
-`App.tsx` owns the only piece of state: `selectedFile: FileNode | null`. It is passed down as props — no context or global store.
+`App.tsx` owns the route and the per-workspace window state; the selected file
+is derived from the route. Everything is passed down as props — no context,
+router library or global store.
 
 `Explorer` manages its own `openFolders: Set<string>` state (folder paths as keys). All folders start expanded. Clicking a folder toggles it; clicking a file calls `onSelect`.
+
+### Routing
+
+The app lives at `/`; a query string says what it shows. `src/utils/route.ts`
+(pure, tested) parses and formats it on top of the History API — there is no
+router library:
+
+| URL | Shows |
+| --- | --- |
+| `/` | the first file, maximized, on workspace 1 |
+| `/?file=projects/Homelab.md` | that file, maximized |
+| `/?file=projects/Homelab.md&state=window` | the editor as a floating window over the desktop (`.arch-window`) |
+| `/?state=desktop&workspace=3` | the bare desktop, workspace 3 |
+
+Defaults (`state=fullscreen`, `workspace=1`, the first file) are left out, so
+the home page stays `/`. Parsing is forgiving by design: order does not
+matter, an unknown or missing value takes its default, and the address bar is
+rewritten to the canonical form with `replaceState` — which is also how a
+legacy `/#projects%2FHomelab.md` link and a file that has left the tree are
+absorbed. `file` is only read alongside an open window; the desktop has none.
+
+Workspaces are 1-based, matching the numbers the Waybar shows
+(`WORKSPACE_COUNT` there and the glyph sets in `Waybar.tsx` must agree). A
+file path keeps its slashes in the URL and escapes everything else, because
+slashes are legal in a query value and `%2F` is unreadable.
+
+Keeping every URL at `/` is load-bearing for content: files in `open_folder/`
+write their asset URLs relative to the site root (`eschbach/logo.jpg` →
+`public/eschbach/logo.jpg`), which only holds while the document URL is the
+root. `index.html` still sets `<base href="%BASE_URL%">` and `vite.config.ts`
+still copies `index.html` to `dist/404.html`; neither is needed to reach a
+route, both keep a mistyped or stale deep path (`/resume`) rendering the app
+rather than the GitHub Pages error page. Links *between* files in
+`open_folder/` are relative to the linking file (`projects/Arch Desktop.md`
+from the root README) and are followed in-app, without a page load.
+
+One editor window exists at a time. `App` remembers what each workspace held,
+so switching away and back restores it; closing the window drops that entry.
+The header's maximize button flips `fullscreen` ⇄ `window`; close and minimize
+both dismiss the window to the desktop. With `showDesktop: false` every route
+collapses onto `fullscreen` and the window buttons do nothing.
 
 ### Search
 
@@ -114,6 +157,12 @@ When changing any of the following, update **all** listed locations together:
   changes, or `model2vec.test.ts` will fail against the old expectations
 - `public/semantic/model.{json,bin}` — re-run `npm run prepare:semantic`
 - `CLAUDE.md` — the Search section above
+
+### The URL scheme (`/?file=…&state=…&workspace=…`)
+- `src/utils/route.ts` — `parseRoute()`/`formatRoute()`, the defaults, `WORKSPACE_COUNT`
+- `src/utils/route.test.ts` — the round-trip and rejection cases
+- `vscode_website.config.ts` — `menuItems` hrefs that point at a file
+- `CLAUDE.md` — the Routing section above
 
 ### Supported file types (`.py`, `.rs`, `.vue`, etc.)
 - `src/services/types.ts` — `FileType` union type

@@ -2,6 +2,9 @@ import { useEffect, useState, type CSSProperties } from "react";
 import "./Waybar.css";
 
 interface WaybarProps {
+  workspace: number;
+  occupiedWorkspaces: ReadonlySet<number>;
+  onWorkspaceChange: (workspace: number) => void;
   onOpen: () => void;
 }
 
@@ -38,8 +41,9 @@ const icons = {
 } as const;
 
 /**
- * Workspace glyph sets. Clicking the keyboard segment — the real bar's layout
- * switcher — cycles between them; `label` is what that segment shows.
+ * Workspace glyph sets, one glyph per workspace (see `WORKSPACE_COUNT`).
+ * Clicking the keyboard segment — the real bar's layout switcher — cycles
+ * between them; `label` is what that segment shows.
  */
 const WS_LANGUAGES = {
   en: { label: "Eng", glyphs: ["1", "2", "3", "4", "5"] },
@@ -86,9 +90,13 @@ function Cap({ fill, side }: { fill: Fill; side: "l" | "r" }) {
   return <span className={`wb-cap wb-cap-${side}`} style={style} aria-hidden="true" />;
 }
 
-export function Waybar({ onOpen }: WaybarProps) {
+export function Waybar({
+  workspace,
+  occupiedWorkspaces,
+  onWorkspaceChange,
+  onOpen,
+}: WaybarProps) {
   const [wsLanguage, setWsLanguage] = useState<WsLanguage>("cn");
-  const [currWsIdx, setCurrWsIdx] = useState(0);
   const [now, setNow] = useState(() => new Date());
 
   const cycleWsLanguage = () =>
@@ -135,7 +143,7 @@ export function Waybar({ onOpen }: WaybarProps) {
         <Arrow from={FILL.secondary} to={FILL.tertiary} dir="r" />
         <div className="wb-seg wb-on-tertiary">
           <span className="wb-mod">
-            <Icon path={icons.music} /> Never gon…
+            <Icon path={icons.music} /> Never gonna …
           </span>
         </div>
 
@@ -152,15 +160,24 @@ export function Waybar({ onOpen }: WaybarProps) {
       </div>
 
       <div className="wb-center">
-        {WS_LANGUAGES[wsLanguage].glyphs.map((glyph, idx) => (
-          <span
-            key={idx}
-            className={idx === currWsIdx ? "wb-ws wb-ws-active" : "wb-ws wb-ws-empty"}
-            onClick={() => setCurrWsIdx(idx)}
-          >
-            {glyph}
-          </span>
-        ))}
+        {WS_LANGUAGES[wsLanguage].glyphs.map((glyph, idx) => {
+          const ws = idx + 1;
+          const state = ws === workspace
+            ? "wb-ws-active"
+            : occupiedWorkspaces.has(ws)
+              ? "wb-ws-occupied"
+              : "wb-ws-empty";
+          return (
+            <button
+              key={idx}
+              className={`wb-ws wb-clickable ${state}`}
+              onClick={() => onWorkspaceChange(ws)}
+              title={`Workspace ${ws}`}
+            >
+              {glyph}
+            </button>
+          );
+        })}
       </div>
 
       <div className="wb-side">

@@ -29,6 +29,11 @@
   overflow: hidden;
 }
 
+/* Inside a desktop window the frame sets the size, not the viewport. */
+.vscode-layout--windowed {
+  height: 100%;
+}
+
 .vscode-body {
   display: flex;
   flex: 1;

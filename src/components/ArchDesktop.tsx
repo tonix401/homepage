@@ -1,33 +1,40 @@
+import { type ReactNode } from "react";
 import "./ArchDesktop.css";
 import { Waybar } from "./Waybar";
 import wallpaper from "/arch_background.svg";
-import vscodeIcon from "/blue_dot.svg";
 
 interface ArchDesktopProps {
+  workspace: number;
+  occupiedWorkspaces: ReadonlySet<number>;
+  onWorkspaceChange: (workspace: number) => void;
   onOpen: () => void;
+  /** The window shown on this workspace, if any. */
+  children?: ReactNode;
 }
 
-export function ArchDesktop({ onOpen }: ArchDesktopProps) {
+export function ArchDesktop({
+  workspace,
+  occupiedWorkspaces,
+  onWorkspaceChange,
+  onOpen,
+  children,
+}: ArchDesktopProps) {
   return (
     <div className="arch-desktop">
-      <Waybar onOpen={onOpen} />
+      <Waybar
+        workspace={workspace}
+        occupiedWorkspaces={occupiedWorkspaces}
+        onWorkspaceChange={onWorkspaceChange}
+        onOpen={onOpen}
+      />
       <div className="arch-wallpaper">
         <img
           src={wallpaper}
           alt=""
           className="arch-wallpaper-img"
         />
-        <button
-          className="arch-desktop-shortcut"
-          onClick={onOpen}
-          title="Portfolio"
-        >
-          <span className="arch-shortcut-icon" aria-hidden="true">
-            <img src={vscodeIcon} alt="Portfolio" />
-          </span>
-          <span className="arch-shortcut-label">Portfolio</span>
-        </button>
       </div>
+      {children}
     </div>
   );
 }

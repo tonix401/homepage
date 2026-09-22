@@ -231,12 +231,21 @@ button.wb-clickable:focus-visible {
   min-width: 30px;
   height: var(--wb-seg-height);
   padding: 0 8px;
+  border: none;
   border-radius: 999px;
+  background: transparent;
+  font: inherit;
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .wb-ws-empty {
   color: var(--wb-outline-variant);
+}
+
+/* Holds a window, but is not the workspace on screen */
+.wb-ws-occupied {
+  background: var(--wb-surface-container-highest);
+  color: var(--wb-on-surface);
 }
 
 .wb-ws-active {
@@ -245,7 +254,7 @@ button.wb-clickable:focus-visible {
 }
 
 /* Below this the side clusters would collide with the workspace pill */
-@media (max-width: 1600px) {
+@media (max-width: 1400px) {
   .wb-center {
     display: none;
   }

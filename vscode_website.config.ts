@@ -12,8 +12,8 @@ export const configuration: OpenFolderPluginOptions = {
     { label: "Home", href: "/" },
     { label: "Github", href: "https://github.com/tonix401" },
     { label: "Resume", href: "/resume" },
-    { label: "Imprint", href: "/#legal%2Fimprint.html" },
-    { label: "Privacy Policy", href: "/#legal%2Fprivacy.html" },
+    { label: "Imprint", href: "/?file=legal/imprint.html" },
+    { label: "Privacy Policy", href: "/?file=legal/privacy.html" },
   ],
   activities: [
     {

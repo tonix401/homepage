@@ -10,6 +10,8 @@ interface HeaderProps {
   files: FileNode[];
   onOpen: (file: FileNode) => void;
   focusSignal: number;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
   onClose?: () => void;
   onMinimize?: () => void;
 }
@@ -20,6 +22,8 @@ export function Header({
   files,
   onOpen,
   focusSignal,
+  isFullscreen = false,
+  onToggleFullscreen,
   onClose,
   onMinimize,
 }: HeaderProps) {
@@ -59,8 +63,23 @@ export function Header({
         <button className="vscode-winbtn vscode-winbtn--min" aria-label="Minimize" title="Minimize" onClick={onMinimize}>
           <svg viewBox="0 0 12 12" fill="currentColor"><rect x="1" y="5.5" width="10" height="1" /></svg>
         </button>
-        <button className="vscode-winbtn vscode-winbtn--max" aria-label="Maximize" title="Maximize">
-          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1"><rect x="1.5" y="1.5" width="9" height="9" /></svg>
+        <button
+          className="vscode-winbtn vscode-winbtn--max"
+          aria-label={isFullscreen ? "Restore" : "Maximize"}
+          title={isFullscreen ? "Restore" : "Maximize"}
+          onClick={onToggleFullscreen}
+        >
+          {isFullscreen ? (
+            // Two offset squares: the standard "restore down" glyph.
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1">
+              <path d="M3.5 3.5v-2h7v7h-2" />
+              <rect x="1.5" y="3.5" width="7" height="7" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1">
+              <rect x="1.5" y="1.5" width="9" height="9" />
+            </svg>
+          )}
         </button>
         <button className="vscode-winbtn vscode-winbtn--close" aria-label="Close" title="Close" onClick={onClose}>
           <svg viewBox="0 0 12 12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"><line x1="2" y1="2" x2="10" y2="10" /><line x1="10" y1="2" x2="2" y2="10" /></svg>

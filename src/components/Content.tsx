@@ -40,16 +40,20 @@ function inlineCss(
 }
 
 // Prepended to every HTML srcDoc so anchor clicks send a postMessage instead
-// of trying to navigate the iframe or parent.
+// of trying to navigate the iframe or parent. Anything that leaves the site —
+// an absolute URL, or a scheme such as mailto: — opens in a new tab: the
+// sandbox blocks it from reaching the top frame, and left alone it would load
+// over the preview itself (blank, for a site that refuses framing).
 // The <style> block makes the html element transparent so the iframe element's
 // dark background shows through before the page's own CSS is applied.
 const HTML_NAV_SCRIPT =
   "<style>html{background:transparent}</style>" +
   "<script>document.addEventListener('click',function(e){" +
   "var a=e.target.closest('a[href]');if(!a)return;" +
-  "var h=a.getAttribute('href');" +
-  "if(!h||h.charAt(0)==='#'||h.indexOf(':')!==-1||h.charAt(0)==='/')return;" +
-  "e.preventDefault();window.parent.postMessage({navigate:h},'*');" +
+  "var h=a.getAttribute('href');if(!h||h.charAt(0)==='#')return;" +
+  "e.preventDefault();" +
+  "if(h.charAt(0)==='/'||h.indexOf(':')!==-1){window.open(h,'_blank','noopener');return;}" +
+  "window.parent.postMessage({navigate:h},'*');" +
   "});</script>";
 
 
@@ -284,7 +288,7 @@ export function Content({ file, onNavigate, resolveFile }: ContentProps) {
             ref={iframeRef}
             className="vscode-html-area"
             srcDoc={HTML_NAV_SCRIPT + processed}
-            sandbox="allow-scripts"
+            sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
             title={file.name}
           />
         )}
