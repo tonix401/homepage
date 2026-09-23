@@ -37,7 +37,6 @@ export interface OpenFolderPluginOptions {
   faviconPath?: string;
   activities?: CustomActivityConfig[];
   menuItems?: MenuItem[];
-  showDesktop?: boolean;
   foldersFirst?: boolean;
   collapsedFolders?: string[];
 }
@@ -147,6 +146,35 @@ export function collectFolderPaths(
     const path = prefix ? `${prefix}/${displayName}` : displayName;
     results.push(path);
     results.push(...collectFolderPaths(resolve(dirPath, entry.name), path));
+  }
+  return results;
+}
+
+/**
+ * Every file path in the folder, spelled the way the explorer shows it — sort
+ * prefixes stripped — so it can be compared against a configured `menuItems`
+ * file. Contents are not read; this walk is for validation only.
+ */
+export function collectFilePaths(
+  dirPath: string,
+  prefix: string = "",
+): string[] {
+  const results: string[] = [];
+  let entries;
+  try {
+    entries = readdirSync(dirPath, { withFileTypes: true });
+  } catch {
+    return results;
+  }
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      const { displayName } = parseFolderName(entry.name);
+      const path = prefix ? `${prefix}/${displayName}` : displayName;
+      results.push(...collectFilePaths(resolve(dirPath, entry.name), path));
+    } else {
+      const displayName = stripSortPrefix(entry.name);
+      results.push(prefix ? `${prefix}/${displayName}` : displayName);
+    }
   }
   return results;
 }
@@ -401,7 +429,6 @@ export function openFolderPlugin(
     faviconPath,
     activities = [],
     menuItems = [],
-    showDesktop = false,
     foldersFirst = true,
     collapsedFolders = [],
   } = options;
@@ -532,7 +559,11 @@ export function openFolderPlugin(
         }
       }
 
+      const treeFiles = new Set(collectFilePaths(absFolder));
+
       for (const item of menuItems) {
+        const itemLabel = item.label.trim() || "(unnamed menu item)";
+
         if (item.label.trim() === "") {
           this.warn(
             `A menu item has an empty "label".\n` +
@@ -541,11 +572,31 @@ export function openFolderPlugin(
           );
         }
 
-        if (item.href !== undefined && item.href.trim() === "") {
+        if (item.file !== undefined && item.url !== undefined) {
           this.warn(
-            `Menu item "${item.label.trim() || "(unnamed menu item)"}" has an empty "href".\n` +
-              `  It will render as plain text instead of a link.\n` +
-              `  Fix: Set "href" to a target, e.g. href: "/", or remove it entirely.`,
+            `Menu item "${itemLabel}" sets both "file" and "url".\n` +
+              `  "url" will take precedence. Remove one of them.`,
+          );
+        }
+
+        if (item.file === undefined && item.url === undefined) {
+          this.warn(
+            `Menu item "${itemLabel}" sets neither "file" nor "url".\n` +
+              `  It will render as plain text instead of something to click.\n` +
+              `  Fix: Add "file" with a path in the open folder, "file: null" for` +
+              ` the default page, or "url" for a link off the site.`,
+          );
+        }
+
+        if (
+          item.file !== undefined &&
+          item.file !== null &&
+          !treeFiles.has(item.file)
+        ) {
+          this.warn(
+            `Menu item "${itemLabel}" points at "${item.file}", which is not in the open folder.\n` +
+              `  The editor would fall back to the first file and the browser would show its not-found page.\n` +
+              `  Fix: Use the path as the explorer shows it (no sort prefixes), e.g. "legal/imprint.html".`,
           );
         }
       }
@@ -659,7 +710,6 @@ export function openFolderPlugin(
           `export const rootFolderName = ${JSON.stringify(rootFolderName)};`,
           `export const activities = ${JSON.stringify(activities.map((a) => resolveActivityText(a, process.cwd())))};`,
           `export const menuItems = ${JSON.stringify(menuItems)};`,
-          `export const showDesktop = ${JSON.stringify(showDesktop)};`,
           `export const foldersFirst = ${JSON.stringify(foldersFirst)};`,
         ].join("\n");
       }

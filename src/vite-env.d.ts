@@ -34,6 +34,5 @@ declare module "virtual:open-folder-config" {
   export const rootFolderName: string;
   export const activities: CustomActivity[];
   export const menuItems: MenuItem[];
-  export const showDesktop: boolean;
   export const foldersFirst: boolean;
 }

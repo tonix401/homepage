@@ -1,290 +1,173 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
-import { type FileNode, type TreeNode } from "./services/types";
-import folderFiles from "virtual:open-folder-files";
-import { activities, showDesktop } from "virtual:open-folder-config";
-import { Header } from "./components/Header";
 import { ArchDesktop } from "./components/ArchDesktop";
-import { ActivityBar, type Panel } from "./components/ActivityBar";
-import { Sidebar } from "./components/Sidebar";
-import { Explorer } from "./components/Explorer";
-import { CustomPanel } from "./components/CustomPanel";
-import { Content } from "./components/Content";
-import { Footer } from "./components/Footer";
-import { flattenFiles } from "./utils/search";
+import { ArchStrip } from "./components/ArchStrip";
+import { APPS } from "./apps/registry";
+import { DEFAULT_APP, type AppId } from "./apps/ids";
+import { type WindowHandle } from "./apps/types";
 import {
-  parseRoute,
-  formatRoute,
-  DEFAULT_STATE,
-  type Route,
-  type WindowState,
+  closeWindow,
+  defaultDesktop,
+  focusWindow,
+  focusedId,
+  focusedWindow,
+  openWindow,
+  setArg,
+  setFullscreen,
+  setLanguage,
+  switchWorkspace,
+  windowsOf,
+  type Desktop,
+  type WindowId,
+  type WindowRecord,
+  type WindowSpec,
   type WorkspaceLanguage,
-} from "./utils/route";
-
-function findFirstFile(nodes: TreeNode[]): FileNode | null {
-  for (const node of nodes) {
-    if (node.kind === "file") return node;
-    const found = findFirstFile(node.children);
-    if (found) return found;
-  }
-  return null;
-}
-
-function findFileByPath(nodes: TreeNode[], path: string): FileNode | null {
-  for (const node of nodes) {
-    if (node.kind === "file" && node.path === path) return node;
-    if (node.kind === "folder") {
-      const found = findFileByPath(node.children, path);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
-function resolvePath(fromPath: string, href: string): string {
-  const dir = fromPath.split("/").slice(0, -1);
-  for (const part of href.split("/")) {
-    if (part === "..") dir.pop();
-    else if (part !== ".") dir.push(part);
-  }
-  return dir.join("/");
-}
-
-/** The file path a legacy `/#projects%2FHomelab.md` link points at. */
-function pathFromHash(): string | null {
-  const hash = window.location.hash.slice(1);
-  if (!hash) return null;
-  try {
-    return decodeURIComponent(hash);
-  } catch {
-    return null;
-  }
-}
-
-/** What a window on the current workspace is showing. */
-interface OpenWindow {
-  state: WindowState;
-  filePath: string | null;
-}
+} from "./utils/desktop";
+import { loadDesktop, saveDesktop } from "./utils/session";
 
 /**
- * Without the desktop there is nothing to be windowed against, so every route
- * collapses onto the maximized editor.
+ * Runs every restored payload past its app. `session.ts` deliberately knows
+ * nothing about the file tree, so this is where a window pointing at a file
+ * that has left it degrades to that app's default instead of coming back blank.
  */
-function routeFromLocation(): Route {
-  const route = parseRoute(window.location.search);
-  // A legacy `/#projects%2FHomelab.md` link names its file in the hash.
-  const filePath = route.filePath ?? (route.state ? pathFromHash() : null);
-  // Without the desktop there is nothing to be windowed against, so every
-  // route collapses onto the maximized editor.
-  return showDesktop
-    ? { ...route, filePath }
-    : { ...route, filePath, state: DEFAULT_STATE };
+function normalize(desktop: Desktop): Desktop {
+  const windows: Record<WindowId, WindowRecord> = {};
+  for (const [id, window] of Object.entries(desktop.windows)) {
+    const arg = APPS[window.app].normalizeArg(window.arg);
+    windows[id] = arg === window.arg ? window : { ...window, arg };
+  }
+  return { ...desktop, windows };
+}
+
+/** This tab's desktop as it was left, or a fresh one on a first visit. */
+function initialDesktop(): Desktop {
+  const stored = loadDesktop();
+  return stored ? normalize(stored) : defaultDesktop();
 }
 
 function App() {
-  const [route, setRoute] = useState<Route>(routeFromLocation);
-  const [activePanel, setActivePanel] = useState<Panel>("explorer");
-  /** Bumped by Ctrl/Cmd+P; QuickOpen focuses its input when it changes. */
-  const [focusSignal, setFocusSignal] = useState(0);
+  const [desktop, setDesktop] = useState(initialDesktop);
+
+  const windows = useMemo(() => windowsOf(desktop), [desktop]);
+  const focused = focusedWindow(desktop);
+
+  /** What the bar's title segment re-opens on a workspace emptied by closing. */
+  const lastWindow = useRef<WindowSpec>({ app: DEFAULT_APP, arg: null });
+  useEffect(() => {
+    if (focused) lastWindow.current = { app: focused.app, arg: focused.arg };
+  }, [focused]);
+
+  // The desktop is nowhere else — there is no URL carrying any of it — so it
+  // is mirrored on every change. A few hundred bytes, nothing to debounce.
+  useEffect(() => {
+    saveDesktop(desktop);
+  }, [desktop]);
+
+  const handleWorkspaceChange = useCallback((workspace: number) => {
+    setDesktop((current) => switchWorkspace(current, workspace));
+  }, []);
+
+  const handleLanguageChange = useCallback((language: WorkspaceLanguage) => {
+    setDesktop((current) => setLanguage(current, language));
+  }, []);
+
+  const handleLaunch = useCallback((app: AppId) => {
+    setDesktop((current) => openWindow(current, { app, arg: null }));
+  }, []);
+
+  /** The bar's window-title segment, which behaves like a taskbar entry. */
+  const handleTitleClick = useCallback(() => {
+    setDesktop((current) =>
+      focusedId(current) === null
+        ? openWindow(current, lastWindow.current)
+        : setFullscreen(current, !current.fullscreen),
+    );
+  }, []);
+
+  const handleFocus = useCallback((id: WindowId) => {
+    setDesktop((current) => focusWindow(current, id));
+  }, []);
+
   /**
-   * The window open on each workspace, so leaving a workspace and coming back
-   * finds the editor as it was. An entry is dropped when its window is closed.
+   * One handle per window, rebuilt only when the desktop changes, so an app
+   * can keep it in a dependency list without re-running on every render. Each
+   * closes over its own id, so a button always acts on the window it is in —
+   * never on whichever one happens to have focus.
    */
-  const [windows, setWindows] = useState<ReadonlyMap<number, OpenWindow>>(() =>
-    route.state
-      ? new Map([[route.workspace, { state: route.state, filePath: route.filePath }]])
-      : new Map(),
-  );
-  /** Defaults for re-opening a closed window. */
-  const lastWindow = useRef<OpenWindow>(
-    route.state
-      ? { state: route.state, filePath: route.filePath }
-      : { state: DEFAULT_STATE, filePath: null },
-  );
-
-  const files = useMemo(() => flattenFiles(folderFiles), []);
-  /** A route naming a file that is not in the tree falls back to the first one. */
-  const selectedFile = useMemo(
+  const handles = useMemo(
     () =>
-      (route.filePath ? findFileByPath(folderFiles, route.filePath) : null) ??
-      findFirstFile(folderFiles),
-    [route.filePath],
+      new Map(
+        windows.map((window): [WindowId, WindowHandle] => [
+          window.id,
+          {
+            id: window.id,
+            setArg: (arg) =>
+              setDesktop((current) => setArg(focusWindow(current, window.id), window.id, arg)),
+            close: () => setDesktop((current) => closeWindow(current, window.id)),
+            toggleFullscreen: () =>
+              setDesktop((current) =>
+                setFullscreen(focusWindow(current, window.id), !current.fullscreen),
+              ),
+            focus: () => handleFocus(window.id),
+            open: (app, arg = null) => setDesktop((current) => openWindow(current, { app, arg })),
+          },
+        ]),
+      ),
+    [windows, handleFocus],
   );
 
-  /** Moves to a route and records what the workspace it leaves behind held. */
-  const applyRoute = useCallback((next: Route) => {
-    setRoute(next);
-    const { workspace, state, filePath } = next;
-    if (!state) return;
-    const open: OpenWindow = { state, filePath };
-    lastWindow.current = open;
-    setWindows((prev) => new Map(prev).set(workspace, open));
-  }, []);
-
-  const navigate = useCallback(
-    (next: Route, replace = false) => {
-      const url = formatRoute(next);
-      if (replace) window.history.replaceState(null, "", url);
-      else window.history.pushState(null, "", url);
-      applyRoute(next);
-    },
-    [applyRoute],
-  );
-
-  // Keeps the address bar honest about routes it did not produce itself: a
-  // legacy hash link, or a file that has since left the tree. A no-op after
-  // `navigate`, which has already written the same URL — and on `/`, whose
-  // missing `file` already means the first file.
-  useEffect(() => {
-    const shown =
-      route.state && route.filePath
-        ? { ...route, filePath: selectedFile?.path ?? null }
-        : route;
-    const url = formatRoute(shown);
-    const current = window.location.pathname + window.location.search + window.location.hash;
-    if (url !== current) window.history.replaceState(null, "", url);
-  }, [route, selectedFile]);
-
-  useEffect(() => {
-    const handler = () => applyRoute(routeFromLocation());
-    window.addEventListener("popstate", handler);
-    return () => window.removeEventListener("popstate", handler);
-  }, [applyRoute]);
-
-  useEffect(() => {
-    const handler = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() !== "p" || !(event.ctrlKey || event.metaKey)) return;
-      event.preventDefault();
-      setFocusSignal((signal) => signal + 1);
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
-
-  const handleSelect = useCallback(
-    (file: FileNode) => {
-      navigate({
-        workspace: route.workspace,
-        language: route.language,
-        state: route.state ?? lastWindow.current.state,
-        filePath: file.path,
+  const renderWindow = useCallback(
+    (window: WindowRecord) => {
+      const handle = handles.get(window.id);
+      if (!handle) return null;
+      return APPS[window.app].render({
+        arg: window.arg,
+        focused: window.id === focused?.id,
+        maximized: desktop.fullscreen,
+        handle,
       });
     },
-    [navigate, route.workspace, route.language, route.state],
+    [handles, focused?.id, desktop.fullscreen],
   );
 
-  const handleNavigate = useCallback(
-    (href: string) => {
-      if (!selectedFile) return;
-      const target = findFileByPath(folderFiles, resolvePath(selectedFile.path, href));
-      if (target) handleSelect(target);
-    },
-    [selectedFile, handleSelect],
+  /** What each workspace holds, for the icons in its Waybar pill. */
+  const workspaceApps = useMemo(
+    () =>
+      new Map(
+        Object.entries(desktop.workspaces).map(([workspace, record]) => [
+          Number(workspace),
+          record.windows
+            .map((id) => desktop.windows[id]?.app)
+            .filter((app): app is AppId => app !== undefined),
+        ]),
+      ),
+    [desktop],
   );
 
-  const resolveFile = useCallback((fromPath: string, href: string) => {
-    return findFileByPath(folderFiles, resolvePath(fromPath, href));
-  }, []);
-
-  const handleOpenWindow = useCallback(() => {
-    const { state, filePath } = lastWindow.current;
-    navigate({
-      workspace: route.workspace,
-      language: route.language,
-      state,
-      filePath: filePath ?? findFirstFile(folderFiles)?.path ?? null,
-    });
-  }, [navigate, route.workspace, route.language]);
-
-  const handleCloseWindow = useCallback(() => {
-    setWindows((prev) => {
-      if (!prev.has(route.workspace)) return prev;
-      const next = new Map(prev);
-      next.delete(route.workspace);
-      return next;
-    });
-    navigate({ workspace: route.workspace, language: route.language, state: null, filePath: null });
-  }, [navigate, route.workspace, route.language]);
-
-  const handleToggleFullscreen = useCallback(() => {
-    if (!route.state) return;
-    navigate({ ...route, state: route.state === "fullscreen" ? "window" : "fullscreen" });
-  }, [navigate, route]);
-
-  const handleWorkspaceChange = useCallback(
-    (workspace: number) => {
-      if (workspace === route.workspace) return;
-      const open = windows.get(workspace);
-      navigate({
-        workspace,
-        language: route.language,
-        state: open?.state ?? null,
-        filePath: open?.filePath ?? null,
-      });
-    },
-    [navigate, route.workspace, route.language, windows],
-  );
-
-  // The numerals are a property of the bar, not of any one workspace, so the
-  // window layout is left exactly as it is.
-  const handleLanguageChange = useCallback(
-    (language: WorkspaceLanguage) => navigate({ ...route, language }),
-    [navigate, route],
-  );
-
-  const occupiedWorkspaces = useMemo(() => new Set(windows.keys()), [windows]);
-  const activeActivity = typeof activePanel === "number" ? activities[activePanel] : null;
-
-  const editor = (
-    <div className={`vscode-layout${route.state === "window" ? " vscode-layout--windowed" : ""}`}>
-      <Header
-        fileName={selectedFile?.name}
-        filePath={selectedFile?.path}
-        files={files}
-        onOpen={handleSelect}
-        focusSignal={focusSignal}
-        isFullscreen={route.state === "fullscreen"}
-        onToggleFullscreen={showDesktop ? handleToggleFullscreen : undefined}
-        onClose={showDesktop ? handleCloseWindow : undefined}
-        onMinimize={showDesktop ? handleCloseWindow : undefined}
-      />
-      <div className="vscode-body">
-        <ActivityBar
-          activities={activities}
-          activePanel={activePanel}
-          onPanelChange={setActivePanel}
-        />
-        <Sidebar>
-          {activePanel === "explorer" && (
-            <Explorer
-              nodes={folderFiles}
-              selectedFile={selectedFile}
-              onSelect={handleSelect}
-            />
-          )}
-          {activeActivity && (
-            <CustomPanel title={activeActivity.title} text={activeActivity.text} />
-          )}
-        </Sidebar>
-        <Content file={selectedFile} onNavigate={handleNavigate} resolveFile={resolveFile} />
-      </div>
-      <Footer file={selectedFile} />
-    </div>
-  );
-
-  if (route.state === "fullscreen") return editor;
+  // A maximized window renders bare, covering the bar, which is why every app
+  // has to carry a restore button of its own.
+  if (desktop.fullscreen && focused) return <>{renderWindow(focused)}</>;
 
   return (
     <ArchDesktop
-      workspace={route.workspace}
-      language={route.language}
-      occupiedWorkspaces={occupiedWorkspaces}
+      workspace={desktop.workspace}
+      language={desktop.language}
+      workspaceApps={workspaceApps}
       onWorkspaceChange={handleWorkspaceChange}
       onLanguageChange={handleLanguageChange}
-      onOpen={handleOpenWindow}
+      onLaunch={handleLaunch}
+      focusedApp={focused?.app ?? null}
+      focusedTitle={focused ? APPS[focused.app].title(focused.arg) : null}
+      onTitleClick={handleTitleClick}
     >
-      {route.state === "window" && <div className="arch-window">{editor}</div>}
+      {windows.length > 0 && (
+        <ArchStrip
+          windows={windows}
+          focusedId={focused?.id ?? null}
+          onFocus={handleFocus}
+          renderWindow={renderWindow}
+        />
+      )}
     </ArchDesktop>
   );
 }

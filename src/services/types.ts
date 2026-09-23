@@ -50,5 +50,12 @@ export interface CustomActivity {
 
 export interface MenuItem {
   label: string;
-  href?: string;
+  /**
+   * A file in the open folder, opened **in the window the menu belongs to** —
+   * these are not links and never load a page. `null` is the window's default
+   * page, which is the first file.
+   */
+  file?: string | null;
+  /** Somewhere off the site; opens a real browser tab. */
+  url?: string;
 }

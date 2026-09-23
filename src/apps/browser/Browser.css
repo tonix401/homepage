@@ -1,0 +1,282 @@
+/*
+ * Chromium's chrome, near enough: a tab strip, a toolbar, a bookmarks bar and
+ * the page. Colours are its dark theme rather than the editor's, so the window
+ * reads as a different application at a glance across the strip.
+ */
+
+.brw-layout {
+  --brw-chrome: #202124;
+  --brw-chrome-high: #292a2d;
+  --brw-field: #3c4043;
+  --brw-fg: #e8eaed;
+  --brw-fg-dim: #9aa0a6;
+
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--brw-chrome);
+  color: var(--brw-fg);
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+/* Inside a desktop column the frame sets the size, not the viewport. */
+.brw-layout--windowed {
+  height: 100%;
+}
+
+/* ── Tab strip ─────────────────────────────────────────── */
+
+.brw-tabstrip {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 36px;
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+.brw-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 260px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px 8px 0 0;
+  font-size: 12px;
+}
+
+.brw-tab--active {
+  background: var(--brw-chrome-high);
+}
+
+.brw-tab-title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.brw-tab-blank {
+  width: 16px;
+}
+
+.brw-tab-close {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--brw-fg-dim);
+  cursor: pointer;
+}
+
+.brw-tab-close svg {
+  width: 12px;
+  height: 12px;
+}
+
+.brw-tab-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--brw-fg);
+}
+
+/* The window's own controls, at the end of the tab strip where Chromium puts
+   them. The restore button is how a maximized window gets back to the strip. */
+.brw-winbtns {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  align-self: stretch;
+}
+
+.brw-winbtn {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--brw-fg);
+  cursor: pointer;
+}
+
+.brw-winbtn svg {
+  width: 11px;
+  height: 11px;
+}
+
+.brw-winbtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.brw-winbtn--close:hover {
+  background: #e81123;
+  color: #fff;
+}
+
+/* ── Toolbar ───────────────────────────────────────────── */
+
+.brw-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  padding: 0 8px;
+  flex-shrink: 0;
+  background: var(--brw-chrome-high);
+}
+
+.brw-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.brw-nav-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--brw-fg);
+  cursor: pointer;
+}
+
+.brw-nav-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.brw-nav-btn:disabled {
+  color: var(--brw-fg-dim);
+  opacity: 0.4;
+  cursor: default;
+}
+
+.brw-omnibox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  margin-left: 4px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--brw-field);
+  transition: box-shadow 0.15s ease;
+}
+
+.brw-omnibox:focus-within {
+  box-shadow: 0 0 0 2px #8ab4f8;
+}
+
+/* A query that matched nothing: the field flashes rather than the page. */
+.brw-omnibox--missed {
+  box-shadow: 0 0 0 2px #f28b82;
+}
+
+.brw-omnibox-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--brw-fg);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.brw-omnibox-star {
+  flex-shrink: 0;
+  color: var(--brw-fg-dim);
+}
+
+/* ── Bookmarks ─────────────────────────────────────────── */
+
+.brw-bookmarks {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 30px;
+  padding: 0 8px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--brw-chrome-high);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.brw-bookmark {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  height: 24px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--brw-fg);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.brw-bookmark:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* A bookmark that leaves the site opens a real tab — say so before the click */
+.brw-bookmark-out {
+  width: 11px;
+  height: 11px;
+  color: var(--brw-fg-dim);
+}
+
+.brw-bookmark--dead {
+  color: var(--brw-fg-dim);
+  cursor: default;
+}
+
+/* ── Page ──────────────────────────────────────────────── */
+
+.brw-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: var(--bg-editor);
+}
+
+.brw-error {
+  align-items: flex-start;
+  padding: 14% 12% 0;
+  color: var(--fg);
+  font-size: 14px;
+}
+
+.brw-error h1 {
+  margin: 0 0 12px;
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.brw-error p {
+  margin: 0 0 8px;
+  color: var(--fg-muted);
+}
+
+.brw-error-code {
+  margin-top: 24px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}

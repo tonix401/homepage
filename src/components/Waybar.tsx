@@ -1,16 +1,34 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import "./Waybar.css";
-import { WORKSPACE_LANGUAGES, type WorkspaceLanguage } from "../utils/route";
+import { WORKSPACE_LANGUAGES, type WorkspaceLanguage } from "../utils/desktop";
 import { useSystemStats } from "../utils/systemStats";
+import { Icon } from "./Icon";
+import { APP_ICONS } from "../apps/icons";
+import { type AppId } from "../apps/ids";
 
 interface WaybarProps {
   workspace: number;
   language: WorkspaceLanguage;
-  occupiedWorkspaces: ReadonlySet<number>;
+  /** Which apps each workspace holds, in strip order. Missing means empty. */
+  workspaceApps: ReadonlyMap<number, readonly AppId[]>;
   onWorkspaceChange: (workspace: number) => void;
   onLanguageChange: (language: WorkspaceLanguage) => void;
-  onOpen: () => void;
+  /** The Arch segment: open the application launcher. */
+  onLaunch: () => void;
+  /** What the window-title segment reports, and what clicking it does. */
+  focusedApp: AppId | null;
+  focusedTitle: string | null;
+  onTitleClick: () => void;
 }
+
+/**
+ * How many app icons one workspace pill names individually. A strip may hold
+ * more (see `MAX_WINDOWS`), and past this it stops naming them at all: showing
+ * the first three of five would claim the workspace holds three. One
+ * "several windows" glyph says what is true instead, and the pill's tooltip
+ * gives the count.
+ */
+const WS_MAX_ICONS = 3;
 
 /** What the music module is "playing". */
 const RICKROLL_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
@@ -77,6 +95,10 @@ const icons = {
   window: "M3 5h18v14H3zM3 9h18",
   bell: "M18 9a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6M10 20a2 2 0 0 0 4 0",
   keyboard: "M3 7h18v10H3zM7 11h.01M11 11h.01M15 11h.01M8 15h8",
+  // More windows than a pill can name: a strip of columns, which is what the
+  // workspace actually looks like. Overlapping window outlines were the other
+  // candidate and turn to mush at the 14px the pill draws them at.
+  windows: "M3 5h4v14H3zM10 5h4v14h-4zM17 5h4v14h-4z",
   bluetooth: "M7 7l10 10-5 4V3l5 4L7 17",
   wifi: "M2 9a16 16 0 0 1 20 0M5 13a11 11 0 0 1 14 0M8.5 16.5a6 6 0 0 1 7 0M12 20h.01",
   vpn: "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z",
@@ -113,16 +135,8 @@ const WS_LANGUAGES: Record<WorkspaceLanguage, { label: string; glyphs: string[] 
  */
 function ArchIcon() {
   return (
-    <svg className="wb-icon wb-icon-filled" viewBox="53 96 106 104" aria-hidden="true">
+    <svg className="ui-icon ui-icon--filled wb-icon" viewBox="53 96 106 104" aria-hidden="true">
       <path d="m 57.35468,196.22952 c 0,0 19.22077,-35.00336 33.33783,-63.37485 1.162263,-2.06625 4.947689,2.60102 11.95668,4.67408 -3.253738,-3.85698 -10.416083,-8.69044 -8.909647,-11.40217 4.655457,-10.90354 9.342707,-19.75839 10.980427,-24.75445 4.20004,12.28158 24.07118,50.53846 36.36948,73.96927 -0.90637,-0.28959 -5.83428,-3.08439 -9.8193,-3.73253 6.09146,4.0999 12.87278,9.50478 12.87278,9.50478 l 8.06913,15.11587 c 0,0 -27.81245,-15.3687 -37.1567,-15.59821 0.85124,-12.41461 -1.91919,-23.80346 -10.3988,-23.84116 -9.859855,-0.0438 -11.331493,17.65897 -9.954956,23.71435 -10.893616,1.27689 -37.346924,15.72502 -37.346924,15.72502 z" />
-    </svg>
-  );
-}
-
-function Icon({ path }: { path: string }) {
-  return (
-    <svg className="wb-icon" viewBox="0 0 24 24" aria-hidden="true">
-      <path d={path} />
     </svg>
   );
 }
@@ -144,10 +158,13 @@ function Cap({ fill, side }: { fill: Fill; side: "l" | "r" }) {
 export function Waybar({
   workspace,
   language,
-  occupiedWorkspaces,
+  workspaceApps,
   onWorkspaceChange,
   onLanguageChange,
-  onOpen,
+  onLaunch,
+  focusedApp,
+  focusedTitle,
+  onTitleClick,
 }: WaybarProps) {
   const [now, setNow] = useState(() => new Date());
   const [ringing, setRinging] = useState(false);
@@ -209,7 +226,11 @@ export function Waybar({
     <header className="waybar">
       <div className="wb-side">
         <Cap fill={FILL.primary} side="l" />
-        <button className="wb-seg wb-on-primary wb-clickable" onClick={onOpen} title="Open portfolio">
+        <button
+          className="wb-seg wb-on-primary wb-clickable"
+          onClick={onLaunch}
+          title="Applications"
+        >
           <ArchIcon />
           tom@box
         </button>
@@ -217,12 +238,12 @@ export function Waybar({
         <Arrow from={FILL.primary} to={FILL.secondary} dir="r" />
         <div className="wb-seg wb-on-secondary">
           <span className="wb-mod wb-stat" title={cpuTitle}>
-            <Icon path={icons.cpu} />
+            <Icon className="wb-icon" path={icons.cpu} />
             <span className="wb-stat-value">{Math.round(cpu * 100)}%</span>
           </span>
           {memory !== null && (
             <span className="wb-mod wb-stat" title={memoryTitle}>
-              <Icon path={icons.memory} />
+              <Icon className="wb-icon" path={icons.memory} />
               <span className="wb-stat-value wb-stat-value-mem">{memory}</span>
             </span>
           )}
@@ -237,18 +258,18 @@ export function Waybar({
           title="Never gonna give you up"
         >
           <span className="wb-mod">
-            <Icon path={icons.music} /> Never gonna …
+            <Icon className="wb-icon" path={icons.music} /> Never gonna …
           </span>
         </button>
 
         <Arrow from={FILL.tertiary} to={FILL.containerHigh} dir="r" />
         <button
           className="wb-seg wb-on-surface wb-window wb-clickable"
-          onClick={onOpen}
-          title="Open portfolio"
+          onClick={onTitleClick}
+          title={focusedTitle ?? "Open portfolio"}
         >
-          <Icon path={icons.window} />
-          Codium
+          <Icon className="wb-icon" path={focusedApp ? APP_ICONS[focusedApp] : icons.window} />
+          {focusedTitle ?? "Desktop"}
         </button>
         <Arrow from={FILL.containerHigh} to={FILL.none} dir="r" />
       </div>
@@ -256,9 +277,14 @@ export function Waybar({
       <div className="wb-center" ref={wsRef}>
         {WS_LANGUAGES[shownLanguage].glyphs.map((glyph, idx) => {
           const ws = idx + 1;
+          const apps = workspaceApps.get(ws) ?? [];
+          const paths =
+            apps.length > WS_MAX_ICONS
+              ? [icons.windows]
+              : apps.map((app) => APP_ICONS[app]);
           const state = ws === workspace
             ? "wb-ws-active"
-            : occupiedWorkspaces.has(ws)
+            : apps.length > 0
               ? "wb-ws-occupied"
               : "wb-ws-empty";
           return (
@@ -266,9 +292,23 @@ export function Waybar({
               key={idx}
               className={`wb-ws wb-clickable ${state}`}
               onClick={() => onWorkspaceChange(ws)}
-              title={`Workspace ${ws}`}
+              // The count matters most where the icons stop naming the apps.
+              title={
+                apps.length
+                  ? `Workspace ${ws} — ${apps.length} window${apps.length > 1 ? "s" : ""}`
+                  : `Workspace ${ws}`
+              }
             >
               <span className="wb-ws-glyph">{glyph}</span>
+              <span
+                className="wb-ws-apps"
+                style={{ "--ws-apps": paths.length } as CSSProperties}
+                aria-hidden="true"
+              >
+                {paths.map((path, i) => (
+                  <Icon key={i} className="wb-ws-app" path={path} />
+                ))}
+              </span>
             </button>
           );
         })}
@@ -282,7 +322,7 @@ export function Waybar({
           title="Notifications"
         >
           <span className={`wb-mod wb-bell${ringing ? " wb-bell-ringing" : ""}`}>
-            <Icon path={icons.bell} />
+            <Icon className="wb-icon" path={icons.bell} />
           </span>
         </button>
 
@@ -293,7 +333,7 @@ export function Waybar({
           title="Change workspace numerals"
         >
           <span className="wb-mod">
-            <Icon path={icons.keyboard} />
+            <Icon className="wb-icon" path={icons.keyboard} />
             {WS_LANGUAGES[language].label}
           </span>
         </button>
@@ -301,27 +341,27 @@ export function Waybar({
         <Arrow from={FILL.containerHigh} to={FILL.tertiary} dir="l" />
         <div className="wb-seg wb-on-tertiary">
           <span className="wb-mod">
-            <Icon path={icons.bluetooth} />up
+            <Icon className="wb-icon" path={icons.bluetooth} />up
           </span>
           <span className="wb-mod">
-            <Icon path={icons.wifi} />up
+            <Icon className="wb-icon" path={icons.wifi} />up
           </span>
         </div>
 
         <Arrow from={FILL.tertiary} to={FILL.secondary} dir="l" />
         <div className="wb-seg wb-on-secondary">
           <span className="wb-mod">
-            <Icon path={icons.volume} />55%
+            <Icon className="wb-icon" path={icons.volume} />55%
           </span>
           <span className="wb-mod">
-            <Icon path={icons.brightness} />100%
+            <Icon className="wb-icon" path={icons.brightness} />100%
           </span>
         </div>
 
         <Arrow from={FILL.secondary} to={FILL.primary} dir="l" />
         <div className="wb-seg wb-on-primary" title={date}>
           <span className="wb-mod">
-            <Icon path={icons.clock} />
+            <Icon className="wb-icon" path={icons.clock} />
             {time}
           </span>
         </div>

@@ -8,13 +8,12 @@ export const configuration: OpenFolderPluginOptions = {
   faviconPath: "./blue_dot.svg",
   foldersFirst: false,
   collapsedFolders: ["work experience"],
-  showDesktop: true,
   menuItems: [
-    { label: "Home", href: "/" },
-    { label: "Github", href: "https://github.com/tonix401" },
-    { label: "Resume", href: "/?file=work%20experience/eschbach.md" },
-    { label: "Imprint", href: "/?file=legal/imprint.html" },
-    { label: "Privacy Policy", href: "/?file=legal/privacy.html" },
+    { label: "Home", file: null },
+    { label: "Github", url: "https://github.com/tonix401" },
+    { label: "Resume", file: "work experience/eschbach.md" },
+    { label: "Imprint", file: "legal/imprint.html" },
+    { label: "Privacy Policy", file: "legal/privacy.html" },
   ],
   activities: [
     {

@@ -1,6 +1,12 @@
 .arch-desktop {
   /* The Waybar's primary role colour — see the palette note in Waybar.css */
   --arch-window-border: #bac3ff;
+  /* What the compositor draws around a client that does not have focus */
+  --arch-window-border-idle: #3a3d4d;
+
+  --strip-gap: 10px;
+  /* The bar is 42px tall and floats over the wallpaper, plus a 4px gap. */
+  --strip-top: 46px;
 
   width: 100%;
   height: 100%;
@@ -38,18 +44,100 @@
 }
 
 /*
- * A floating window, laid out the way Hyprland tiles a single client: gaps
- * all round, the bar's height kept clear at the top, and the accent border
- * and rounded corners the compositor draws around the focused window.
+ * The scrolling strip of windows, laid out the way niri tiles columns: gaps
+ * all round, the bar's height kept clear at the top, and the compositor's
+ * accent border and rounded corners around the focused client.
  */
-.arch-window {
+.arch-strip {
   position: absolute;
-  top: 46px;
-  right: 10px;
-  bottom: 10px;
-  left: 10px;
-  border: 2px solid var(--arch-window-border);
+  top: var(--strip-top);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: stretch;
+  gap: var(--strip-gap);
+  padding: 0 var(--strip-gap) var(--strip-gap);
+  /* `scroll` rather than `auto`: the gutter is then always reserved, so the
+     columns do not change height when a second window opens. */
+  overflow-x: scroll;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+}
+
+/*
+ * One column fills the viewport; two or more take half of it each, so a third
+ * pushes the first off the left edge. The percentage resolves against the
+ * strip's content box — the viewport less its two gutters — and the gap
+ * arithmetic makes every gap, inside the strip and around it, the same width:
+ *
+ *   f = 1    ->  100%              one window, the box the old .arch-window had
+ *   f = 0.5  ->  calc(50% - 5px)   10 + w + 10 + w + 10 = the viewport
+ */
+.arch-column {
+  flex: 0 0 calc(var(--strip-fraction) * (100% + var(--strip-gap)) - var(--strip-gap));
+  min-width: 0;
+  height: 100%;
+  border: 2px solid var(--arch-window-border-idle);
   border-radius: 12px;
   overflow: hidden;
+  background: var(--bg-editor);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
+  transition:
+    flex-basis 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+  animation: arch-column-in 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.arch-column--focused {
+  border-color: var(--arch-window-border);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+}
+
+/*
+ * A new column rises into place. There is deliberately no closing animation:
+ * React unmounts the column at once, and the flex-basis transition on the ones
+ * that remain carries the motion — which is also what a compositor killing a
+ * client looks like.
+ */
+@keyframes arch-column-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+}
+
+/* The strip's own scrollbar, a thin pill in the bottom gutter, overriding the
+   editor-grey one index.css sets everywhere. */
+.arch-strip {
+  scrollbar-width: thin;
+  scrollbar-color: var(--arch-window-border-idle) transparent;
+}
+
+.arch-strip::-webkit-scrollbar {
+  height: 10px;
+}
+
+.arch-strip::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.arch-strip::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--arch-window-border) 35%, transparent);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+
+.arch-strip::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--arch-window-border) 60%, transparent);
+  background-clip: padding-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arch-column {
+    transition: none;
+    animation: none;
+  }
 }

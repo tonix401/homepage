@@ -37,9 +37,14 @@
   cursor: default;
   text-decoration: none;
   -webkit-app-region: no-drag;
+  /* The file items are buttons, since they navigate inside this window */
+  background: none;
+  border: none;
+  font-family: inherit;
 }
 
-a.vscode-menu-item {
+a.vscode-menu-item,
+button.vscode-menu-item {
   cursor: pointer;
 }
 

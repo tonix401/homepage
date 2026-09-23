@@ -9,11 +9,12 @@ interface HeaderProps {
   filePath?: string;
   files: FileNode[];
   onOpen: (file: FileNode) => void;
+  /** Follows a configured menu item, in this window. */
+  onNavigate: (path: string | null) => void;
   focusSignal: number;
-  isFullscreen?: boolean;
-  onToggleFullscreen?: () => void;
-  onClose?: () => void;
-  onMinimize?: () => void;
+  isFullscreen: boolean;
+  onToggleFullscreen: () => void;
+  onClose: () => void;
 }
 
 export function Header({
@@ -21,32 +22,36 @@ export function Header({
   filePath,
   files,
   onOpen,
+  onNavigate,
   focusSignal,
-  isFullscreen = false,
+  isFullscreen,
   onToggleFullscreen,
   onClose,
-  onMinimize,
 }: HeaderProps) {
   return (
     <header className="vscode-header">
       <div className="vscode-header-left">
         <svg className="vscode-appicon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5" fill="#007ACC" /></svg>
         <nav className="vscode-menu-bar">
-          {menuItems.map(({ label, href }, i) =>
-            href ? (
-              <a
-                key={i}
-                className="vscode-menu-item"
-                href={href}
-                target={href.startsWith("http") ? "_blank" : undefined}
-                rel={href.startsWith("http") ? "noreferrer" : undefined}
-              >
-                {label}
-              </a>
-            ) : (
-              <span key={i} className="vscode-menu-item">{label}</span>
-            )
-          )}
+          {menuItems.map(({ label, file, url }, i) => {
+            // A file opens in this window rather than loading a page, so it is
+            // a button; only a destination off the site is a real link.
+            if (url !== undefined) {
+              return (
+                <a key={i} className="vscode-menu-item" href={url} target="_blank" rel="noreferrer">
+                  {label}
+                </a>
+              );
+            }
+            if (file !== undefined) {
+              return (
+                <button key={i} className="vscode-menu-item" onClick={() => onNavigate(file)}>
+                  {label}
+                </button>
+              );
+            }
+            return <span key={i} className="vscode-menu-item">{label}</span>;
+          })}
         </nav>
       </div>
 
@@ -60,9 +65,6 @@ export function Header({
       </div>
 
       <div className="vscode-header-right">
-        <button className="vscode-winbtn vscode-winbtn--min" aria-label="Minimize" title="Minimize" onClick={onMinimize}>
-          <svg viewBox="0 0 12 12" fill="currentColor"><rect x="1" y="5.5" width="10" height="1" /></svg>
-        </button>
         <button
           className="vscode-winbtn vscode-winbtn--max"
           aria-label={isFullscreen ? "Restore" : "Maximize"}

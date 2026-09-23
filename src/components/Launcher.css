@@ -1,0 +1,89 @@
+/*
+ * A modal <dialog> centres itself with `margin: auto` from the UA stylesheet —
+ * but the global reset in index.css zeroes every margin, so it has to be put
+ * back here or the launcher lands in the top-left corner.
+ */
+.arch-launcher {
+  width: min(420px, calc(100vw - 32px));
+  margin: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--wb-on-surface, #e3e1e9);
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+.arch-launcher::backdrop {
+  background: rgba(2, 4, 7, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.arch-launcher-panel {
+  border: 1px solid #46464f;
+  border-radius: 14px;
+  background: #0d0e13;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.arch-launcher-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  border-bottom: 1px solid #46464f;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+.arch-launcher-input::placeholder {
+  color: #7a7a85;
+}
+
+.arch-launcher-list {
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.arch-launcher-app {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.arch-launcher-app--active {
+  background: #bac3ff;
+  color: #222c61;
+}
+
+.arch-launcher-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.arch-launcher-empty {
+  padding: 14px 18px;
+  color: #7a7a85;
+  font-size: 13px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arch-launcher::backdrop {
+    backdrop-filter: none;
+  }
+}

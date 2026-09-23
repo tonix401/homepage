@@ -114,26 +114,16 @@
 }
 
 .wb-window {
+  max-width: 260px;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* Geometry comes from `.ui-icon` in Icon.css; the bar only sets the size. */
 .wb-icon {
   width: 16px;
   height: 16px;
-  flex-shrink: 0;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* The Arch mark is a filled glyph, unlike the stroke icons */
-.wb-icon-filled {
-  fill: currentColor;
-  stroke: none;
 }
 
 button.wb-clickable {
@@ -247,8 +237,17 @@ button.wb-clickable:focus-visible {
   border-radius: 0 100% 100% 0 / 0 50% 50% 0;
 }
 
-/* The only part of the bar with a backdrop of its own */
+/*
+ * The only part of the bar with a backdrop of its own.
+ *
+ * Centred absolutely rather than by `space-between`: the pill's width now
+ * changes as windows open and close, and under `space-between` that would drag
+ * it back and forth along the bar on every change.
+ */
 .wb-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   flex: 0 0 auto;
   display: flex;
   align-items: center;
@@ -260,8 +259,9 @@ button.wb-clickable:focus-visible {
 }
 
 .wb-ws {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-width: 30px;
   height: var(--wb-seg-height);
   padding: 0 8px;
@@ -307,10 +307,37 @@ button.wb-clickable:focus-visible {
  * at the halfway point, which is where Waybar.tsx swaps the character — so the
  * exchange happens behind the one frame where there is nothing to see.
  * Rotation is 2D on purpose: a flip on X or Y would show the glyph mirrored
- * through half its travel.
+ * through half its travel. The selector is scoped to the glyph on purpose too:
+ * the numerals change, the app icons beside them do not.
  */
 .wb-ws-glyph {
   display: inline-block;
+}
+
+/*
+ * What a workspace holds, next to its numeral.
+ *
+ * A button's `width: auto` cannot be transitioned, so the row of icons is
+ * given an explicit width derived from how many there are and animates that;
+ * the pill's own width follows along. `min(--ws-apps, 1)` collapses the gap to
+ * nothing for an empty workspace rather than leaving a stray margin behind.
+ */
+.wb-ws-apps {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  overflow: hidden;
+  width: calc(var(--ws-apps) * 17px);
+  margin-left: calc(min(var(--ws-apps), 1) * 5px);
+  transition:
+    width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    margin-left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.wb-ws-app {
+  width: 14px;
+  height: 14px;
+  opacity: 0.85;
 }
 
 .wb-ws-spinning .wb-ws-glyph {
@@ -327,10 +354,15 @@ button.wb-clickable:focus-visible {
   .wb-ws-spinning .wb-ws-glyph {
     animation: none;
   }
+
+  .wb-ws-apps {
+    transition: none;
+  }
 }
 
-/* Below this the side clusters would collide with the workspace pill */
-@media (max-width: 1400px) {
+/* Below this the side clusters would collide with the workspace pill, which
+   is wider than it was now that it carries each workspace's app icons */
+@media (max-width: 1600px) {
   .wb-center {
     display: none;
   }
