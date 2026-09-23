@@ -103,7 +103,15 @@ button.vscode-menu-item {
   -webkit-app-region: no-drag;
 }
 
+/*
+ * The hover highlight is a circle behind the glyph, not the whole button box.
+ * The box stays its full size so the target is still easy to hit — the circle
+ * is an absolutely positioned pseudo-element, which also keeps it out of the
+ * button's own centring layout — and the glyph is lifted above it, since a
+ * positioned pseudo-element would otherwise paint over static content.
+ */
 .vscode-winbtn {
+  position: relative;
   width: 46px;
   height: 100%;
   background: none;
@@ -115,16 +123,31 @@ button.vscode-menu-item {
   justify-content: center;
 }
 
+.vscode-winbtn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  transition: background-color 0.12s ease;
+}
+
 .vscode-winbtn svg {
+  position: relative;
   width: 12px;
   height: 12px;
 }
 
-.vscode-winbtn:hover {
-  background: rgba(255, 255, 255, 0.1);
+.vscode-winbtn:hover::before {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.vscode-winbtn--close:hover::before {
+  background-color: #e81123;
 }
 
 .vscode-winbtn--close:hover {
-  background: #e81123;
   color: #fff;
 }
