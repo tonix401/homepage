@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import "./App.css";
 import { ArchDesktop } from "./components/ArchDesktop";
-import { ArchStrip } from "./components/ArchStrip";
+import { ArchStage } from "./components/ArchStage";
 import { APPS } from "./apps/registry";
 import { DEFAULT_APP, type AppId } from "./apps/ids";
 import { type WindowHandle } from "./apps/types";
@@ -47,6 +47,11 @@ function App() {
   const [desktop, setDesktop] = useState(initialDesktop);
 
   const windows = useMemo(() => windowsOf(desktop), [desktop]);
+  /** For the strip `ArchStage` keeps on screen while it slides away. */
+  const windowsOfWorkspace = useCallback(
+    (workspace: number) => windowsOf(desktop, workspace),
+    [desktop],
+  );
   const focused = focusedWindow(desktop);
 
   // The desktop is nowhere else — there is no URL carrying any of it — so it
@@ -98,11 +103,15 @@ function App() {
    * can keep it in a dependency list without re-running on every render. Each
    * closes over its own id, so a button always acts on the window it is in —
    * never on whichever one happens to have focus.
+   *
+   * Every window the desktop holds, not just the ones on screen: during a
+   * workspace switch `ArchStage` keeps the outgoing workspace rendered while it
+   * slides away, and without a handle each of those would go as an empty box.
    */
   const handles = useMemo(
     () =>
       new Map(
-        windows.map((window): [WindowId, WindowHandle] => [
+        Object.values(desktop.windows).map((window): [WindowId, WindowHandle] => [
           window.id,
           {
             id: window.id,
@@ -118,7 +127,7 @@ function App() {
           },
         ]),
       ),
-    [windows, handleFocus],
+    [desktop.windows, handleFocus],
   );
 
   const renderWindow = useCallback(
@@ -164,15 +173,16 @@ function App() {
       onHome={handleHome}
       focusedApp={focused?.app ?? null}
       focusedTitle={focused ? APPS[focused.app].title(focused.arg) : null}
+      empty={windows.length === 0}
     >
-      {windows.length > 0 && (
-        <ArchStrip
-          windows={windows}
-          focusedId={focused?.id ?? null}
-          onFocus={handleFocus}
-          renderWindow={renderWindow}
-        />
-      )}
+      <ArchStage
+        workspace={desktop.workspace}
+        windows={windows}
+        focusedId={focused?.id ?? null}
+        onFocus={handleFocus}
+        renderWindow={renderWindow}
+        windowsOfWorkspace={windowsOfWorkspace}
+      />
     </ArchDesktop>
   );
 }

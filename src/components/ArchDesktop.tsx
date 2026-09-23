@@ -20,10 +20,9 @@ interface ArchDesktopProps {
   onHome: () => void;
   focusedApp: AppId | null;
   focusedTitle: string | null;
-  /**
-   * The strip of windows on this workspace, or nothing when it holds none —
-   * an empty workspace shows the hint below instead.
-   */
+  /** True when this workspace holds no windows, which is what the hint is for. */
+  empty: boolean;
+  /** The strips: the one on this workspace, and any still sliding away. */
   children?: ReactNode;
 }
 
@@ -37,6 +36,7 @@ export function ArchDesktop({
   onHome,
   focusedApp,
   focusedTitle,
+  empty,
   children,
 }: ArchDesktopProps) {
   // Whether the launcher is up is desktop chrome and nothing else: it is not
@@ -64,7 +64,8 @@ export function ArchDesktop({
           draggable={false}
         />
       </div>
-      {children || <EmptyHint />}
+      {children}
+      {empty && <EmptyHint />}
       <Launcher
         open={launcherOpen}
         onLaunch={onLaunch}

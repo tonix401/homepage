@@ -233,10 +233,14 @@ two or more take half of it each — so opening a third pushes the first off the
 left edge and `.arch-strip` scrolls.
 
 `.arch-strip` is a real `overflow-x: scroll` container, not a translated row.
-That buys trackpad, shift-wheel, touch and keyboard scrolling and a draggable
-scrollbar for none of the wheel, drag and thumb code a transform would need. It
-is `scroll` rather than `auto` so the gutter is always reserved and the columns
-do not change height when a second window opens.
+That buys trackpad, shift-wheel, touch and keyboard scrolling for none of the
+wheel and drag code a transform would need. Its scrollbar is hidden
+(`scrollbar-width: none` plus the `::-webkit-scrollbar` rule — a compositor
+draws no bar under its windows, and `index.css` puts one on everything), so no
+gutter is ever reserved and the columns keep their height however many windows
+the strip holds, which is what `scroll` rather than `auto` used to be for. Only
+the bar goes: every way of scrolling still works, including the `scrollTo` a
+focus change makes; dragging a thumb is the one thing lost.
 
 **Closing a column does not snap the survivors across the gap.** A plain
 flex-basis transition would: `--strip-fraction` lives on the strip, so when two
@@ -265,6 +269,37 @@ under a still cursor (which happens every time the strip scrolls) has not been
 pointed at and must not steal focus from the window just opened. A press
 focuses too, for touch, on the capture phase and without preventing anything,
 so the control underneath still gets its click.
+
+**Switching workspaces travels rather than cuts.** `ArchStage` sits between
+`App` and `ArchStrip` for this one reason: going to a higher-numbered workspace
+carries the strip you were on off to the left and brings the new one in from
+the right, and going back reverses both — so for a third of a second two strips
+are mounted at once. `--slide-dir` is `-1` for leftward and `+1` for rightward,
+which is what lets one pair of keyframes cover every direction.
+
+The slide is **translation and nothing else**. The two strips are exactly
+adjacent at every moment of it, so neither has anything to fade behind, and
+`arch-column-in` is scoped to `.arch-column--new` — a column that opens into a
+strip already on screen, which `ArchStrip` tells apart by the window ids it
+mounted with. Suppressing that animation with a class on the arriving strip
+instead is a trap: taking `animation: none` back off an element is what *starts*
+an animation, so the columns fell into their rise the moment the slide ended.
+
+The departing strip renders a workspace that is no longer current, so `App`
+builds a `WindowHandle` for **every** window the desktop holds rather than only
+the visible ones — without that each would slide off as an empty box. It is
+`inert` while it goes, so nothing can tab into or hover a window that has
+already left. `ArchStage` asks for its windows by workspace number instead of
+keeping a copy: the records live in `desktop.windows` and outlive the switch,
+so the only thing worth remembering is which workspace was on screen.
+
+A strip stops sliding when its animation's `finished` promise settles, **not**
+on `animationend`. An animation that runs out while the tab is in the
+background completes without ever dispatching to a listener that comes back
+afterwards, and a strip waiting for that event keeps a whole app subtree
+mounted off-screen until the next switch replaces it. `getAnimations()` reports
+the animation whatever the tab was doing, and `finished` resolves straight away
+for one that is already done.
 
 **The view never sets focus.** Nothing listens to `scroll`, so reading along
 the strip by hand leaves focus where it was. That is the point of a scrolling

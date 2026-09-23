@@ -58,8 +58,9 @@
   align-items: stretch;
   gap: var(--strip-gap);
   padding: 0 var(--strip-gap) var(--strip-gap);
-  /* `scroll` rather than `auto`: the gutter is then always reserved, so the
-     columns do not change height when a second window opens. */
+  /* The scrollbar is hidden below, so no gutter is ever reserved and the
+     columns keep their height however many windows the strip holds — which is
+     what `scroll` rather than `auto` used to be here for. */
   overflow-x: scroll;
   overflow-y: hidden;
   overscroll-behavior-x: contain;
@@ -91,6 +92,12 @@
     transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     border-color 0.18s ease,
     box-shadow 0.18s ease;
+}
+
+/* Only a column that opens into a strip already on screen — see `initial` in
+   ArchStrip. Putting this on every `.arch-column` would make a whole workspace
+   rise as it arrives, on top of the slide that is already carrying it. */
+.arch-column--new {
   animation: arch-column-in 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
@@ -100,8 +107,8 @@
 }
 
 /*
- * A new column rises into place. A closing one still has no animation of its
- * own — React unmounts it at once, which is what a compositor killing a client
+ * A column opening into a strip that is already on screen rises into place. A
+ * closing one still has no animation of its own — React unmounts it at once, which is what a compositor killing a client
  * looks like — but the motion of the columns that remain is not left to
  * flex-basis alone: `ArchStrip` FLIPs them, so a window widening into the gap
  * grows sideways from where it stood instead of snapping there first.
@@ -113,31 +120,21 @@
   }
 }
 
-/* The strip's own scrollbar, a thin pill in the bottom gutter, overriding the
-   editor-grey one index.css sets everywhere. */
+/*
+ * No visible scrollbar. A compositor does not draw one under its windows, and
+ * `index.css` puts an editor-grey one on everything, so it has to be taken off
+ * here — both properties, since Firefox and Chromium each ignore the other's.
+ *
+ * Only the bar goes: the trackpad, shift-wheel, touch and keyboard scrolling
+ * all still work, and so does the `scrollTo` a focus change makes. What is
+ * lost is dragging the thumb.
+ */
 .arch-strip {
-  scrollbar-width: thin;
-  scrollbar-color: var(--arch-window-border-idle) transparent;
+  scrollbar-width: none;
 }
 
 .arch-strip::-webkit-scrollbar {
-  height: 10px;
-}
-
-.arch-strip::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.arch-strip::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--arch-window-border) 35%, transparent);
-  border: 3px solid transparent;
-  background-clip: padding-box;
-  border-radius: 999px;
-}
-
-.arch-strip::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--arch-window-border) 60%, transparent);
-  background-clip: padding-box;
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -259,5 +256,43 @@
 
   .arch-hint-caret {
     animation: none;
+  }
+}
+
+/*
+ * Switching workspaces travels rather than cuts, the way a scrolling
+ * compositor does it: going to a higher-numbered workspace carries the strip
+ * you were on off to the left and brings the new one in from the right, and
+ * going back reverses both. `--slide-dir` is -1 for leftward and +1 for
+ * rightward, so one pair of keyframes covers every direction.
+ *
+ * `ArchStage` mounts both strips for the length of this, and clears each class
+ * on `animationend` — the `--in` one especially, since it suppresses the
+ * columns' own entry animation and a window opened later still wants that.
+ */
+.arch-strip--out {
+  animation: arch-strip-out 0.34s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.arch-strip--in {
+  animation: arch-strip-in 0.34s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/*
+ * Translation and nothing else. At every moment of the slide the two strips
+ * are exactly adjacent — the one leaving spans [-t, 1-t] and the one arriving
+ * [1-t, 2-t] — so they never overlap and neither has anything to fade behind.
+ * A fade here only read as the arriving workspace materialising out of thin
+ * air once it had already stopped moving.
+ */
+@keyframes arch-strip-out {
+  to {
+    transform: translateX(calc(var(--slide-dir) * 100%));
+  }
+}
+
+@keyframes arch-strip-in {
+  from {
+    transform: translateX(calc(var(--slide-dir) * -100%));
   }
 }

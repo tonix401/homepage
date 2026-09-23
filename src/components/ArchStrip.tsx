@@ -12,7 +12,14 @@
  * would need.
  */
 
-import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import {
   columnFraction,
   scrollShiftFor,
@@ -20,14 +27,42 @@ import {
   type WindowRecord,
 } from "../utils/desktop";
 
+/** Which way a strip is sliding during a workspace switch, and why. */
+export interface Slide {
+  phase: "in" | "out";
+  /** -1 carries the strip leftward, +1 rightward. */
+  dir: -1 | 1;
+}
+
 interface ArchStripProps {
   windows: readonly WindowRecord[];
   focusedId: WindowId | null;
   onFocus: (id: WindowId) => void;
   renderWindow: (window: WindowRecord) => ReactNode;
+  /** Set only while this strip is arriving on, or leaving, the screen. */
+  slide?: Slide;
+  onSlideEnd?: () => void;
 }
 
-export function ArchStrip({ windows, focusedId, onFocus, renderWindow }: ArchStripProps) {
+export function ArchStrip({
+  windows,
+  focusedId,
+  onFocus,
+  renderWindow,
+  slide,
+  onSlideEnd,
+}: ArchStripProps) {
+  /**
+   * The windows this strip was built with.
+   *
+   * `arch-column-in` is for a window *opening* into a strip that is already
+   * there. A strip that mounts with its columns — a workspace arriving, or the
+   * first paint — is not a series of openings, and animating each column then
+   * doubles up with whatever the strip itself is doing. So only a column that
+   * turns up later is marked as new.
+   */
+  const [initial] = useState(() => new Set(windows.map((window) => window.id)));
+  const root = useRef<HTMLDivElement>(null);
   const columns = useRef<(HTMLDivElement | null)[]>([]);
   /** Set when the focus change under way came from the pointer wandering. */
   const followedMouse = useRef(false);
@@ -131,17 +166,61 @@ export function ArchStrip({ windows, focusedId, onFocus, renderWindow }: ArchStr
     }
   }, [focusedId, focusIndex, windows.length]);
 
-  const style = { "--strip-fraction": columnFraction(windows.length) } as CSSProperties;
+  /*
+   * The slide is over when its animation is — and `animationend` is not a
+   * dependable way to hear that. An animation that runs out while the tab is
+   * in the background completes without ever dispatching to a listener that
+   * comes back afterwards, and a strip left waiting for that event keeps a
+   * whole app subtree mounted off-screen until the next switch replaces it.
+   * `getAnimations()` reports the animation whatever the tab was doing, and
+   * `finished` resolves straight away for one that is already done.
+   */
+  useEffect(() => {
+    if (!slide || !onSlideEnd) return;
+    const animation = root.current?.getAnimations()[0];
+    if (!animation) {
+      onSlideEnd();
+      return;
+    }
+    let cancelled = false;
+    animation.finished.then(
+      () => {
+        if (!cancelled) onSlideEnd();
+      },
+      // A cancelled animation rejects; the strip is being replaced anyway.
+      () => {},
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [slide, onSlideEnd]);
+
+  const style = {
+    "--strip-fraction": columnFraction(windows.length),
+    "--slide-dir": slide?.dir,
+  } as CSSProperties;
 
   return (
-    <div className="arch-strip" style={style}>
+    <div
+      className={`arch-strip${slide ? ` arch-strip--${slide.phase}` : ""}`}
+      style={style}
+      // A strip on its way out is still on screen for a third of a second, and
+      // nothing about it should answer: `inert` takes it out of the tab order
+      // and stops the pointer reaching a window that has already gone.
+      inert={slide?.phase === "out" || undefined}
+      ref={root}
+    >
       {windows.map((window, i) => (
         <div
           key={window.id}
           ref={(el) => {
             columns.current[i] = el;
           }}
-          className={`arch-column${window.id === focusedId ? " arch-column--focused" : ""}`}
+          className={
+            "arch-column" +
+            (window.id === focusedId ? " arch-column--focused" : "") +
+            (initial.has(window.id) ? "" : " arch-column--new")
+          }
           // Focus follows the mouse. `mousemove` rather than `mouseenter`,
           // because a column that slides under a still cursor — which is what
           // the strip does every time a window opens — has not been pointed
