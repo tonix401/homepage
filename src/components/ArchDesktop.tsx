@@ -13,10 +13,12 @@ interface ArchDesktopProps {
   workspaceApps: ReadonlyMap<number, readonly AppId[]>;
   onWorkspaceChange: (workspace: number) => void;
   onLanguageChange: (language: WorkspaceLanguage) => void;
+  /** Launch an app from the launcher's list. */
   onLaunch: (app: AppId) => void;
+  /** The bar's Arch mark: the editor, maximized, on its default page. */
+  onHome: () => void;
   focusedApp: AppId | null;
   focusedTitle: string | null;
-  onTitleClick: () => void;
   /** The strip of windows on this workspace. */
   children?: ReactNode;
 }
@@ -28,9 +30,9 @@ export function ArchDesktop({
   onWorkspaceChange,
   onLanguageChange,
   onLaunch,
+  onHome,
   focusedApp,
   focusedTitle,
-  onTitleClick,
   children,
 }: ArchDesktopProps) {
   // Whether the launcher is up is desktop chrome and nothing else: it is not
@@ -45,10 +47,10 @@ export function ArchDesktop({
         workspaceApps={workspaceApps}
         onWorkspaceChange={onWorkspaceChange}
         onLanguageChange={onLanguageChange}
-        onLaunch={() => setLauncherOpen(true)}
+        onHome={onHome}
         focusedApp={focusedApp}
         focusedTitle={focusedTitle}
-        onTitleClick={onTitleClick}
+        onAppMenu={() => setLauncherOpen(true)}
       />
       <div className="arch-wallpaper">
         <img

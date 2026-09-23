@@ -160,17 +160,24 @@ button for it would only be a second close.
 Most of the bar's modules are decoration with a fixed value. The cpu and
 memory ones are real measurements, taken by `src/utils/systemStats.ts`.
 
-Three segments do something. The Arch mark opens the launcher; the
-window-title segment reports the focused window (`AppDefinition.title`) and
-behaves like a taskbar entry — it maximizes and restores, or opens the last
-window again on an empty workspace; the keyboard segment cycles the numerals
-(`WORKSPACE_LANGUAGES` lives in `src/utils/desktop.ts`).
+Three segments do something. The Arch mark opens Codium — maximized, on its
+default page, reusing the focused window when that is already an editor rather
+than stacking up more; the window-title segment reports the focused window
+(`AppDefinition.title`) and opens the launcher; the keyboard segment cycles the
+numerals (`WORKSPACE_LANGUAGES` lives in `src/utils/desktop.ts`).
+
+**Nothing in the bar has a `title`.** Every label is an `aria-label`, so the bar
+carries no native tooltips at all; the three that are not on a button — the cpu
+and memory modules and the clock — need a `role="img"` beside the label, or a
+bare `span` takes no accessible name. The window chrome inside the apps still
+uses tooltips; this is the bar's rule, not the site's.
 
 Each workspace pill carries its numeral and one app icon per open window, up to
 `WS_MAX_ICONS` (3). A strip may hold more (`MAX_WINDOWS`), and past three the
 pill stops naming them: showing the first three of five would claim the
 workspace holds three, so a single "several windows" glyph stands in and the
-tooltip gives the count. A button's `width: auto` cannot be transitioned, so
+pill's aria-label gives the count — which, under the `cn` or `roman` numerals,
+is also the only place the workspace's number exists at all. A button's `width: auto` cannot be transitioned, so
 `.wb-ws-apps` is given an explicit width derived from how many icons there are
 and animates *that*; the pill's own width follows. The spin that swaps the
 numerals is scoped to `.wb-ws-spinning .wb-ws-glyph` on purpose — the numerals
@@ -184,7 +191,7 @@ is why the hide breakpoint matters and why it moved from 1400px to 1600px —
 the pills are wider than they were.
 
 Both are the *tab's* numbers, not the machine's, because nothing a page can
-call reports what other processes are doing. The modules' tooltips say so.
+call reports what other processes are doing. The modules' labels say so.
 
 `cpu` is main-thread busyness: the event loop is checked in on ten times a
 second and the lag it accumulates over a window is the share of that second
@@ -222,6 +229,18 @@ scrollbar for none of the wheel, drag and thumb code a transform would need. It
 is `scroll` rather than `auto` so the gutter is always reserved and the columns
 do not change height when a second window opens.
 
+**Closing a column does not snap the survivors across the gap.** A plain
+flex-basis transition would: `--strip-fraction` lives on the strip, so when two
+windows become one the survivor is child #0 — pinned to the left gutter — from
+the first frame, while its width is still growing from a half. `ArchStrip`
+FLIPs instead, putting each survivor back where it was with a `translateX` and
+letting that animate to zero. `.arch-column` therefore transitions `transform`
+at *exactly* `flex-basis`'s duration and easing: the two interpolating in step
+is what holds the widening column's right edge still, so it grows leftward into
+the space instead of jumping there. Only a close animates — an opening column
+has its own `arch-column-in` keyframe, whose transform would fight it — and
+`prefers-reduced-motion` skips it entirely.
+
 Where a focus change scrolls to is `scrollShiftFor` — the minimal shift that
 brings a column fully inside the strip's gutter, or none if it is already
 there. `scrollIntoView({ inline: "nearest" })` would be the one-line version,
@@ -258,6 +277,11 @@ whichever happened to have focus.
 must not go fullscreen or the bar the launcher lives on disappears with the
 desktop, and opening beside an existing window should show you what you opened
 and where it landed. Maximizing it again is one click away.
+
+The bar's Arch mark is the one exception, and it is one because it composes
+rather than because the rule bends: `App`'s `handleHome` calls `setFullscreen`
+*after* `openWindow`, at that single call site. Anything else that wants to open
+maximized should do the same — the reducer keeps its rule.
 
 `closeWindow` is the mirror of that rule: closing the window that filled the
 viewport leaves the strip rather than handing its fullscreen to whichever

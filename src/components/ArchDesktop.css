@@ -83,8 +83,12 @@
   overflow: hidden;
   background: var(--bg-editor);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
+  /* `transform` must keep flex-basis's duration and easing exactly: ArchStrip
+     FLIPs the survivors of a close, and it is the two interpolating in step
+     that holds a widening column's right edge still. */
   transition:
     flex-basis 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     border-color 0.18s ease,
     box-shadow 0.18s ease;
   animation: arch-column-in 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -96,10 +100,11 @@
 }
 
 /*
- * A new column rises into place. There is deliberately no closing animation:
- * React unmounts the column at once, and the flex-basis transition on the ones
- * that remain carries the motion — which is also what a compositor killing a
- * client looks like.
+ * A new column rises into place. A closing one still has no animation of its
+ * own — React unmounts it at once, which is what a compositor killing a client
+ * looks like — but the motion of the columns that remain is not left to
+ * flex-basis alone: `ArchStrip` FLIPs them, so a window widening into the gap
+ * grows sideways from where it stood instead of snapping there first.
  */
 @keyframes arch-column-in {
   from {

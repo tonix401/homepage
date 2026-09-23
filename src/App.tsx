@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./App.css";
 import { ArchDesktop } from "./components/ArchDesktop";
 import { ArchStrip } from "./components/ArchStrip";
@@ -9,7 +9,6 @@ import {
   closeWindow,
   defaultDesktop,
   focusWindow,
-  focusedId,
   focusedWindow,
   openWindow,
   setArg,
@@ -20,7 +19,6 @@ import {
   type Desktop,
   type WindowId,
   type WindowRecord,
-  type WindowSpec,
   type WorkspaceLanguage,
 } from "./utils/desktop";
 import { loadDesktop, saveDesktop } from "./utils/session";
@@ -51,12 +49,6 @@ function App() {
   const windows = useMemo(() => windowsOf(desktop), [desktop]);
   const focused = focusedWindow(desktop);
 
-  /** What the bar's title segment re-opens on a workspace emptied by closing. */
-  const lastWindow = useRef<WindowSpec>({ app: DEFAULT_APP, arg: null });
-  useEffect(() => {
-    if (focused) lastWindow.current = { app: focused.app, arg: focused.arg };
-  }, [focused]);
-
   // The desktop is nowhere else — there is no URL carrying any of it — so it
   // is mirrored on every change. A few hundred bytes, nothing to debounce.
   useEffect(() => {
@@ -75,13 +67,26 @@ function App() {
     setDesktop((current) => openWindow(current, { app, arg: null }));
   }, []);
 
-  /** The bar's window-title segment, which behaves like a taskbar entry. */
-  const handleTitleClick = useCallback(() => {
-    setDesktop((current) =>
-      focusedId(current) === null
-        ? openWindow(current, lastWindow.current)
-        : setFullscreen(current, !current.fullscreen),
-    );
+  /**
+   * The bar's Arch mark: Codium, maximized, on its default page.
+   *
+   * The one place that opens maximized. `openWindow` deliberately leaves the
+   * strip tiled, so the flag is set after it rather than by it — the rule
+   * stands, this is the single exception, and the editor carries its own
+   * restore button so the bar is one click away again.
+   */
+  const handleHome = useCallback(() => {
+    setDesktop((current) => {
+      const window = focusedWindow(current);
+      // Reuse a focused editor rather than stacking up windows. `setArg`
+      // returns the same object when the payload already matches, so a second
+      // press changes nothing but the fullscreen flag.
+      const next =
+        window?.app === DEFAULT_APP
+          ? setArg(current, window.id, null)
+          : openWindow(current, { app: DEFAULT_APP, arg: null });
+      return setFullscreen(next, true);
+    });
   }, []);
 
   const handleFocus = useCallback((id: WindowId) => {
@@ -156,9 +161,9 @@ function App() {
       onWorkspaceChange={handleWorkspaceChange}
       onLanguageChange={handleLanguageChange}
       onLaunch={handleLaunch}
+      onHome={handleHome}
       focusedApp={focused?.app ?? null}
       focusedTitle={focused ? APPS[focused.app].title(focused.arg) : null}
-      onTitleClick={handleTitleClick}
     >
       {windows.length > 0 && (
         <ArchStrip

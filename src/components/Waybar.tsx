@@ -13,20 +13,20 @@ interface WaybarProps {
   workspaceApps: ReadonlyMap<number, readonly AppId[]>;
   onWorkspaceChange: (workspace: number) => void;
   onLanguageChange: (language: WorkspaceLanguage) => void;
-  /** The Arch segment: open the application launcher. */
-  onLaunch: () => void;
-  /** What the window-title segment reports, and what clicking it does. */
+  /** The Arch segment: the editor, maximized, on its default page. */
+  onHome: () => void;
+  /** What the window-title segment reports; clicking it opens the launcher. */
   focusedApp: AppId | null;
   focusedTitle: string | null;
-  onTitleClick: () => void;
+  onAppMenu: () => void;
 }
 
 /**
  * How many app icons one workspace pill names individually. A strip may hold
  * more (see `MAX_WINDOWS`), and past this it stops naming them at all: showing
  * the first three of five would claim the workspace holds three. One
- * "several windows" glyph says what is true instead, and the pill's tooltip
- * gives the count.
+ * "several windows" glyph says what is true instead, and the pill's
+ * aria-label gives the count.
  */
 const WS_MAX_ICONS = 3;
 
@@ -161,10 +161,10 @@ export function Waybar({
   workspaceApps,
   onWorkspaceChange,
   onLanguageChange,
-  onLaunch,
+  onHome,
   focusedApp,
   focusedTitle,
-  onTitleClick,
+  onAppMenu,
 }: WaybarProps) {
   const [now, setNow] = useState(() => new Date());
   const [ringing, setRinging] = useState(false);
@@ -228,8 +228,10 @@ export function Waybar({
         <Cap fill={FILL.primary} side="l" />
         <button
           className="wb-seg wb-on-primary wb-clickable"
-          onClick={onLaunch}
-          title="Applications"
+          onClick={onHome}
+          // The label names the action rather than the visible `tom@box`,
+          // which is decoration. Same for the keyboard segment below.
+          aria-label="Open Codium"
         >
           <ArchIcon />
           tom@box
@@ -237,12 +239,15 @@ export function Waybar({
 
         <Arrow from={FILL.primary} to={FILL.secondary} dir="r" />
         <div className="wb-seg wb-on-secondary">
-          <span className="wb-mod wb-stat" title={cpuTitle}>
+          {/* `role="img"` because a bare span takes no accessible name: the
+              stats and the clock are the three labels in the bar that are not
+              on a button. */}
+          <span className="wb-mod wb-stat" role="img" aria-label={cpuTitle}>
             <Icon className="wb-icon" path={icons.cpu} />
             <span className="wb-stat-value">{Math.round(cpu * 100)}%</span>
           </span>
           {memory !== null && (
-            <span className="wb-mod wb-stat" title={memoryTitle}>
+            <span className="wb-mod wb-stat" role="img" aria-label={memoryTitle}>
               <Icon className="wb-icon" path={icons.memory} />
               <span className="wb-stat-value wb-stat-value-mem">{memory}</span>
             </span>
@@ -255,7 +260,7 @@ export function Waybar({
           onClick={() =>
             window.open(RICKROLL_URL, "_blank", "noopener,noreferrer")
           }
-          title="Never gonna give you up"
+          aria-label="Never gonna give you up"
         >
           <span className="wb-mod">
             <Icon className="wb-icon" path={icons.music} /> Never gonna …
@@ -265,8 +270,10 @@ export function Waybar({
         <Arrow from={FILL.tertiary} to={FILL.containerHigh} dir="r" />
         <button
           className="wb-seg wb-on-surface wb-window wb-clickable"
-          onClick={onTitleClick}
-          title={focusedTitle ?? "Open portfolio"}
+          onClick={onAppMenu}
+          // It opens the launcher, so the label leads with that; the focused
+          // window is on screen but would otherwise not be announced at all.
+          aria-label={focusedTitle ? `Applications — ${focusedTitle}` : "Applications"}
         >
           <Icon className="wb-icon" path={focusedApp ? APP_ICONS[focusedApp] : icons.window} />
           {focusedTitle ?? "Desktop"}
@@ -292,8 +299,10 @@ export function Waybar({
               key={idx}
               className={`wb-ws wb-clickable ${state}`}
               onClick={() => onWorkspaceChange(ws)}
-              // The count matters most where the icons stop naming the apps.
-              title={
+              // The count matters most where the icons stop naming the apps —
+              // and under `cn` or `roman` numerals this is the only place the
+              // workspace's number exists at all.
+              aria-label={
                 apps.length
                   ? `Workspace ${ws} — ${apps.length} window${apps.length > 1 ? "s" : ""}`
                   : `Workspace ${ws}`
@@ -319,7 +328,7 @@ export function Waybar({
         <button
           className="wb-seg wb-on-surface wb-clickable"
           onClick={ring}
-          title="Notifications"
+          aria-label="Notifications"
         >
           <span className={`wb-mod wb-bell${ringing ? " wb-bell-ringing" : ""}`}>
             <Icon className="wb-icon" path={icons.bell} />
@@ -330,7 +339,7 @@ export function Waybar({
         <button
           className="wb-seg wb-on-surface wb-kbd wb-clickable"
           onClick={cycleWsLanguage}
-          title="Change workspace numerals"
+          aria-label="Change workspace numerals"
         >
           <span className="wb-mod">
             <Icon className="wb-icon" path={icons.keyboard} />
@@ -359,7 +368,8 @@ export function Waybar({
         </div>
 
         <Arrow from={FILL.secondary} to={FILL.primary} dir="l" />
-        <div className="wb-seg wb-on-primary" title={date}>
+        {/* The date alone would drop the time that is actually on screen. */}
+        <div className="wb-seg wb-on-primary" role="img" aria-label={`${time} — ${date}`}>
           <span className="wb-mod">
             <Icon className="wb-icon" path={icons.clock} />
             {time}
