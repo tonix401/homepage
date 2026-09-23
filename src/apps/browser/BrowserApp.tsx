@@ -2,8 +2,9 @@
  * A browser, as a window.
  *
  * It shows the same `open_folder/` content the editor does, but as pages: the
- * window's payload is the current tab, the configured `menuItems` are the
- * bookmarks bar, and links inside a page are followed in place.
+ * window's payload is the current tab, the bookmarks bar carries the folder
+ * itself — its folders as dropdowns — beside the configured `menuItems`, and
+ * links inside a page are followed in place.
  *
  * Its payload is a file path and never a URL. Nothing outside this site can be
  * framed — `X-Frame-Options` sees to that — so a bookmark that leaves the site
@@ -17,10 +18,11 @@ import folderFiles from "virtual:open-folder-files";
 import { menuItems } from "virtual:open-folder-config";
 import { findFileByPath, findFirstFile, resolvePath } from "../../utils/files";
 import { flattenFiles, searchFiles } from "../../utils/search";
+import { type Bookmark, bookmarksFromMenu, bookmarksFromTree } from "../../utils/bookmarks";
+import { BookmarkBar } from "./BookmarkBar";
 import { FileView } from "../../components/FileView";
 import { SetiIcon } from "../../components/SetiIcon";
 import { Icon } from "../../components/Icon";
-import { type MenuItem } from "../../services/types";
 import { type AppRenderProps } from "../types";
 
 /** The site the fake omnibox claims to be showing — public/CNAME. */
@@ -31,7 +33,6 @@ const icons = {
   forward: "M5 12h14M12 5l7 7-7 7",
   reload: "M20 11a8 8 0 1 0-.9 4.5M20 5v6h-6",
   star: "M12 3.5l2.6 5.3 5.9.9-4.2 4.1 1 5.8-5.3-2.8-5.3 2.8 1-5.8L3.5 9.7l5.9-.9z",
-  external: "M14 4h6v6M20 4l-8 8M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5",
 };
 
 /** What the address bar reads for a page. */
@@ -41,6 +42,10 @@ function addressOf(path: string | null): string {
 
 export function BrowserApp({ arg, maximized, handle }: AppRenderProps) {
   const files = useMemo(() => flattenFiles(folderFiles), []);
+  // The tree is a build-time constant, so both halves of the bar are derived
+  // once per window rather than on every navigation.
+  const treeBookmarks = useMemo(() => bookmarksFromTree(folderFiles), []);
+  const menuBookmarks = useMemo(() => bookmarksFromMenu(menuItems, folderFiles), []);
   /** No payload means the home page, the same first file `/` opens. */
   const file = arg ? findFileByPath(folderFiles, arg) : findFirstFile(folderFiles);
 
@@ -97,9 +102,12 @@ export function BrowserApp({ arg, maximized, handle }: AppRenderProps) {
   }, [draft, files, handle]);
 
   const openBookmark = useCallback(
-    ({ file, url }: MenuItem) => {
-      if (url !== undefined) window.open(url, "_blank", "noopener,noreferrer");
-      else if (file !== undefined) handle.setArg(file);
+    (bookmark: Bookmark) => {
+      // Nothing outside this site can be framed — `X-Frame-Options` sees to
+      // that — so a bookmark that leaves the site opens a real tab instead,
+      // marked with an arrow so the difference is visible before you click.
+      if (bookmark.kind === "link") window.open(bookmark.url, "_blank", "noopener,noreferrer");
+      else if (bookmark.kind === "page") handle.setArg(bookmark.path);
     },
     [handle],
   );
@@ -209,25 +217,7 @@ export function BrowserApp({ arg, maximized, handle }: AppRenderProps) {
         </div>
       </div>
 
-      <div className="brw-bookmarks">
-        {menuItems.map((item, i) =>
-          item.url !== undefined || item.file !== undefined ? (
-            <button
-              key={i}
-              className="brw-bookmark"
-              onClick={() => openBookmark(item)}
-              title={item.url ?? addressOf(item.file ?? null)}
-            >
-              {item.label}
-              {item.url !== undefined && (
-                <Icon className="brw-icon brw-bookmark-out" path={icons.external} />
-              )}
-            </button>
-          ) : (
-            <span key={i} className="brw-bookmark brw-bookmark--dead">{item.label}</span>
-          ),
-        )}
-      </div>
+      <BookmarkBar tree={treeBookmarks} menu={menuBookmarks} onOpen={openBookmark} />
 
       {file ? (
         <div className="brw-page">

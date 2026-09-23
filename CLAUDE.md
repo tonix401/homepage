@@ -44,7 +44,8 @@ EditorApp                  — the VSCode window, one instance per column
 └── Footer                 — status bar (file type, line count, encoding)
 
 BrowserApp                 — the browser window, one instance per column
-├── tab strip / toolbar / bookmarks bar
+├── tab strip / toolbar
+├── BookmarkBar            — the open folder as folders, plus `menuItems`
 └── FileView               — the same body renderer the editor uses
 ```
 
@@ -302,6 +303,22 @@ the Waybar and the launcher draw app icons without importing app components.
 The browser's back and forward are its own, kept out of `window.history` on
 purpose — nothing on this desktop writes history at all. Its buttons replay the
 window's own trail through `setArg`.
+
+Its bookmarks bar has two halves, both derived by `src/utils/bookmarks.ts`: the
+open folder itself — root files as bookmarks, folders as dropdowns, nested as
+deeply as the folder is — and then the configured `menuItems`. `FolderNode`
+carries no path, so `bookmarksFromTree` threads the prefix down exactly as
+`Explorer` does.
+
+**The dropdowns are portalled to `document.body`.** Rendering them in place
+would clip them to a 30px strip, because `.brw-bookmarks` is `overflow: hidden`
+so a bar wider than the window truncates rather than wrapping; and
+`position: fixed` alone would not save them either, since `.arch-column`'s open
+animation uses a `transform`, which makes the column a containing block for
+fixed children while it runs. The consequence to remember is that a portalled
+menu is rendered *outside* `.brw-layout`, so the `--brw-*` palette is declared
+on `:root` — scoped to the layout it would resolve to nothing and the menus
+would come out transparent.
 
 **Adding an app:** an id in `src/apps/ids.ts`, an icon and name in
 `src/apps/icons.ts`, a definition folder under `src/apps/`, and an entry in
