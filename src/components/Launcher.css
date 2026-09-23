@@ -2,15 +2,26 @@
  * A modal <dialog> centres itself with `margin: auto` from the UA stylesheet —
  * but the global reset in index.css zeroes every margin, so it has to be put
  * back here or the launcher lands in the top-left corner.
+ *
+ * The look is the compositor's own: the same accent the focused window is
+ * outlined in (`--arch-window-border`, set on `.arch-desktop`), a monospace
+ * face, and roomy rows with the selection drawn as a filled pill. A modal
+ * dialog paints in the top layer but stays where it is in the DOM, so it is
+ * still a child of `.arch-desktop` and inherits that variable — unlike the
+ * browser's portalled menus, which had to be given their palette at `:root`.
  */
 .arch-launcher {
-  width: min(420px, calc(100vw - 32px));
+  --launcher-accent: var(--arch-window-border, #bac3ff);
+  --launcher-surface: #0b0d14;
+  --launcher-ink: #1c2150;
+
+  width: min(460px, calc(100vw - 32px));
   margin: auto;
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--wb-on-surface, #e3e1e9);
-  font-family: "Segoe UI", Tahoma, sans-serif;
+  color: var(--launcher-accent);
+  font-family: var(--font-mono);
 }
 
 .arch-launcher::backdrop {
@@ -19,45 +30,51 @@
 }
 
 .arch-launcher-panel {
-  border: 1px solid #46464f;
+  padding: 8px;
+  border: 2px solid var(--launcher-accent);
   border-radius: 14px;
-  background: #0d0e13;
+  background: var(--launcher-surface);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
 
+/* No rule under the field and no box around it: the spacing separates the
+   query from the list, the way the real launcher does it. */
 .arch-launcher-input {
   width: 100%;
-  padding: 14px 16px;
+  padding: 11px 13px 14px;
   border: none;
-  border-bottom: 1px solid #46464f;
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 15px;
+  font-size: 14px;
+  caret-color: var(--launcher-accent);
   outline: none;
 }
 
 .arch-launcher-input::placeholder {
-  color: #7a7a85;
+  color: inherit;
+  opacity: 0.55;
 }
 
 .arch-launcher-list {
   margin: 0;
-  padding: 6px;
+  padding: 0;
   list-style: none;
-  max-height: 50vh;
+  max-height: 52vh;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(186, 195, 255, 0.25) transparent;
 }
 
 .arch-launcher-app {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
   width: 100%;
-  padding: 10px 12px;
+  padding: 6px 9px;
   border: none;
-  border-radius: 8px;
+  border-radius: 9px;
   background: transparent;
   color: inherit;
   font: inherit;
@@ -67,19 +84,32 @@
 }
 
 .arch-launcher-app--active {
-  background: #bac3ff;
-  color: #222c61;
+  background: var(--launcher-accent);
+  color: var(--launcher-ink);
 }
 
+/* Every entry on a real launcher carries a square app icon; these are stroke
+   glyphs rather than artwork, so the tile is drawn here to give them one. The
+   active row's tile goes dark and keeps a light glyph — the row it sits on is
+   the accent colour, and a dark-on-accent icon would lose its detail. */
 .arch-launcher-icon {
-  width: 20px;
-  height: 20px;
+  width: 31px;
+  height: 31px;
+  padding: 6px;
+  border-radius: 8px;
+  background: rgba(186, 195, 255, 0.1);
+  color: var(--launcher-accent);
+}
+
+.arch-launcher-app--active .arch-launcher-icon {
+  background: var(--launcher-ink);
 }
 
 .arch-launcher-empty {
-  padding: 14px 18px;
-  color: #7a7a85;
-  font-size: 13px;
+  padding: 12px 15px;
+  color: inherit;
+  opacity: 0.55;
+  font-size: 14px;
 }
 
 @media (prefers-reduced-motion: reduce) {

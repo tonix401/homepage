@@ -27,7 +27,7 @@
   padding: 3px 8px;
   cursor: pointer;
   color: var(--fg);
-  font-size: 13px;
+  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   user-select: none;
@@ -44,7 +44,7 @@
   padding: 3px 8px;
   cursor: pointer;
   color: var(--fg);
-  font-size: 13px;
+  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
 }

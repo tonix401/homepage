@@ -10,8 +10,8 @@
    nothing and render as transparent boxes over the page. */
 :root {
   --brw-chrome: #202124;
-  --brw-chrome-high: #292a2d;
-  --brw-field: #3c4043;
+  --brw-chrome-high: #36383e;
+  --brw-field: #202124;
   --brw-fg: #e8eaed;
   --brw-fg-dim: #9aa0a6;
 }
@@ -42,23 +42,29 @@
   flex-shrink: 0;
 }
 
+/* A fixed width, not the title's: a tab that resized itself as you browsed
+   would shuffle the window controls along the strip on every navigation. */
 .brw-tab {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 0 0 220px;
   min-width: 0;
-  max-width: 260px;
   height: 32px;
   padding: 0 10px;
-  border-radius: 8px 8px 0 0;
-  font-size: 12px;
+  border-radius: 10px 10px 0 0;
+  font-size: 14px;
 }
 
 .brw-tab--active {
   background: var(--brw-chrome-high);
 }
 
+/* Takes the slack, so the close button stays pinned to the tab's right edge
+   and a long file name ellipsises instead of pushing it out. */
 .brw-tab-title {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -198,7 +204,7 @@
   background: transparent;
   color: var(--brw-fg);
   font: inherit;
-  font-size: 12px;
+  font-size: 14px;
   outline: none;
 }
 
@@ -233,7 +239,7 @@
   background: transparent;
   color: var(--brw-fg);
   font: inherit;
-  font-size: 12px;
+  font-size: 14px;
   cursor: pointer;
 }
 
@@ -248,14 +254,14 @@
 /* The folder glyph, and the arrow that says a bookmark leaves the site — both
    quieter than the label they sit beside. */
 .brw-bookmark-glyph {
-  width: 13px;
-  height: 13px;
+  width: 16px;
+  height: 16px;
   color: var(--brw-fg-dim);
 }
 
 .brw-bookmark-caret {
-  width: 11px;
-  height: 11px;
+  width: 13px;
+  height: 13px;
   margin-left: -2px;
   color: var(--brw-fg-dim);
   transition: transform 0.12s ease;
@@ -313,7 +319,7 @@
   background: transparent;
   color: var(--brw-fg);
   font: inherit;
-  font-size: 12px;
+  font-size: 14px;
   text-align: left;
   cursor: pointer;
 }
@@ -339,7 +345,7 @@
 .brw-menu-empty {
   padding: 6px 8px;
   color: var(--brw-fg-dim);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 /* ── Page ──────────────────────────────────────────────── */
@@ -373,5 +379,5 @@
 .brw-error-code {
   margin-top: 24px;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 14px;
 }

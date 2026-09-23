@@ -9,9 +9,9 @@ export const configuration: OpenFolderPluginOptions = {
   foldersFirst: false,
   collapsedFolders: ["work experience"],
   menuItems: [
-    { label: "Home", file: null },
     { label: "Github", url: "https://github.com/tonix401" },
-    { label: "Resume", file: "work experience/eschbach.md" },
+    { label: "Experience", file: "work experience/eschbach.md" },
+    { label: "Projects", file: "projects/Arch Desktop.md" },
     { label: "Imprint", file: "legal/imprint.html" },
     { label: "Privacy Policy", file: "legal/privacy.html" },
   ],

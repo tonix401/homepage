@@ -29,7 +29,7 @@
 
 .vscode-menu-item {
   color: var(--fg);
-  font-size: 12px;
+  font-size: 14px;
   padding: 0 8px;
   height: 35px;
   display: flex;
@@ -89,7 +89,7 @@ button.vscode-menu-item {
 
 .vscode-title-search-text {
   color: var(--fg-muted);
-  font-size: 12px;
+  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

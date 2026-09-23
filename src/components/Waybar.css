@@ -12,11 +12,18 @@
  * Layout and role assignment mirror ~/.config/waybar/style.css: powerline
  * segments filled with primary / secondary / tertiary / surface containers,
  * each using its matching on_* colour for text.
+ *
+ * One value departs from matugen's output on purpose. Its secondary, #c3c5dd,
+ * is a near neighbour of primary in both tone and hue, and the two segments
+ * touch at both ends of the bar — so the boundary between them all but
+ * vanished. Secondary is taken down to the tone below instead, keeping the
+ * hue, which separates the two fills while leaving --wb-on-secondary above
+ * 4.5:1 on it. Re-running matugen will hand back the lighter value.
  */
 .waybar {
   --wb-primary: #bac3ff;
   --wb-on-primary: #222c61;
-  --wb-secondary: #c3c5dd;
+  --wb-secondary: #d5d6de;
   --wb-on-secondary: #2c2f42;
   --wb-tertiary: #e5bad8;
   --wb-on-tertiary: #44263e;
@@ -360,9 +367,38 @@ button.wb-clickable:focus-visible {
   }
 }
 
-/* Below this the side clusters would collide with the workspace pill, which
-   is wider than it was now that it carries each workspace's app icons */
+/*
+ * Below this the side clusters would collide with the workspace pill, which is
+ * wider than it was now that it carries each workspace's app icons. The pill is
+ * what the bar is actually for, so the decoration gives way instead of it: the
+ * grey and pink groups — cpu/memory and the music track on the left, bluetooth/
+ * wifi and volume/brightness on the right — collapse to nothing, and their
+ * separators close up behind them. What is left is the powerline tails and
+ * arrow tips, a run of chevrons where the modules were. Everything that does
+ * something keeps its text: the Arch mark, the window title, the bell, the
+ * numerals and the clock.
+ *
+ * `min-width: 0` is the load-bearing half. A flex item's automatic minimum size
+ * is its content, so `width: 0` on its own would leave each segment as wide as
+ * the text inside it.
+ */
 @media (max-width: 1600px) {
+  .wb-seg.wb-on-secondary,
+  .wb-seg.wb-on-tertiary {
+    width: 0;
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+}
+
+/*
+ * Collapsing buys about 500px, and below this even that is not enough: the
+ * window title is capped at 260px, which puts the left cluster at 438px at its
+ * widest, so the pill's own half plus the gutter stops fitting around 1100px.
+ * Only then does it give up and hide.
+ */
+@media (max-width: 1150px) {
   .wb-center {
     display: none;
   }

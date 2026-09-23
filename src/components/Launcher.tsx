@@ -76,7 +76,7 @@ function LauncherPanel({ onLaunch, onClose }: Omit<LauncherProps, "open">) {
         className="arch-launcher-input"
         autoFocus
         value={query}
-        placeholder="Search applications…"
+        placeholder="Search apps…"
         aria-label="Search applications"
         onChange={(event) => {
           setQuery(event.target.value);

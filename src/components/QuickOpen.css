@@ -23,7 +23,7 @@
   padding: 0;
   color: var(--fg);
   font-family: inherit;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .vscode-title-search-input::placeholder {
@@ -60,7 +60,7 @@
   align-items: baseline;
   gap: 6px;
   padding: 3px 10px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--fg);
   cursor: pointer;
   white-space: nowrap;
@@ -108,7 +108,7 @@
 
 .vscode-quickopen-empty {
   padding: 8px 10px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--fg-muted);
 }
 

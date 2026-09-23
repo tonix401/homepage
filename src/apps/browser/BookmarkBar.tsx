@@ -141,7 +141,7 @@ function BarButton({ bookmark, onClick }: { bookmark: Bookmark; onClick: () => v
       title={bookmark.kind === "link" ? bookmark.url : (bookmark.path ?? "")}
     >
       {bookmark.kind === "page" ? (
-        <SetiIcon type={bookmark.type} size={14} />
+        <SetiIcon type={bookmark.type} size={17} />
       ) : (
         <Icon className="brw-icon brw-bookmark-glyph" path={icons.external} />
       )}
@@ -203,7 +203,7 @@ function BookmarkMenu({ items, rect, placement, onChoose }: BookmarkMenuProps) {
                 title={item.kind === "link" ? item.url : (item.path ?? "")}
               >
                 {item.kind === "page" ? (
-                  <SetiIcon type={item.type} size={14} />
+                  <SetiIcon type={item.type} size={17} />
                 ) : (
                   <Icon className="brw-icon brw-bookmark-glyph" path={icons.external} />
                 )}

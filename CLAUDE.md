@@ -187,8 +187,17 @@ turn, the app icons beside them do not.
 the pill's width now changes whenever a window opens or closes, and under
 `space-between` that would drag it back and forth along the bar on every
 change. It can then overlap the side clusters instead of pushing them, which
-is why the hide breakpoint matters and why it moved from 1400px to 1600px —
-the pills are wider than they were.
+is why the breakpoints matter.
+
+At 1600px the **decoration gives way, not the pill**: the grey and pink groups
+(`.wb-on-secondary`, `.wb-on-tertiary` — cpu/memory and music on the left,
+bluetooth/wifi and volume/brightness on the right) collapse to `width: 0`, and
+their powerline separators close up into a run of bare tails and arrow tips.
+`min-width: 0` goes with the `width: 0`, or a flex item's automatic minimum
+size keeps each segment as wide as its text. That buys about 500px, and only
+below 1150px does `.wb-center` hide outright — the window title is capped at
+260px, which puts the left cluster at 438px at its widest, so the pill's half
+plus the gutter stops fitting around there.
 
 Both are the *tab's* numbers, not the machine's, because nothing a page can
 call reports what other processes are doing. The modules' labels say so.
