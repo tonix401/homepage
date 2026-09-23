@@ -30,6 +30,13 @@ interface WaybarProps {
  */
 const WS_MAX_ICONS = 3;
 
+/**
+ * The two segments the empty-workspace hint points at, named here so it can
+ * quote them and they cannot drift apart.
+ */
+export const HOST_LABEL = "tom@box";
+export const NO_WINDOW_LABEL = "Desktop";
+
 /** What the music module is "playing". */
 const RICKROLL_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
@@ -229,12 +236,12 @@ export function Waybar({
         <button
           className="wb-seg wb-on-primary wb-clickable"
           onClick={onHome}
-          // The label names the action rather than the visible `tom@box`,
+          // The label names the action rather than the visible host name,
           // which is decoration. Same for the keyboard segment below.
           aria-label="Open Codium"
         >
           <ArchIcon />
-          tom@box
+          {HOST_LABEL}
         </button>
 
         <Arrow from={FILL.primary} to={FILL.secondary} dir="r" />
@@ -276,7 +283,7 @@ export function Waybar({
           aria-label={focusedTitle ? `Applications — ${focusedTitle}` : "Applications"}
         >
           <Icon className="wb-icon" path={focusedApp ? APP_ICONS[focusedApp] : icons.window} />
-          {focusedTitle ?? "Desktop"}
+          {focusedTitle ?? NO_WINDOW_LABEL}
         </button>
         <Arrow from={FILL.containerHigh} to={FILL.none} dir="r" />
       </div>

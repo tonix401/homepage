@@ -146,3 +146,118 @@
     animation: none;
   }
 }
+
+/*
+ * The hint on an empty workspace, anchored under the left end of the bar —
+ * where both of the segments it names actually sit. It is inert: it points at
+ * the controls rather than duplicating them, so a click still has to land on
+ * the bar and there is only ever one place that does each job.
+ *
+ * The card borrows the launcher's surface, so the two things the desktop puts
+ * over the wallpaper look like they belong to the same compositor.
+ *
+ * It waits out `--arch-hint-delay` first, so closing a window on the way to
+ * opening another does not flash it up: help that arrives the instant you
+ * might need it is help that interrupts. The wait is the animation's delay
+ * rather than a timer, because `backwards` holds the first keyframe —
+ * `visibility: hidden` included, so it is out of the accessibility tree too —
+ * for the whole of it, and because the hint remounts every time the workspace
+ * empties, which restarts the clock with nothing to reset.
+ */
+.arch-hint {
+  --arch-hint-delay: 3s;
+
+  position: absolute;
+  top: calc(var(--strip-top) - 2px);
+  left: var(--strip-gap);
+  pointer-events: none;
+  animation: arch-hint-in 0.6s var(--arch-hint-delay) backwards ease-out;
+}
+
+/* Slow and shallow: on an otherwise empty desktop it only has to catch the
+   eye once, not keep asking for attention. */
+.arch-hint-caret {
+  display: block;
+  width: 20px;
+  height: 20px;
+  margin-left: 20px;
+  color: var(--arch-window-border);
+  animation: arch-hint-bob 2.6s ease-in-out infinite;
+}
+
+.arch-hint-card {
+  padding: 13px 16px 14px;
+  border: 1px solid rgba(186, 195, 255, 0.18);
+  border-radius: 14px;
+  background: rgba(13, 14, 19, 0.72);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+}
+
+.arch-hint-lead {
+  margin: 0 0 11px;
+  color: #d7dae6;
+  font-size: 13.5px;
+}
+
+/* Two columns, so the labels stack into a column of their own and their
+   meanings line up beside it rather than trailing off at ragged starts. */
+.arch-hint-keys {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 7px 11px;
+  margin: 0;
+  color: #9096a8;
+  font-size: 12.5px;
+}
+
+.arch-hint-keys dd {
+  margin: 0;
+}
+
+/* The bar's own face and accent, so a quoted label reads as a reference to
+   something on screen rather than as emphasis. */
+.arch-hint-key {
+  display: block;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(186, 195, 255, 0.13);
+  color: var(--arch-window-border);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: center;
+}
+
+@keyframes arch-hint-in {
+  from {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+  }
+}
+
+/* Reduced motion drops the movement, not the wait — the delay is what keeps
+   the hint from interrupting, and that is not a motion preference. */
+@keyframes arch-hint-fade {
+  from {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes arch-hint-bob {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arch-hint {
+    animation-name: arch-hint-fade;
+  }
+
+  .arch-hint-caret {
+    animation: none;
+  }
+}
