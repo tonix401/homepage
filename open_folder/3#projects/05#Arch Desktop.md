@@ -1,4 +1,4 @@
-## [Desktop and System Configuration](https://github.com/tonix401/box-dots)
+## <a href="https://github.com/tonix401/box-dots" target="_blank" rel="noopener noreferrer">Desktop and System Configuration</a>
 
 ![Lua](https://img.shields.io/badge/Lua-%23000080.svg?logo=Lua&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-%233776AB.svg?logo=Python&logoColor=white)
@@ -28,7 +28,7 @@ All of this is of **inspired** by other peoples linux ricing but fully **custom*
 
 ---
 
-<a href="https://github.com/tonix401/box-dots" target="_blank" class="learnmore">Check it out on GitHub</a>
+<a href="https://github.com/tonix401/box-dots" target="_blank" rel="noopener noreferrer" class="learnmore">Check it out on GitHub</a>
 
 <style>
   .learnmore {

@@ -16,8 +16,8 @@
 ---
 
 <table>
-<tr><td>🏢 Who?</td><td><strong><a href="https://www.eschbach.com/">eschbach GmbH</a></strong></td></tr>
-<tr><td>🎓 What?</td><td><strong>Informatics at <a href="https://dhbw-loerrach.de/home">DHBW Lörrach</a></strong></td></tr>
+<tr><td>🏢 Who?</td><td><strong><a href="https://www.eschbach.com/" target="_blank" rel="noopener noreferrer">eschbach GmbH</a></strong></td></tr>
+<tr><td>🎓 What?</td><td><strong>Informatics at <a href="https://dhbw-loerrach.de/home" target="_blank" rel="noopener noreferrer">DHBW Lörrach</a></strong></td></tr>
 <tr><td>📍 Where?</td><td><strong>Bad Säckingen, Germany</strong></td></tr>
 <tr><td>🕚 When?</td><td><strong>October 2024 - now</strong></td></tr>
 <tr><td>📜 How?</td><td><strong>Apprenticeship / Study contract (3 years)</strong></td></tr>
@@ -26,7 +26,7 @@
 ---
 
 - working as a `Web-Developer`
-- studying `Informatics` at the [DHBW Lörrach](https://dhbw-loerrach.de/home)
+- studying `Informatics` at the <a href="https://dhbw-loerrach.de/home" target="_blank" rel="noopener noreferrer">DHBW Lörrach</a>
 
 <style>
   .md-image {

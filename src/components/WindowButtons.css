@@ -5,7 +5,8 @@
 }
 
 /* The same circle-behind-the-glyph hover as the browser's buttons, in the
-   theme's colours rather than Chrome's. */
+   theme's colours rather than Chrome's. An app in a look of its own — Obsidian
+   — sets the three `--win-btn-*` properties instead. */
 .win-btn {
   position: relative;
   display: grid;
@@ -15,7 +16,7 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: color-mix(in srgb, var(--theme-primary) 55%, transparent);
+  color: var(--win-btn-fg, color-mix(in srgb, var(--theme-primary) 55%, transparent));
   cursor: pointer;
   transition: color 0.12s ease;
 }
@@ -38,11 +39,11 @@
 }
 
 .win-btn:hover {
-  color: var(--theme-on-primary-container);
+  color: var(--win-btn-hover-fg, var(--theme-on-primary-container));
 }
 
 .win-btn:hover::before {
-  background-color: var(--theme-primary-container);
+  background-color: var(--win-btn-hover-bg, var(--theme-primary-container));
 }
 
 .win-btn--close:hover {

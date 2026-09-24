@@ -1,4 +1,4 @@
-## [DnDCLI](https://github.com/tonix401/dndcli)
+## <a href="https://github.com/tonix401/dndcli" target="_blank" rel="noopener noreferrer">DnDCLI</a>
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
 ![NodeJS](https://img.shields.io/badge/node.js-%236DA55F.svg?logo=node.js&logoColor=white)
@@ -24,7 +24,7 @@ Stylish terminal based role playing game:
 
 ---
 
-<a href="https://github.com/tonix401/dndcli" target="_blank" class="learnmore">Check it out on GitHub</a>
+<a href="https://github.com/tonix401/dndcli" target="_blank" rel="noopener noreferrer" class="learnmore">Check it out on GitHub</a>
 
 <style>
   .learnmore {

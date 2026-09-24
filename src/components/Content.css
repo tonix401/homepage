@@ -201,7 +201,10 @@
 
 .vscode-md-area p { margin: 0.7em 0; }
 
-.vscode-md-area a { color: #4daafc; text-decoration: none; }
+/* Links and inline code take the desktop theme's colours — primary and its
+   second accent, tertiary — in every app that renders markdown, even the ones
+   that otherwise keep their own palette. Code blocks keep the plain text colour. */
+.vscode-md-area a { color: var(--theme-primary); text-decoration: none; }
 .vscode-md-area a:hover { text-decoration: underline; }
 
 .vscode-md-area code {
@@ -210,7 +213,7 @@
   background: #2d2d2d;
   padding: 0.15em 0.4em;
   border-radius: 3px;
-  color: #ce9178;
+  color: var(--theme-tertiary);
 }
 
 .vscode-md-area pre {

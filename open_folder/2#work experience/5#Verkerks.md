@@ -5,7 +5,7 @@
 ---
 
 <table>
-<tr><td>🏢 Who?</td><td><strong><a href="https://www.verkerks.co.nz/">Verkerks</a></strong></td></tr>
+<tr><td>🏢 Who?</td><td><strong><a href="https://www.verkerks.co.nz/" target="_blank" rel="noopener noreferrer">Verkerks</a></strong></td></tr>
 <tr><td>📍 Where?</td><td><strong>Christchurch, New Zealand</strong></td></tr>
 <tr><td>🕚 When?</td><td><strong>April - October 2023</strong></td></tr>
 <tr><td>📜 How?</td><td><strong>Contract with a recruitment agency</strong></td></tr>

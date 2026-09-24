@@ -25,9 +25,9 @@ function fakeStorage(initial: Record<string, string> = {}): Storage {
 }
 
 describe("subjects", () => {
-  it("offers the three logos and Tom's cat, Arch first and the default", () => {
+  it("offers the three logos and Tom's cat, with the cat as the default", () => {
     expect(SUBJECT_IDS).toEqual(["arch", "tux", "hyprland", "cat"]);
-    expect(DEFAULT_SUBJECT).toBe("arch");
+    expect(DEFAULT_SUBJECT).toBe("cat");
     expect(subjectName("hyprland")).toBe("Hyprland");
   });
 
@@ -46,7 +46,7 @@ describe("loadSubject / saveSubject", () => {
     expect(loadSubject(store)).toBe("tux");
   });
 
-  it("falls back to Arch for nothing stored, anything unknown, or no storage", () => {
+  it("falls back to the default for nothing stored, anything unknown, or no storage", () => {
     expect(loadSubject(fakeStorage())).toBe(DEFAULT_SUBJECT);
     expect(loadSubject(fakeStorage({ [SUBJECT_KEY]: "gentoo" }))).toBe(DEFAULT_SUBJECT);
     // Once offered and since removed: a visitor who had it gets the default.

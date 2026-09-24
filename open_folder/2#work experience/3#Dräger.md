@@ -5,7 +5,7 @@
 ---
 
 <table>
-<tr><td>🏢 Who?</td><td><strong><a href="https://www.draeger.com/en_neeur/Safety">Dräger Safety AG &amp; Co. KG</a></strong></td></tr>
+<tr><td>🏢 Who?</td><td><strong><a href="https://www.draeger.com/en_neeur/Safety" target="_blank" rel="noopener noreferrer">Dräger Safety AG &amp; Co. KG</a></strong></td></tr>
 <tr><td>📍 Where?</td><td><strong>Burghausen, Germany</strong></td></tr>
 <tr><td>🕚 When?</td><td><strong>Spring and Summer 2024</strong></td></tr>
 <tr><td>📜 How?</td><td><strong>Contract with a recruitment agency</strong></td></tr>
@@ -13,7 +13,7 @@
 
 ---
 
-- Safety lookout for [Dräger Safety AG & Co. KG](https://www.draeger.com/en_neeur/Safety) on the OMV refinery
+- Safety lookout for <a href="https://www.draeger.com/en_neeur/Safety" target="_blank" rel="noopener noreferrer">Dräger Safety AG & Co. KG</a> on the OMV refinery
 - Trained in use of atmosphere measurement tools, PPE, evacuation procedures, work safety
 - Measuring atmosphere inside confined spaces
 - Logging entry and exit of maintenance workers

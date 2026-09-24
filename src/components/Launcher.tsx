@@ -51,6 +51,15 @@ const SUBMENUS: readonly { id: Submenu; name: string; icon: string; keywords: st
   },
 ];
 
+/**
+ * Lower case with accents and tone marks taken off, for matching: "jizi"
+ * finds jīzǐ, and so does typing the tone marks. NFD splits a marked letter
+ * into the letter and a combining mark, and the marks are then dropped.
+ */
+function fold(text: string): string {
+  return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+}
+
 /** One row of the launcher: an app, or the way into a submenu. */
 type Entry = { kind: "app"; id: AppId; name: string } | { kind: "submenu"; id: Submenu };
 
@@ -118,9 +127,9 @@ function LauncherPanel({
   // second dialog, and the query survives the trip there and back.
   const [view, setView] = useState<"apps" | Submenu>("apps");
 
-  const needle = query.trim().toLowerCase();
+  const needle = fold(query.trim());
   const entries: Entry[] = [
-    ...LAUNCHABLE.filter((app) => app.name.toLowerCase().includes(needle)).map(
+    ...LAUNCHABLE.filter((app) => fold(app.name).includes(needle)).map(
       (app): Entry => ({ kind: "app", id: app.id, name: app.name }),
     ),
     ...SUBMENUS.filter((menu) => menu.keywords.some((word) => word.includes(needle))).map(

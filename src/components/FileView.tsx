@@ -46,9 +46,16 @@ function inlineCss(
 // sandbox blocks it from reaching the top frame, and left alone it would load
 // over the preview itself (blank, for a site that refuses framing).
 // The <style> block makes the html element transparent so the iframe element's
-// dark background shows through before the page's own CSS is applied.
+// dark background shows through before the page's own CSS is applied. It also
+// repeats index.css's scrollbar: the frame is a document of its own, so the
+// site's stylesheet never reaches it, and a long page scrolled with the
+// browser's default light, arrowed bar down the side of a dark window.
 const HTML_NAV_SCRIPT =
-  "<style>html{background:transparent}</style>" +
+  "<style>html{background:transparent;scrollbar-width:thin;scrollbar-color:#424242 transparent}" +
+  "::-webkit-scrollbar{width:10px;height:10px}" +
+  "::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}" +
+  "::-webkit-scrollbar-thumb{background:#424242;border:2px solid transparent;background-clip:padding-box;border-radius:2px}" +
+  "::-webkit-scrollbar-thumb:hover{background:#555555}</style>" +
   "<script>document.addEventListener('click',function(e){" +
   "var a=e.target.closest('a[href]');if(!a)return;" +
   "var h=a.getAttribute('href');if(!h||h.charAt(0)==='#')return;" +

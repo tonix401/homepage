@@ -102,6 +102,49 @@
   background: var(--wb-surface-container-highest);
 }
 
+/*
+ * On an empty workspace the launcher segment is the way to open something, so
+ * it pulses. Only the label and icon glow towards the primary, and the icon
+ * swells a little: the segment is a powerline block whose arrow tips are
+ * separate pieces in its fill colour, so pulsing its background would leave
+ * them behind.
+ *
+ * It waits a second first, so closing a window on the way to opening another
+ * does not flash it up. The wait is the animation's delay rather than a timer,
+ * and the class comes and goes with the empty state, so it restarts cleanly.
+ */
+.wb-window--pulse {
+  animation: wb-launcher-pulse 2.2s 1s ease-in-out infinite;
+}
+
+.wb-window--pulse .wb-icon {
+  animation: wb-launcher-swell 2.2s 1s ease-in-out infinite;
+}
+
+@keyframes wb-launcher-pulse {
+  50% {
+    color: var(--wb-primary);
+  }
+}
+
+@keyframes wb-launcher-swell {
+  50% {
+    transform: scale(1.18);
+  }
+}
+
+/* No pulsing for less motion: the segment just stays lit in the primary. */
+@media (prefers-reduced-motion: reduce) {
+  .wb-window--pulse,
+  .wb-window--pulse .wb-icon {
+    animation: none;
+  }
+
+  .wb-window--pulse {
+    color: var(--wb-primary);
+  }
+}
+
 /* Fixed width so cycling the workspace numerals doesn't shift the cluster */
 .wb-kbd {
   justify-content: center;
@@ -248,7 +291,10 @@ button.wb-clickable:focus-visible {
   align-items: center;
   gap: 3px;
   height: var(--wb-seg-height);
-  padding: 0 9px;
+  /* No padding: the pills are exactly as tall as this track, so the first and
+     last sit flush in its rounded ends rather than floating a gap inside them.
+     An empty pill there still centres its numeral in its own 30px circle. */
+  padding: 0;
   border-radius: 999px;
   background: var(--wb-surface-container-lowest);
 }

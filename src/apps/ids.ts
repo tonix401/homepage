@@ -7,7 +7,7 @@
  * app tree. The registry imports this; this imports nothing.
  */
 
-export const APP_IDS = ["editor", "browser", "terminal"] as const;
+export const APP_IDS = ["editor", "browser", "terminal", "notes"] as const;
 
 export type AppId = (typeof APP_IDS)[number];
 

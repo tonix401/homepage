@@ -1,4 +1,4 @@
-## [Domus](https://github.com/DHBWLoerrach/TIF24B_AnwProjekt_A)
+## <a href="https://github.com/DHBWLoerrach/TIF24B_AnwProjekt_A" target="_blank" rel="noopener noreferrer">Domus</a>
 
 ![React](https://img.shields.io/badge/React-%2320232a.svg?logo=react&logoColor=%2361DAFB)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=fff)
@@ -12,7 +12,7 @@ A self-hosted shared living management app, deployable via Docker. Manage shoppi
 <br>
 <br>
 
-## [Uniplanner 3000](https://github.com/akoSiThaesler/uniplanner3000)
+## <a href="https://github.com/akoSiThaesler/uniplanner3000" target="_blank" rel="noopener noreferrer">Uniplanner 3000</a>
 
 ![HTML](https://img.shields.io/badge/HTML-E34C26?logo=html5&logoColor=fff)
 ![CSS](https://img.shields.io/badge/CSS-1572B6?logo=css&logoColor=fff)
@@ -20,18 +20,18 @@ A self-hosted shared living management app, deployable via Docker. Manage shoppi
 
 A web app for managing university resources — teachers, courses, schedules, and more.
 
-<a href="https://github.com/akoSiThaesler/uniplanner3000" target="_blank" class="learnmore">Check it out on GitHub</a>
+<a href="https://github.com/akoSiThaesler/uniplanner3000" target="_blank" rel="noopener noreferrer" class="learnmore">Check it out on GitHub</a>
 
 <br>
 <br>
 
-## [Quarrelships](https://github.com/tonix401/quarrelships)
+## <a href="https://github.com/tonix401/quarrelships" target="_blank" rel="noopener noreferrer">Quarrelships</a>
 
 ![Java](https://img.shields.io/badge/☕-Java-E34C26?labelColor=E34C26)
 
 A game of battleships in the form of a java desktop app with processing as the graphics library
 
-<a href="https://github.com/tonix401/quarrelships" target="_blank" class="learnmore">Check it out on GitHub</a>
+<a href="https://github.com/tonix401/quarrelships" target="_blank" rel="noopener noreferrer" class="learnmore">Check it out on GitHub</a>
 
 <style>
   .learnmore {

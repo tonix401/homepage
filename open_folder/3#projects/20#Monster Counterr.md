@@ -1,4 +1,4 @@
-## [Monster Counter](https://tonix401.github.io/monster-counterr/)
+## <a href="https://tonix401.github.io/monster-counterr/" target="_blank" rel="noopener noreferrer">Monster Counter</a>
 
 ![React](https://img.shields.io/badge/React-555?logo=react&logoColor=%2361DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
@@ -18,8 +18,8 @@ A React web app (hence the extra _r_) for D&D game masters to manage combat enco
 
 ---
 
-<a href="https://github.com/tonix401/monster-counterr" target="_blank" class="learnmore">Check it out on GitHub</a>
-<a href="https://tonix401.github.io/monster-counterr/" target="_blank" class="learnmore">Check it the live instance</a>
+<a href="https://github.com/tonix401/monster-counterr" target="_blank" rel="noopener noreferrer" class="learnmore">Check it out on GitHub</a>
+<a href="https://tonix401.github.io/monster-counterr/" target="_blank" rel="noopener noreferrer" class="learnmore">Check it the live instance</a>
 
 <style>
   .learnmore {

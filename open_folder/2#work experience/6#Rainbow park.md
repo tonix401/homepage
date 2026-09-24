@@ -5,7 +5,7 @@
 ---
 
 <table>
-<tr><td>🏢 Who?</td><td><strong><a href="https://rainbowpark.co.nz/">Rainbow Park Nurseries Limited</a></strong></td></tr>
+<tr><td>🏢 Who?</td><td><strong><a href="https://rainbowpark.co.nz/" target="_blank" rel="noopener noreferrer">Rainbow Park Nurseries Limited</a></strong></td></tr>
 <tr><td>📍 Where?</td><td><strong>Drury, New Zealand</strong></td></tr>
 <tr><td>🕚 When?</td><td><strong>December 2022 - March 2023</strong></td></tr>
 <tr><td>📜 How?</td><td><strong>Fixed-term labour contract (3 months)</strong></td></tr>

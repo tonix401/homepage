@@ -47,9 +47,14 @@ BrowserApp                 — the browser window, one instance per column
 ├── BookmarkBar            — the open folder as folders, plus `menuItems`
 └── FileView               — the same body renderer the editor uses
 
-TerminalApp                — jizi, a terminal running a ranger-style file manager
+TerminalApp                — jīzǐ, a terminal running a ranger-style file manager
 ├── top line               — user@host, the cursor's path, window buttons
 └── panes                  — parent dir | current dir | preview (raw text)
+
+NotesApp                   — Obsidian: the open folder as a vault
+├── ribbon                 — files and graph view toggles
+├── file tree              — notes without `.md`, folders with indent guides
+└── reading view / GraphView — the note, or every note and folder linked
 ```
 
 `App.tsx` owns one `Desktop` object and nothing else: it is the window
@@ -171,8 +176,12 @@ than stacking up more; the window-title segment reports the focused window
 (`AppDefinition.title`) and opens the launcher. Every app's title names the
 file it shows, as in `Homelab.md — Codium`: a window with no file set names
 the first file, because that's what it shows (`pageName` in
-`src/utils/files.ts`), and jizi names the entry under its cursor; the keyboard segment cycles the
+`src/utils/files.ts`), and jīzǐ names the entry under its cursor; the keyboard segment cycles the
 numerals (`WORKSPACE_LANGUAGES` lives in `src/utils/desktop.ts`).
+On an empty workspace the title segment reads "App Launcher" and pulses: its label and
+icon glow towards the primary. The background can't pulse, because the
+powerline arrow tips are separate pieces in its fill colour. It is the only
+nudge an empty desktop gives; there is no hint card.
 
 **Nothing in the bar has a `title`.** Every label is an `aria-label`, so the bar
 carries no native tooltips at all; the three that are not on a button — the cpu
@@ -319,9 +328,11 @@ window renders bare, covering the bar, so **every app must put a restore button
 in its own title bar** — that is the only way back to the strip, and an app
 without one strands the workspace. Every current app has one (`Header`'s
 maximize button, `.brw-winbtn` in the browser's tab strip, and
-`src/components/WindowButtons.tsx` in jizi's top line), and the next app
-needs one too. An app drawn in the theme can reuse `WindowButtons` rather than
-drawing its own.
+`src/components/WindowButtons.tsx` in jīzǐ's and Obsidian's title bars), and
+the next app needs one too. Any app can reuse `WindowButtons` rather than
+drawing its own. They're in the theme's colours unless the app sets
+`--win-btn-fg`, `--win-btn-hover-fg` and `--win-btn-hover-bg`, as Obsidian
+does to use its own greys.
 
 Maximizing takes focus with it: the button belongs to a particular window, so
 pressing it on an unfocused one must maximize *that* window rather than
@@ -363,8 +374,9 @@ modifier class would fix it for every app at once.
 An app is an `AppDefinition` in `src/apps/registry.tsx`: an id, a name, how it
 titles itself, how it cleans up a payload that came back out of storage, and
 how it renders into a column. A window is `{ app, arg }` and nothing more;
-`arg` is app-defined. The editor and browser read it as a file path; the
-terminal reads it as the path under its cursor, which may be a folder.
+`arg` is app-defined. The editor, browser and Obsidian read it as a file
+path; the terminal reads it as the path under its cursor, which may be a
+folder.
 
 Everything an app may do to its own window arrives as a `WindowHandle`
 (`setArg`, `close`, `toggleFullscreen`, `focus`, `open`), so no app ever reaches
@@ -413,6 +425,27 @@ paints the editor's grey behind every window, so `Terminal.css` clears it with
 `.arch-column:has(> .term--windowed)`. A maximized window has no wallpaper
 behind it and keeps a solid background.
 
+Obsidian (`src/apps/notes/`, app id `notes`) treats the open folder as a vault.
+- **Kept per window:** its payload is the open note. Which view is showing,
+  the sidebar and the expanded folders are the window's own state. A window
+  **opens on the graph view**, and picking a node or a file switches to the
+  note.
+- **Reading view:** notes render through the shared `FileView` with
+  Codium's markdown styles. `Notes.css` restyles only the colour of links and
+  inline code, which are Obsidian's purple rather than the theme's, so a note
+  otherwise looks the same in both apps. The breadcrumb above it is
+  Obsidian's. The file tree also uses Codium's 14px, so the two
+  trees read at the same scale.
+- **Graph:** `src/utils/graph.ts` builds the graph and lays it out, pure and
+  tested. `linksOf` finds a file's relative markdown links and HTML `href`s
+  that land on another file in the tree. There are only three such links today,
+  all from the README, so `buildGraph` also makes every folder a node tied to
+  what it holds, and the folder tree shows as clusters.
+- **Layout:** `layoutGraph` is a deterministic Fruchterman–Reingold layout
+  (nodes start round a circle, not at random), fitted into [-1, 1], so the
+  graph looks the same on every visit. `GraphView` draws it in a viewBox of
+  those units, so it scales to any window without being laid out again.
+
 **Adding an app:** an id in `src/apps/ids.ts`, an icon and name in
 `src/apps/icons.ts`, a definition folder under `src/apps/`, and an entry in
 `APPS`/`LAUNCHABLE`. Nothing in the desktop model, the strip or the bar changes. The
@@ -448,11 +481,12 @@ site's original look), teal, rose, amber and green. Everything in
 - `subjects.ts` defines what the wallpaper shows. The subject is picked
   separately from the theme, so any subject works in any theme. There are two
   styles, because the artwork comes in two:
-  - **Logos:** the Arch logo (the default, the original Inkscape drawing), Tux
+  - **Logos:** the Arch logo (the original Inkscape drawing), Tux
     and the Hyprland logo. They're filled with the theme's logo colour and
     outlined in white. Tux and Hyprland are single-path 24×24 icons from
     Simple Icons (16.32.0, CC0-1.0).
-  - **Drawings:** your cat, from `~/.config/matugen/templates/cat.svg`. It's
+  - **Drawings:** your cat, from `~/.config/matugen/templates/cat.svg`, which
+    is the **default** subject (`DEFAULT_SUBJECT`) that a first visit sees. It's
     line art, stroked in the theme's primary exactly as the template strokes
     it, with the eyes filled. Its elements were copied from the template
     unchanged.
@@ -487,9 +521,13 @@ The generator makes a few deliberate choices, each commented in the script:
   The raw sources differ fivefold in brightness.
 - Blue keeps its hand-drawn logo and gradient exactly.
 
-**Codium and Chromium are not themed.** They keep the VSCode and Chrome
-palettes in `App.css` and `Browser.css`, like real apps that ignore your GTK
-theme. The desktop chrome and jizi follow the theme.
+**Codium, Chromium and Obsidian are not themed.** They keep the VSCode, Chrome
+and Obsidian palettes in `App.css`, `Browser.css` and `Notes.css`, like real
+apps that ignore your GTK theme. The desktop chrome and jīzǐ follow the
+theme. The one exception is markdown in Codium and Chromium: links take the
+theme's primary and inline code its tertiary (`.vscode-md-area` in
+`Content.css`). Obsidian overrides both with its own purple, `--obs-accent`.
+Code blocks keep the plain text colour everywhere.
 
 The theme and the wallpaper are both picked in the **launcher**, not by an app.
 

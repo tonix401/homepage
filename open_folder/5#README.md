@@ -18,7 +18,7 @@
   }
 </style>
 
-# [Hello there, I'm Tom](github.com/tonix401)
+# <a href="https://github.com/tonix401" target="_blank" rel="noopener noreferrer">Hello there, I'm Tom</a>
 
 Behold! my stuff ...
 

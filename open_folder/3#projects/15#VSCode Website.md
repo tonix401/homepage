@@ -1,4 +1,4 @@
-## [VSCode Website](https://github.com/tonix401/vscode_website)
+## <a href="https://github.com/tonix401/vscode_website" target="_blank" rel="noopener noreferrer">VSCode Website</a>
 
 ![React](https://img.shields.io/badge/React-555?logo=react&logoColor=%2361DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
@@ -27,11 +27,11 @@ the whole thing.
  
 The idea is to embed it in a portfolio or project page so visitors can browse source files without leaving the browser.
  
-A custom Vite plugin reads everything in `open_folder/` at build time and bundles it into a virtual module. No runtime file I/O, no server. The output is a fully static site. See the [documentation](https://tonix401.github.io/vscode_website/) for a full breakdown.
+A custom Vite plugin reads everything in `open_folder/` at build time and bundles it into a virtual module. No runtime file I/O, no server. The output is a fully static site. See the <a href="https://tonix401.github.io/vscode_website/" target="_blank" rel="noopener noreferrer">documentation</a> for a full breakdown.
 
 ---
 
-<a href="https://github.com/tonix401/vscode_website" target="_blank" class="learnmore">Check it out on GitHub</a>
+<a href="https://github.com/tonix401/vscode_website" target="_blank" rel="noopener noreferrer" class="learnmore">Check it out on GitHub</a>
 
 ---
 

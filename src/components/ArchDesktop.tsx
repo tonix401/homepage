@@ -1,8 +1,7 @@
 import { useState, type ReactNode } from "react";
 import "./ArchDesktop.css";
-import { HOST_LABEL, NO_WINDOW_LABEL, Waybar } from "./Waybar";
+import { Waybar } from "./Waybar";
 import { Launcher } from "./Launcher";
-import { Icon } from "./Icon";
 import { type WorkspaceLanguage } from "../utils/desktop";
 import { type AppId } from "../apps/ids";
 import { type ThemeId } from "../themes/theme";
@@ -29,7 +28,7 @@ interface ArchDesktopProps {
   onHome: () => void;
   focusedApp: AppId | null;
   focusedTitle: string | null;
-  /** True when this workspace holds no windows, which is what the hint is for. */
+  /** True when this workspace holds no windows: the bar's launcher segment pulses. */
   empty: boolean;
   /** The strips: the one on this workspace, and any still sliding away. */
   children?: ReactNode;
@@ -68,10 +67,10 @@ export function ArchDesktop({
         focusedApp={focusedApp}
         focusedTitle={focusedTitle}
         onAppMenu={() => setLauncherOpen(true)}
+        empty={empty}
       />
       <Wallpaper url={wallpaperUrl(theme, subject)} />
       {children}
-      {empty && <EmptyHint />}
       <Launcher
         open={launcherOpen}
         theme={theme}
@@ -81,40 +80,6 @@ export function ArchDesktop({
         onLaunch={onLaunch}
         onClose={() => setLauncherOpen(false)}
       />
-    </div>
-  );
-}
-
-/**
- * What an empty workspace says.
- *
- * Closing the last window leaves the bare wallpaper, and both ways out of it
- * are segments in the bar — easy to miss when there is nothing else on screen
- * to look at. It sits under the *left* end of the bar because that is where
- * both of those segments are; centred on the desktop it would be pointing at
- * nothing. The labels come from `Waybar` rather than being retyped, so the
- * hint cannot end up naming a segment that no longer reads that way.
- */
-function EmptyHint() {
-  return (
-    <div className="arch-hint">
-      <Icon className="arch-hint-caret" path="M6 15l6-6 6 6" />
-      <div className="arch-hint-card">
-        <p className="arch-hint-lead">Nothing open on this workspace</p>
-        {/* A description list, so the labels form a column and their meanings
-            line up beside it — and in the order the bar reads, left to right,
-            so the caret above lands on the first one named. */}
-        <dl className="arch-hint-keys">
-          <dt>
-            <span className="arch-hint-key">{HOST_LABEL}</span>
-          </dt>
-          <dd>reopens Codium</dd>
-          <dt>
-            <span className="arch-hint-key">{NO_WINDOW_LABEL}</span>
-          </dt>
-          <dd>opens the launcher</dd>
-        </dl>
-      </div>
     </div>
   );
 }

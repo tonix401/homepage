@@ -5,7 +5,7 @@
 ---
 
 <table>
-<tr><td>🏢 Who?</td><td><strong><a href="https://www.edeka.de/maerkte/047771/">Edeka Südwest</a></strong></td></tr>
+<tr><td>🏢 Who?</td><td><strong><a href="https://www.edeka.de/maerkte/047771/" target="_blank" rel="noopener noreferrer">Edeka Südwest</a></strong></td></tr>
 <tr><td>📍 Where?</td><td><strong>Endersbach, Germany</strong></td></tr>
 <tr><td>🕚 When?</td><td><strong>Winter 2023/24</strong></td></tr>
 <tr><td>📜 How?</td><td><strong>Fixed-term labour contract (2.5 months)</strong></td></tr>

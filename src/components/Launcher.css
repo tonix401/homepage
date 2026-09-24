@@ -22,9 +22,11 @@
   font-family: var(--font-mono);
 }
 
+/* A light veil, not a curtain: the desktop behind stays readable, dimmed and
+   softened just enough that the launcher is plainly what has focus. */
 .arch-launcher::backdrop {
-  background: color-mix(in srgb, var(--theme-wall-outer) 55%, transparent);
-  backdrop-filter: blur(3px);
+  background: color-mix(in srgb, var(--theme-wall-outer) 30%, transparent);
+  backdrop-filter: blur(1.5px);
 }
 
 .arch-launcher-panel {
@@ -120,7 +122,7 @@
 
 /*
  * The Themes and Wallpapers submenus (`PickerMenu`): a preview and a list,
- * split by a rule in the accent — the same pane divider jizi's file manager
+ * split by a rule in the accent — the same pane divider jīzǐ's file manager
  * draws. The preview is the wallpaper as the highlighted choice would make it,
  * zoomed in on its subject, so the glow and gradient are part of the choice.
  */
@@ -163,7 +165,7 @@
   cursor: pointer;
 }
 
-/* The highlight is jizi's cursor, not the launcher's filled pill: this is a
+/* The highlight is jīzǐ's cursor, not the launcher's filled pill: this is a
    list being browsed, and nothing happens until Enter. */
 .arch-picker-item--active {
   background: var(--theme-primary-container);

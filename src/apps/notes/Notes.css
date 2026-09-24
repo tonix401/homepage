@@ -1,0 +1,389 @@
+/*
+ * Obsidian's default dark theme — its own palette, not the desktop's, the way
+ * Codium and Chromium keep theirs. Named after the variables Obsidian itself
+ * uses (background-primary, text-muted, interactive-accent, …).
+ */
+.obs {
+  --obs-bg: #1e1e1e;
+  --obs-bg-2: #262626;
+  --obs-border: #363636;
+  --obs-text: #dadada;
+  --obs-muted: #b3b3b3;
+  --obs-faint: #666666;
+  --obs-accent: #a882ff;
+  --obs-hover: rgba(255, 255, 255, 0.075);
+  --obs-active: rgba(255, 255, 255, 0.12);
+
+  /* The shared window buttons, in Obsidian's greys rather than the theme's. */
+  --win-btn-fg: var(--obs-muted);
+  --win-btn-hover-fg: var(--obs-text);
+  --win-btn-hover-bg: var(--obs-active);
+
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--obs-bg);
+  color: var(--obs-text);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
+}
+
+.obs--windowed {
+  height: 100%;
+}
+
+/* ── Title bar: the open tab, and the window's buttons ─────────────────── */
+
+.obs-titlebar {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  height: 38px;
+  padding: 0 4px 0 58px;
+  background: var(--obs-bg-2);
+  border-bottom: 1px solid var(--obs-border);
+}
+
+.obs-tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  align-self: flex-end;
+  width: 220px;
+  min-width: 0;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--obs-border);
+  border-bottom: none;
+  border-radius: 7px 7px 0 0;
+  margin-bottom: -1px;
+  background: var(--obs-bg);
+  color: var(--obs-text);
+}
+
+.obs-tab-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--obs-muted);
+  stroke-width: 1.8;
+}
+
+.obs-tab-title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ── Ribbon, sidebar, main ─────────────────────────────────────────────── */
+
+.obs-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.obs-ribbon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 50px;
+  padding-top: 8px;
+  background: var(--obs-bg-2);
+  border-right: 1px solid var(--obs-border);
+}
+
+.obs-ribbon-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  /* Muted rather than Obsidian's faint grey: these are the way into the graph,
+     and at #666 on the ribbon they were easy to miss. */
+  color: var(--obs-muted);
+  cursor: pointer;
+}
+
+.obs-ribbon-btn:hover {
+  background: var(--obs-hover);
+  color: var(--obs-text);
+}
+
+.obs-ribbon-btn--on {
+  color: var(--obs-text);
+}
+
+.obs-ribbon-icon {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.8;
+}
+
+.obs-sidebar {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 240px;
+  min-width: 0;
+  background: var(--obs-bg-2);
+  border-right: 1px solid var(--obs-border);
+}
+
+.obs-tree {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--obs-border) transparent;
+  user-select: none;
+}
+
+.obs-file,
+.obs-folder {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 3px 8px 3px 10px;
+  border-radius: 5px;
+  color: var(--obs-muted);
+  /* Codium's explorer size, so the two trees read at the same scale. */
+  font-size: 14px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.obs-file:hover,
+.obs-folder:hover {
+  background: var(--obs-hover);
+  color: var(--obs-text);
+}
+
+.obs-file--current,
+.obs-file--current:hover {
+  background: var(--obs-active);
+  color: var(--obs-text);
+}
+
+.obs-file-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* The grey tag Obsidian puts on a file that is not a note. */
+.obs-file-ext {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--obs-active);
+  color: var(--obs-muted);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  line-height: 1.6;
+}
+
+.obs-folder {
+  margin-left: -4px;
+  padding-left: 4px;
+  color: var(--obs-text);
+}
+
+.obs-folder-chevron {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: var(--obs-faint);
+  transition: transform 0.12s ease;
+}
+
+.obs-folder-chevron--open {
+  transform: rotate(90deg);
+}
+
+/* A folder's children, indented, with the guide line down their left. */
+.obs-folder-children {
+  margin-left: 11px;
+  padding-left: 6px;
+  border-left: 1px solid var(--obs-border);
+}
+
+.obs-vault {
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--obs-border);
+  color: var(--obs-muted);
+  font-weight: 600;
+}
+
+.obs-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.obs-empty {
+  margin: auto;
+  color: var(--obs-faint);
+}
+
+/* ── Reading view ──────────────────────────────────────────────────────── */
+
+/*
+ * The note is Codium's markdown preview: `FileView` draws it inside
+ * `.vscode-md-area`, and the column, type, headings and code blocks are
+ * Content.css's, untouched. `.vscode-md-area` scrolls itself, so this is only
+ * the column that stacks the breadcrumb, which stays put, above it.
+ */
+.obs-reading {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The one thing restyled: links and inline code in Obsidian's own purple,
+   where Codium colours them with the desktop theme. */
+.obs-reading .vscode-md-area a,
+.obs-reading .vscode-md-area code {
+  color: var(--obs-accent);
+}
+
+/* A code block keeps Codium's plain text colour, as it does there. */
+.obs-reading .vscode-md-area pre code {
+  color: var(--fg);
+}
+
+.obs-crumbs {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 10px 16px 0;
+  color: var(--obs-faint);
+  font-size: 12px;
+}
+
+.obs-crumb + .obs-crumb::before {
+  content: "/";
+  margin-right: 6px;
+}
+
+.obs-crumb--note {
+  color: var(--obs-muted);
+}
+
+/* ── Graph view ────────────────────────────────────────────────────────── */
+
+.obs-graph {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  animation: obs-graph-in 0.35s ease-out;
+}
+
+.obs-graph-edge {
+  stroke: var(--obs-faint);
+  stroke-width: 0.003;
+  transition:
+    stroke 0.15s ease,
+    opacity 0.15s ease;
+}
+
+/* A written link is the stronger tie; a folder holding a note, the fainter. */
+.obs-graph-edge--link {
+  stroke: var(--obs-muted);
+  stroke-width: 0.0045;
+}
+
+.obs-graph-edge--folder {
+  stroke-dasharray: 0.012 0.01;
+}
+
+.obs-graph-node .obs-graph-dot {
+  fill: var(--obs-muted);
+  transition:
+    fill 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.obs-graph-hit {
+  fill: transparent;
+}
+
+/* A folder is a ring: part of the structure, not something to read. */
+.obs-graph-node--folder .obs-graph-dot {
+  fill: var(--obs-bg);
+  stroke: var(--obs-muted);
+  stroke-width: 0.005;
+}
+
+.obs-graph-node--file {
+  cursor: pointer;
+  outline: none;
+}
+
+.obs-graph-node text {
+  fill: var(--obs-muted);
+  font-family: inherit;
+  font-size: 0.034px;
+  text-anchor: middle;
+  /* The name is a target too: hovering it highlights the node, clicking it
+     opens the note. The whole box of the text, not just its glyphs, or the
+     highlight would flicker off in the gaps between letters. Firefox has no
+     `bounding-box`, keeps the line above, and takes the glyphs alone. */
+  pointer-events: visiblePainted;
+  pointer-events: bounding-box;
+  user-select: none;
+  transition: opacity 0.15s ease;
+}
+
+.obs-graph-node--current .obs-graph-dot {
+  fill: var(--obs-accent);
+}
+
+/* Hovering one node lights it and its neighbours and fades back the rest. */
+.obs-graph--focus .obs-graph-node:not(.obs-graph-node--lit) .obs-graph-dot,
+.obs-graph--focus .obs-graph-node:not(.obs-graph-node--lit) text,
+.obs-graph--focus .obs-graph-edge:not(.obs-graph-edge--lit) {
+  opacity: 0.2;
+}
+
+.obs-graph-edge--lit {
+  stroke: var(--obs-accent);
+}
+
+.obs-graph-node--hovered .obs-graph-dot,
+.obs-graph-node--file:focus-visible .obs-graph-dot {
+  fill: var(--obs-accent);
+}
+
+.obs-graph-node--folder.obs-graph-node--hovered .obs-graph-dot {
+  fill: var(--obs-bg);
+  stroke: var(--obs-accent);
+}
+
+.obs-graph-node--hovered text {
+  fill: var(--obs-text);
+}
+
+@keyframes obs-graph-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obs-graph {
+    animation: none;
+  }
+}

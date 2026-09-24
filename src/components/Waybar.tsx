@@ -19,6 +19,8 @@ interface WaybarProps {
   focusedApp: AppId | null;
   focusedTitle: string | null;
   onAppMenu: () => void;
+  /** Nothing open on this workspace: the launcher segment pulses to say so. */
+  empty: boolean;
 }
 
 /**
@@ -30,12 +32,9 @@ interface WaybarProps {
  */
 const WS_MAX_ICONS = 3;
 
-/**
- * The two segments the empty-workspace hint points at, named here so it can
- * quote them and they cannot drift apart.
- */
-export const HOST_LABEL = "tom@box";
-export const NO_WINDOW_LABEL = "Desktop";
+const HOST_LABEL = "tom@box";
+/** What the window-title segment says while no window is focused. */
+const NO_WINDOW_LABEL = "App Launcher";
 
 /** What the music module is "playing". */
 const RICKROLL_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
@@ -172,6 +171,7 @@ export function Waybar({
   focusedApp,
   focusedTitle,
   onAppMenu,
+  empty,
 }: WaybarProps) {
   const [now, setNow] = useState(() => new Date());
   const [ringing, setRinging] = useState(false);
@@ -276,7 +276,9 @@ export function Waybar({
 
         <Arrow from={FILL.tertiary} to={FILL.containerHigh} dir="r" />
         <button
-          className="wb-seg wb-on-surface wb-window wb-clickable"
+          // On an empty workspace this is the way to open something, so it
+          // pulses — the only thing on screen asking to be clicked.
+          className={`wb-seg wb-on-surface wb-window wb-clickable${empty ? " wb-window--pulse" : ""}`}
           onClick={onAppMenu}
           // It opens the launcher, so the label leads with that; the focused
           // window is on screen but would otherwise not be announced at all.

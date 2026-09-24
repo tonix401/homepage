@@ -26,7 +26,8 @@ export const SUBJECTS = [
 export type SubjectId = (typeof SUBJECTS)[number]["id"];
 
 export const SUBJECT_IDS: readonly SubjectId[] = SUBJECTS.map((s) => s.id);
-export const DEFAULT_SUBJECT: SubjectId = "arch";
+/** What a first visit shows. The list keeps the Arch logo first all the same. */
+export const DEFAULT_SUBJECT: SubjectId = "cat";
 export const SUBJECT_KEY = "homepage.wallpaper.v1";
 
 export function isSubjectId(value: unknown): value is SubjectId {
