@@ -12,13 +12,17 @@ import { editorApp } from "./editor";
 import { browserApp } from "./browser";
 import { terminalApp } from "./terminal";
 import { notesApp } from "./notes";
+import { monitorApp } from "./monitor";
+import { fetchApp } from "./fetch";
 
 export const APPS: Record<AppId, AppDefinition> = {
   editor: editorApp,
   browser: browserApp,
   terminal: terminalApp,
   notes: notesApp,
+  monitor: monitorApp,
+  fetch: fetchApp,
 };
 
 /** The order the launcher lists them in. */
-export const LAUNCHABLE: readonly AppDefinition[] = [editorApp, browserApp, terminalApp, notesApp];
+export const LAUNCHABLE: readonly AppDefinition[] = [editorApp, browserApp, notesApp, terminalApp, monitorApp, fetchApp];

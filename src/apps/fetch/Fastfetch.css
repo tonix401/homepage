@@ -1,0 +1,183 @@
+/*
+ * fastfetch in kitty, with the face jīzǐ has there too — the theme's primary
+ * on its darkest surface, see-through while tiled, 16px mono — and the keys
+ * in kitty's ANSI colours, as Tom's own fastfetch prints them.
+ */
+.ff {
+  /* The terminal's side padding, the gap between the logo and the info, and
+     how far the info's first column — the `╭──╮` rules — sits inside it. */
+  --ff-edge: 26px;
+  --ff-gap: 40px;
+  --ff-rule-inset: 24px;
+
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--theme-surface-lowest);
+  color: var(--theme-primary);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.ff--windowed {
+  height: 100%;
+  background: color-mix(in srgb, var(--theme-surface-lowest) 84%, transparent);
+}
+
+/* The column paints the editor's grey behind every window; see Terminal.css. */
+.arch-column:has(> .ff--windowed) {
+  background: transparent;
+}
+
+.ff-topline {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 34px;
+  padding: 4px 6px 0 26px;
+}
+
+.ff-host {
+  font-weight: 700;
+}
+
+.ff-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px var(--ff-edge) 20px;
+  scrollbar-width: none;
+}
+
+.ff-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.ff-arrow {
+  font-weight: 700;
+}
+
+.ff-body {
+  display: flex;
+  align-items: center;
+  gap: var(--ff-gap);
+  padding: 16px 0 18px;
+}
+
+/*
+ * Tom's logo: one hairline outline, as his template strokes it at 0.5 of 100.
+ * Centred in the space left of the info: the margin makes the gap from the
+ * terminal's edge to the logo the same as from the logo to the rules.
+ */
+.ff-logo {
+  flex: 0 1 300px;
+  min-width: 120px;
+  margin-left: calc(var(--ff-gap) + var(--ff-rule-inset) - var(--ff-edge));
+  height: auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.5;
+}
+
+.ff-info {
+  min-width: 0;
+}
+
+.ff-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 40px;
+  font-weight: 700;
+}
+
+.ff-group {
+  margin-top: 4px;
+}
+
+/* The `╭──╮` / `╰──╯` lines Tom's config draws round each group. They are
+   decoration, so they may be cut rather than wrap in a narrow window. */
+.ff-rule {
+  padding-left: var(--ff-rule-inset);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ff-row {
+  display: grid;
+  grid-template-columns: 18px 9ch 1.5ch minmax(0, 1fr);
+  align-items: center;
+  gap: 0 12px;
+  padding-left: 40px;
+  white-space: nowrap;
+}
+
+/* An icon beside a key is a few px larger than the 16px text. */
+.ff-icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}
+
+.ff-row .ff-icon {
+  color: inherit;
+}
+
+.ff-key {
+  font-weight: 700;
+}
+
+.ff-sep {
+  color: var(--theme-outline);
+}
+
+.ff-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ff-colors {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  padding-left: 40px;
+  font-size: 20px;
+}
+
+.ff-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  vertical-align: text-bottom;
+  background: currentColor;
+  animation: ff-blink 1.1s steps(1) infinite;
+}
+
+@keyframes ff-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* A narrow window has no room beside the logo: it goes above the info. */
+@media (max-width: 1100px) {
+  .ff--windowed .ff-body {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .ff--windowed .ff-logo {
+    flex: none;
+    width: 180px;
+    margin-left: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ff-cursor {
+    animation: none;
+  }
+}

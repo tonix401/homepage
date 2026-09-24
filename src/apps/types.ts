@@ -9,6 +9,7 @@
 
 import { type ReactNode } from "react";
 import { type AppId } from "./ids";
+import { type Desktop } from "../utils/desktop";
 
 /** The commands a window can issue about itself. Supplied by `App`. */
 export interface WindowHandle {
@@ -31,6 +32,13 @@ export interface AppRenderProps {
   /** True when this window fills the viewport (`state === "fullscreen"`). */
   maximized: boolean;
   handle: WindowHandle;
+  /**
+   * The whole desktop, to **read**: btop draws it as its process tree. It is
+   * the live object, frozen by convention — an app changes its own window
+   * through `handle` and never anything here, so the window manager stays
+   * the only writer.
+   */
+  desktop: Desktop;
 }
 
 export interface AppDefinition {

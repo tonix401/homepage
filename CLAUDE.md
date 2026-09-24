@@ -47,7 +47,7 @@ BrowserApp                 — the browser window, one instance per column
 ├── BookmarkBar            — the open folder as folders, plus `menuItems`
 └── FileView               — the same body renderer the editor uses
 
-TerminalApp                — jīzǐ, a terminal running a ranger-style file manager
+TerminalApp                — jīzǐ, a yazi-style file manager in a kitty window
 ├── top line               — user@host, the cursor's path, window buttons
 └── panes                  — parent dir | current dir | preview (raw text)
 
@@ -55,6 +55,12 @@ NotesApp                   — Obsidian: the open folder as a vault
 ├── ribbon                 — files and graph view toggles
 ├── file tree              — notes without `.md`, folders with indent guides
 └── reading view / GraphView — the note, or every note and folder linked
+
+BtopApp                    — btop: the desktop's window model as a process tree
+├── cpu / mem / net        — what the page measures about itself, graphed
+└── proc                   — systemd → Hyprland → workspaces → windows
+
+FastfetchApp               — fastfetch: the visitor's own browser, Tom's layout
 ```
 
 `App.tsx` owns one `Desktop` object and nothing else: it is the window
@@ -328,7 +334,8 @@ window renders bare, covering the bar, so **every app must put a restore button
 in its own title bar** — that is the only way back to the strip, and an app
 without one strands the workspace. Every current app has one (`Header`'s
 maximize button, `.brw-winbtn` in the browser's tab strip, and
-`src/components/WindowButtons.tsx` in jīzǐ's and Obsidian's title bars), and
+`src/components/WindowButtons.tsx` in the title bars of jīzǐ, Obsidian, btop and
+fastfetch), and
 the next app needs one too. Any app can reuse `WindowButtons` rather than
 drawing its own. They're in the theme's colours unless the app sets
 `--win-btn-fg`, `--win-btn-hover-fg` and `--win-btn-hover-bg`, as Obsidian
@@ -379,8 +386,10 @@ path; the terminal reads it as the path under its cursor, which may be a
 folder.
 
 Everything an app may do to its own window arrives as a `WindowHandle`
-(`setArg`, `close`, `toggleFullscreen`, `focus`, `open`), so no app ever reaches
-the desktop — or any window but its own. Each handle closes over its own id, so
+(`setArg`, `close`, `toggleFullscreen`, `focus`, `open`), so no app ever
+*changes* the desktop, or any window but its own. Apps can *read* it:
+`AppRenderProps.desktop` is the live `Desktop`, frozen by convention, which
+btop draws as its process tree. The window manager stays its only writer. Each handle closes over its own id, so
 a button always acts on the window it is in, never on whichever one happens to
 have focus. `render` must return an element of a *stable* component type — an
 inline closure would be a new type on every render, and React would remount the
@@ -445,6 +454,68 @@ Obsidian (`src/apps/notes/`, app id `notes`) treats the open folder as a vault.
   (nodes start round a circle, not at random), fitted into [-1, 1], so the
   graph looks the same on every visit. `GraphView` draws it in a viewBox of
   those units, so it scales to any window without being laid out again.
+
+btop (`src/apps/monitor/`, app id `monitor`) runs in the theme's colours,
+like jīzǐ, and keeps no payload of its own.
+- **proc:** `buildProcessTree` in `src/utils/processTree.ts` (pure, tested)
+  turns the `Desktop` into `systemd (init)` → `Hyprland` → every workspace
+  that holds a window (plus the one on screen) → its windows in strip order.
+  `flattenTree` draws btop's `├─`/`└─`/`[-]` guides and hides folded nodes.
+- **Pids:** a window's pid comes from the hex digits of its id (`pidFor`), so
+  it's stable for as long as the window is open.
+- **Terminal programs:** jīzǐ, btop and fastfetch run in kitty, so their window
+  is a `kitty` process with the program as its child, one pid along
+  (`WindowProcess.host`). The program keeps the window's id as its key, and
+  the focus mark.
+- **Command lines:** each window's is built from its record, e.g.
+  `codium README.md`.
+- **Keys:** `j`/`k` and the arrows select, `←`/`→` fold, climbing to the
+  parent on a folded node, and Space toggles. Only the focused window listens,
+  as in jīzǐ.
+- **cpu, mem and net show only what a page can measure about itself,** and say
+  so:
+  - cpu is the tab's main-thread load, the same `useSystemStats` the bar uses.
+  - mem is `performance.memory`, via `readHeap`.
+  - net is the bytes resource timing has seen downloaded.
+  - There is no per-core load, and no upload figure.
+- **Decoration:** the per-process threads, memory and cpu in the proc columns
+  are made up, like the bar's volume module. btop's own row is the exception:
+  it shows the real tab cpu.
+- **Graphs:** `brailleGraph` in `src/utils/brailleGraph.ts` draws them, two
+  readings per character across and four dots down, newest on the right.
+  Every reading lights at least the floor dot, so an idle graph is a line, as
+  btop's is. `Graph` measures its box with a `ResizeObserver` and asks for
+  exactly as many cells as fit.
+- **Sampling:** once a second, skipping hidden tabs, which also freezes the
+  graphs while the tab is in the background.
+
+fastfetch (`src/apps/fetch/`, app id `fetch`) copies the layout of your own
+fastfetch config (`~/.config/matugen/templates/colors-fastfetch.jsonc`):
+- **Layout:** your outlined Arch logo from the matugen `arch.svg`, then two
+  groups of keys between `╭──╮` / `╰──╯` rules, keys in the terminal's ANSI
+  colours, values in the theme's primary, and the colour circles.
+- **What it reports:** the *visitor's* browser, from what any page is told
+  without a permission prompt:
+  - User-Agent Client Hints and the user-agent string
+  - `hardwareConcurrency`
+  - the WebGL renderer
+  - `deviceMemory` and the JS heap
+  - `screen`, and a refresh rate measured from animation frames
+  - locale and time zone
+  - Resource Timing
+  - the Battery API
+  Nothing is sent anywhere. OS Age has no browser equivalent, so Locale takes
+  its place.
+- **Parsing:** in `src/utils/browserInfo.ts`, pure and tested: user agent to
+  OS and engine, ANGLE and OpenGL renderer strings to a GPU name,
+  refresh-rate snapping, and uptime wording.
+- **Timing:** like the real command it's a snapshot taken when the window
+  opens. Uptime counts from this tab's session start, not the page load:
+  `src/utils/sessionStart.ts` writes `homepage.started` to `sessionStorage` on
+  the first load (from `main.tsx`) and never overwrites it, so a reload keeps
+  counting and a new tab starts its own. btop's `up` reads the same value. The awaited fields (client hints, battery, refresh rate) fill in as
+  they arrive; a hidden tab gets no animation frames, so there the refresh
+  rate waits.
 
 **Adding an app:** an id in `src/apps/ids.ts`, an icon and name in
 `src/apps/icons.ts`, a definition folder under `src/apps/`, and an entry in

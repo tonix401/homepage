@@ -171,9 +171,10 @@ function App() {
         focused: window.id === focused?.id,
         maximized: desktop.fullscreen,
         handle,
+        desktop,
       });
     },
-    [handles, focused?.id, desktop.fullscreen],
+    [handles, focused?.id, desktop],
   );
 
   /** What each workspace holds, for the icons in its Waybar pill. */

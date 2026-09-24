@@ -1,0 +1,353 @@
+/*
+ * btop in a terminal: the theme's colours on its darkest surface, see-through
+ * while tiled so the wallpaper shows behind it, as jīzǐ does. The palette is
+ * how btop draws with a matugen theme — titles and meters in the primary, the
+ * frames in the outline, memory and network in the tertiary.
+ */
+.btop {
+  --btop-fg: var(--theme-on-surface);
+  --btop-dim: var(--theme-outline);
+  --btop-frame: var(--theme-outline-variant);
+  --btop-accent: var(--theme-primary);
+  --btop-second: var(--theme-tertiary);
+
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--theme-surface-lowest);
+  color: var(--btop-fg);
+  font-family: var(--font-mono);
+  /* jīzǐ's size, so the programs in kitty read alike. A tighter line than
+     jīzǐ's 26px, though: btop packs four boxes where jīzǐ has one list. */
+  font-size: 16px;
+  line-height: 1.5;
+  user-select: none;
+  container-type: inline-size;
+}
+
+.btop--windowed {
+  height: 100%;
+  background: color-mix(in srgb, var(--theme-surface-lowest) 84%, transparent);
+}
+
+/* The column paints the editor's grey behind every window; see Terminal.css. */
+.arch-column:has(> .btop--windowed) {
+  background: transparent;
+}
+
+.btop-topline {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 34px;
+  padding: 4px 6px 0 18px;
+  color: var(--btop-accent);
+}
+
+.btop-host {
+  font-weight: 700;
+}
+
+.btop-accent {
+  color: var(--btop-accent);
+  font-weight: 700;
+}
+
+.btop-num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.btop-note {
+  margin: 0;
+  color: var(--btop-dim);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* ── Layout: cpu across the top, mem and net down the left, proc the rest ── */
+
+.btop-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 9fr) minmax(0, 11fr);
+  grid-template-rows: minmax(0, 34fr) minmax(0, 33fr) minmax(0, 33fr);
+  grid-template-areas:
+    "cpu cpu"
+    "mem proc"
+    "net proc";
+  gap: 14px 10px;
+  padding: 12px 14px 14px;
+}
+
+/* A half-width window: the tree goes full width, where it is readable. */
+@container (max-width: 1000px) {
+  .btop-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 26fr) minmax(0, 48fr) minmax(0, 26fr);
+    grid-template-areas:
+      "cpu cpu"
+      "proc proc"
+      "mem net";
+  }
+
+  .btop-panel {
+    display: none;
+  }
+}
+
+/* ── Boxes ─────────────────────────────────────────────────────────────── */
+
+.btop-box {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 12px 8px;
+  border: 1px solid var(--btop-frame);
+  border-radius: 6px;
+}
+
+.btop-box--cpu { grid-area: cpu; }
+.btop-box--mem { grid-area: mem; }
+.btop-box--net { grid-area: net; }
+.btop-box--proc { grid-area: proc; }
+
+/* Set into the top edge, with the frame's background behind it so the line
+   breaks around the title, as btop's `┐¹cpu┌` does. */
+.btop-box-title,
+.btop-box-aside {
+  position: absolute;
+  top: -0.78em;
+  padding: 0 5px;
+  background: var(--theme-surface-lowest);
+  color: var(--btop-accent);
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.btop--windowed .btop-box-title,
+.btop--windowed .btop-box-aside {
+  /* Over the see-through window, a solid patch would show as a box; the
+     frame instead stops short, drawn by the title's own side borders. */
+  background: color-mix(in srgb, var(--theme-surface-lowest) 92%, transparent);
+  border-radius: 3px;
+}
+
+.btop-box-title {
+  left: 10px;
+}
+
+.btop-box-aside {
+  right: 10px;
+  font-weight: 400;
+}
+
+.btop-box-n {
+  margin-right: 1px;
+  color: var(--btop-fg);
+  font-weight: 400;
+}
+
+/* ── Graphs ────────────────────────────────────────────────────────────── */
+
+.btop-graph {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  line-height: 1;
+  white-space: pre;
+}
+
+.btop-graph > div {
+  height: 1em;
+}
+
+.btop-graph-probe {
+  position: absolute;
+  visibility: hidden;
+  line-height: 1;
+}
+
+.btop-graph--cpu { color: var(--btop-accent); }
+.btop-graph--net { color: var(--btop-second); }
+
+/* ── cpu ───────────────────────────────────────────────────────────────── */
+
+.btop-cpu {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 14px;
+}
+
+.btop-panel {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 360px;
+  padding: 8px 12px;
+  border: 1px solid var(--btop-frame);
+  border-radius: 5px;
+}
+
+.btop-panel-head,
+.btop-panel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.btop-label {
+  font-weight: 700;
+}
+
+.btop-up {
+  flex-shrink: 0;
+  color: var(--btop-fg);
+}
+
+.btop-meter {
+  letter-spacing: -0.12em;
+}
+
+.btop-meter-on {
+  color: var(--btop-accent);
+}
+
+.btop-meter-off {
+  color: var(--btop-frame);
+}
+
+.btop-meter--used .btop-meter-on { color: var(--btop-second); }
+
+/* ── mem ───────────────────────────────────────────────────────────────── */
+
+.btop-mem {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.btop-mem-row,
+.btop-mem-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.btop-mem-bar {
+  justify-content: flex-end;
+  color: var(--btop-dim);
+}
+
+/* ── net ───────────────────────────────────────────────────────────────── */
+
+.btop-net {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 12px;
+}
+
+.btop-net-stats {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  padding: 4px 10px;
+  border: 1px solid var(--btop-frame);
+  border-radius: 5px;
+}
+
+/* ── proc ──────────────────────────────────────────────────────────────── */
+
+/* The same columns in the header and in every row. */
+.btop-proc-head,
+.btop-proc-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 8ch 7ch 6ch 6ch;
+  gap: 0 8px;
+  padding: 0 6px;
+}
+
+.btop-proc-head {
+  flex-shrink: 0;
+  color: var(--btop-fg);
+  font-weight: 700;
+}
+
+.btop-col {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.btop-col--user {
+  text-align: left;
+}
+
+.btop-proc-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.btop-proc-list::-webkit-scrollbar {
+  display: none;
+}
+
+.btop-proc-row {
+  cursor: default;
+  white-space: pre;
+}
+
+.btop-proc-tree {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btop-proc-guides {
+  color: var(--btop-dim);
+}
+
+.btop-proc-args {
+  color: var(--btop-dim);
+}
+
+/* A workspace is part of the model, not a process: it reads as a heading. */
+.btop-proc-row--group .btop-proc-name {
+  color: var(--btop-second);
+  font-style: italic;
+}
+
+/* The window with focus, and the workspace on screen. */
+.btop-proc-row--current .btop-proc-name {
+  color: var(--btop-accent);
+  font-weight: 700;
+}
+
+.btop-proc-row--selected {
+  background: var(--theme-primary-container);
+  color: var(--theme-on-primary-container);
+}
+
+.btop-proc-row--selected .btop-proc-guides,
+.btop-proc-row--selected .btop-proc-args {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.btop-proc-foot {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 6px 0;
+  color: var(--btop-dim);
+}

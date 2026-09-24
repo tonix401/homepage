@@ -1,6 +1,6 @@
 /**
- * A terminal, as a window — running a ranger-style file manager over the open
- * folder, because a prompt with nothing to type into it is not much of an app.
+ * jīzǐ, a yazi-style file manager over the open folder, as a window — running
+ * in a kitty terminal, which is what the window draws as.
  *
  * Three panes, left to right: the parent directory with the current one
  * highlighted, the current directory with the cursor, and a preview of

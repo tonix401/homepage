@@ -45,13 +45,15 @@ export function formatBytes(bytes: number): string {
     : `${Math.round(bytes / 1e6)}MB`;
 }
 
-interface HeapInfo {
+export interface HeapInfo {
   usedJSHeapSize: number;
+  /** What the heap has actually claimed from the system, used or not. */
+  totalJSHeapSize: number;
   jsHeapSizeLimit: number;
 }
 
 /** `performance.memory` — Chromium only, and not on the standards track. */
-function readHeap(): HeapInfo | null {
+export function readHeap(): HeapInfo | null {
   const memory = (performance as Performance & { memory?: HeapInfo }).memory;
   return memory && typeof memory.usedJSHeapSize === "number" ? memory : null;
 }
