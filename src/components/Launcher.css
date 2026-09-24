@@ -120,7 +120,7 @@
 
 /*
  * The Themes and Wallpapers submenus (`PickerMenu`): a preview and a list,
- * split by a rule in the accent — the same pane divider kitty's file manager
+ * split by a rule in the accent — the same pane divider jizi's file manager
  * draws. The preview is the wallpaper as the highlighted choice would make it,
  * zoomed in on its subject, so the glow and gradient are part of the choice.
  */
@@ -163,7 +163,7 @@
   cursor: pointer;
 }
 
-/* The highlight is kitty's cursor, not the launcher's filled pill: this is a
+/* The highlight is jizi's cursor, not the launcher's filled pill: this is a
    list being browsed, and nothing happens until Enter. */
 .arch-picker-item--active {
   background: var(--theme-primary-container);

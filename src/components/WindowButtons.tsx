@@ -1,6 +1,6 @@
 /**
  * Maximize/restore and close, for an app that draws its own chrome in the
- * theme's colours — kitty today. A maximized window covers the bar, so this
+ * theme's colours — jizi today. A maximized window covers the bar, so this
  * restore button is the only way back to the strip, and every app has to carry
  * one. (Codium and Chromium keep their own, in their own look.)
  */

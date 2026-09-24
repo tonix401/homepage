@@ -47,7 +47,7 @@ BrowserApp                 — the browser window, one instance per column
 ├── BookmarkBar            — the open folder as folders, plus `menuItems`
 └── FileView               — the same body renderer the editor uses
 
-TerminalApp                — kitty running a ranger-style file manager
+TerminalApp                — jizi, a terminal running a ranger-style file manager
 ├── top line               — user@host, the cursor's path, window buttons
 └── panes                  — parent dir | current dir | preview (raw text)
 ```
@@ -168,7 +168,10 @@ memory ones are real measurements, taken by `src/utils/systemStats.ts`.
 Three segments do something. The Arch mark opens Codium — maximized, on its
 default page, reusing the focused window when that is already an editor rather
 than stacking up more; the window-title segment reports the focused window
-(`AppDefinition.title`) and opens the launcher; the keyboard segment cycles the
+(`AppDefinition.title`) and opens the launcher. Every app's title names the
+file it shows, as in `Homelab.md — Codium`: a window with no file set names
+the first file, because that's what it shows (`pageName` in
+`src/utils/files.ts`), and jizi names the entry under its cursor; the keyboard segment cycles the
 numerals (`WORKSPACE_LANGUAGES` lives in `src/utils/desktop.ts`).
 
 **Nothing in the bar has a `title`.** Every label is an `aria-label`, so the bar
@@ -316,7 +319,7 @@ window renders bare, covering the bar, so **every app must put a restore button
 in its own title bar** — that is the only way back to the strip, and an app
 without one strands the workspace. Every current app has one (`Header`'s
 maximize button, `.brw-winbtn` in the browser's tab strip, and
-`src/components/WindowButtons.tsx` in kitty's top line), and the next app
+`src/components/WindowButtons.tsx` in jizi's top line), and the next app
 needs one too. An app drawn in the theme can reuse `WindowButtons` rather than
 drawing its own.
 
@@ -486,7 +489,7 @@ The generator makes a few deliberate choices, each commented in the script:
 
 **Codium and Chromium are not themed.** They keep the VSCode and Chrome
 palettes in `App.css` and `Browser.css`, like real apps that ignore your GTK
-theme. The desktop chrome and kitty follow the theme.
+theme. The desktop chrome and jizi follow the theme.
 
 The theme and the wallpaper are both picked in the **launcher**, not by an app.
 

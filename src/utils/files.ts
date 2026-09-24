@@ -28,6 +28,19 @@ export function findFileByPath(nodes: TreeNode[], path: string): FileNode | null
   return null;
 }
 
+/**
+ * The name of the page a window with this payload is showing, for its title.
+ *
+ * `null` is not "nothing": the editor and the browser both show the first file
+ * for it, so the title names that file too. A path that is not in the tree
+ * keeps its own last segment — the browser shows its error page for exactly
+ * that name, and the title should agree with the address bar.
+ */
+export function pageName(nodes: TreeNode[], path: string | null): string | null {
+  const file = path === null ? findFirstFile(nodes) : findFileByPath(nodes, path);
+  return file?.name ?? path?.split("/").pop() ?? null;
+}
+
 /** Resolves a link written inside `fromPath` against the file it links from. */
 export function resolvePath(fromPath: string, href: string): string {
   const dir = fromPath.split("/").slice(0, -1);
