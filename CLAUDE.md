@@ -31,6 +31,7 @@ App
 │   ├── ArchStrip          — the scrolling row of windows
 │   │   └── .arch-column   — one window: APPS[app].render(…)
 │   └── Launcher           — the centred <dialog> app launcher
+│       └── PickerMenu     — its Themes / Wallpapers submenus: preview | list
 └── (maximized)            — one window, rendered bare, no desktop
 
 EditorApp                  — the VSCode window, one instance per column
@@ -76,7 +77,9 @@ the option. Selecting a file still expands its ancestors.
 **Nothing is in the URL.** The address bar stays `/` however many windows are
 open, on every workspace, in every language. The whole desktop is one object in
 `src/utils/desktop.ts`, mirrored to `sessionStorage` by `src/utils/session.ts`,
-and that is the only thing a reload has to restore:
+and that is the only thing a reload has to restore (besides the colour theme,
+which is a preference rather than layout and lives in `localStorage` — see
+Themes):
 
 ```ts
 interface Desktop {
@@ -312,8 +315,10 @@ layout and the first thing a later change is tempted to "fix".
 window renders bare, covering the bar, so **every app must put a restore button
 in its own title bar** — that is the only way back to the strip, and an app
 without one strands the workspace. Every current app has one (`Header`'s
-maximize button, `.brw-winbtn` in the browser's tab strip, `.term-winbtn` in
-the terminal's top line), and the next app needs one too.
+maximize button, `.brw-winbtn` in the browser's tab strip, and
+`src/components/WindowButtons.tsx` in kitty's top line), and the next app
+needs one too. An app drawn in the theme can reuse `WindowButtons` rather than
+drawing its own.
 
 Maximizing takes focus with it: the button belongs to a particular window, so
 pressing it on an unfocused one must maximize *that* window rather than
@@ -419,6 +424,117 @@ scored like VSCode's quick open) and file contents (case-insensitive
 substring). The corpus is a handful of files already in memory, so there is no
 index, worker or debounce.
 
+### Themes
+
+The desktop has five colour themes. Each is a Material-You palette that
+matugen generates from one source colour: blue `#0027a3` (the default, and the
+site's original look), teal, rose, amber and green. Everything in
+`src/themes/` belongs to them:
+
+- `palettes.ts` is **generated**. Run `npm run generate:themes`
+  (`scripts/generate-themes.ts`) and commit the output, because CI has no
+  matugen. The script calls matugen with `--dry-run`, and that flag is not
+  optional: without it matugen also renders your real templates and fires
+  their post-hooks, re-theming the machine the script runs on.
+- `theme.ts` puts the chosen palette on `<html>` as `--theme-*` custom
+  properties (`--theme-primary`, `--theme-surface-lowest`, …). Putting them on
+  the root is what lets them reach the bar, the launcher in the top layer, the
+  browser's portalled menus, and a maximized window, which renders outside the
+  desktop. The palette used to be scoped to `.waybar` and copied by value
+  wherever else it was needed.
+- `subjects.ts` defines what the wallpaper shows. The subject is picked
+  separately from the theme, so any subject works in any theme. There are two
+  styles, because the artwork comes in two:
+  - **Logos:** the Arch logo (the default, the original Inkscape drawing), Tux
+    and the Hyprland logo. They're filled with the theme's logo colour and
+    outlined in white. Tux and Hyprland are single-path 24×24 icons from
+    Simple Icons (16.32.0, CC0-1.0).
+  - **Drawings:** your cat, from `~/.config/matugen/templates/cat.svg`. It's
+    line art, stroked in the theme's primary exactly as the template strokes
+    it, with the eyes filled. Its elements were copied from the template
+    unchanged.
+  - **Placement:** every subject is fitted into a 100×69 box centred where the
+    Arch logo sits (x 184, y 98), and drawn at `SUBJECT_SIZE` (90%) of it. The
+    Arch logo keeps its own Inkscape placement, shrunk about that same centre.
+    Each one's outline, stroke and glow blur are divided by its own scale, so
+    only the shape changes size. Each subject also brings its own glow filter.
+  - **Glow region:** the filter's region is 50% of the subject's size on every
+    side. The Inkscape margin of about 14% cut the glow of a wide, flat drawing
+    off in a hard-edged box.
+  - **Adding a subject:** an icon in `ICONS` or a drawing in `DRAWINGS`, plus
+    an entry in `SUBJECTS`.
+- `wallpaper.ts` builds the wallpaper SVG for a theme and subject and hands it
+  to an `<img>` as a data URL. It isn't inline SVG: the glow is a large blur
+  filter that an image rasterizes once, and the inline previews would resolve
+  each other's `url(#…)` ids.
+- `preferences.ts` reads and writes both choices in `localStorage`,
+  `homepage.theme.v1` and `homepage.wallpaper.v1`. It falls back to the
+  default when storage is missing, blocked or full.
+
+Components keep their own variable names (`--wb-primary`, `--term-fg`,
+`--arch-window-border`, `--launcher-accent`) but define them from
+`var(--theme-*)`. Translucent tints are
+`color-mix(in srgb, var(--theme-primary) N%, transparent)`. A new colour
+belongs in a theme token, not in a literal.
+
+The generator makes a few deliberate choices, each commented in the script:
+- The bar's secondary is tone 90, not matugen's 80, which sits too close to
+  primary where the two segments meet.
+- Every derived logo is primary tone 25, the depth the original blue sits at.
+  The raw sources differ fivefold in brightness.
+- Blue keeps its hand-drawn logo and gradient exactly.
+
+**Codium and Chromium are not themed.** They keep the VSCode and Chrome
+palettes in `App.css` and `Browser.css`, like real apps that ignore your GTK
+theme. The desktop chrome and kitty follow the theme.
+
+The theme and the wallpaper are both picked in the **launcher**, not by an app.
+
+- **The rows:** the last rows of the app list, **Themes ›** and
+  **Wallpapers ›**, sit below a hairline. `SUBMENUS` in `Launcher.tsx` gives
+  each its own filter keywords: "colours" finds Themes; "tux" or "background"
+  finds Wallpapers.
+- **Opening one:** Enter, → or a click opens `PickerMenu` in the same panel,
+  laid out like a rofi wallpaper menu: a preview on the left, the choices on
+  the right.
+- **Browsing:** moving the highlight changes only the preview. That's the
+  wallpaper as the choice would leave it, zoomed in on the subject: a theme is
+  previewed with the current subject, and a subject in the current theme.
+- **Picking:** Enter or a click applies the choice and closes the launcher.
+- **Going back:** Esc or ← returns to the apps rather than closing. That's why
+  the list's Esc handler prevents the default, which would otherwise cancel
+  the dialog.
+- **Where they go:** apps never see either choice. Both go from `App` through
+  `ArchDesktop` to the launcher and the wallpaper, and everything else reads
+  the theme from CSS.
+
+The circle reveal runs on any wallpaper change, whether theme or subject:
+`Wallpaper` is keyed by the image URL, which `wallpaperUrl` memoizes per
+pair.
+
+**A theme change animates** over `THEME_TRANSITION` (0.8s).
+- **Colours:** `registerThemeProperties` registers every `--theme-*` token
+  with `CSS.registerProperty` as a `<color>`. An ordinary custom property is a
+  string and can only switch. A registered one interpolates, so a single
+  transition on `<html>` fades every border, pill and glyph that reads the
+  palette through `var()`, with no transition rule of their own.
+- **When the fade switches on:** `animateThemeChanges` sets that transition
+  two animation frames after mount, so a page load never fades in from the
+  registered defaults. A tab opened in the background doesn't get it until it
+  is shown. Reduced motion skips it.
+- **Wallpaper:** being an image, it can't interpolate, and it deliberately
+  doesn't fade. `ArchDesktop`'s `Wallpaper` keeps the old image underneath and
+  reveals the new one, once it has loaded, with a `clip-path` circle growing
+  from the centre of the screen. The circle ends at 72%: a percentage radius
+  is taken of the diagonal over √2, so reaching the corners takes 70.7%. The
+  old image is dropped on `animationend`. Keep the keyframe's duration in step
+  with `THEME_TRANSITION`.
+
+The choice is kept in **`localStorage`** (`homepage.theme.v1`), not the
+session. The window layout deliberately ends with the visit, but a theme is a
+preference, so a new visit comes back to it. `App` applies it in a layout
+effect, so the first paint is already in the stored theme.
+
 ### Static assets
 
 VSCode icons are in `public/images/` and referenced as `/images/<name>`. The project uses dark-variant SVGs (`*-dark.svg`) for folder and document icons, and `forward-tb.png` (rotated via CSS) as the expand/collapse caret.
@@ -454,6 +570,14 @@ Note: `documentation/CONFIGURATION.md` does not exist in this fork; skip it.
 - `src/utils/desktop.test.ts` — the reducer and invariant cases
 - `src/utils/session.test.ts` — the round-trip and rejection cases
 - `CLAUDE.md` — the Desktop state section above
+
+### The themes (`blue`, `teal`, …, the `--theme-*` tokens)
+- `scripts/generate-themes.ts` — `SOURCES`, and the token list in `tokensFor()`
+- `src/themes/palettes.ts` — regenerate with `npm run generate:themes`, never edit
+- `src/themes/theme.test.ts` — the theme ids, and blue's pinned values
+- `src/themes/subjects.ts` / `subjects.test.ts` — the wallpaper subjects and their ids
+- Every stylesheet that reads a token, when one is renamed or removed
+- `CLAUDE.md` — the Themes section above
 
 ### The app registry (`editor`, `browser`, …)
 - `src/apps/ids.ts` — `APP_IDS`, `DEFAULT_APP`

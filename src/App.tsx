@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import "./App.css";
 import { ArchDesktop } from "./components/ArchDesktop";
 import { ArchStage } from "./components/ArchStage";
@@ -22,6 +22,17 @@ import {
   type WorkspaceLanguage,
 } from "./utils/desktop";
 import { loadDesktop, saveDesktop } from "./utils/session";
+import {
+  animateThemeChanges,
+  applyTheme,
+  loadTheme,
+  registerThemeProperties,
+  saveTheme,
+} from "./themes/theme";
+import { loadSubject, saveSubject } from "./themes/subjects";
+
+// Before the first render, so the first theme is applied to registered colours.
+registerThemeProperties();
 
 /**
  * Runs every restored payload past its app. `session.ts` deliberately knows
@@ -45,6 +56,27 @@ function initialDesktop(): Desktop {
 
 function App() {
   const [desktop, setDesktop] = useState(initialDesktop);
+  const [theme, setTheme] = useState(loadTheme);
+  const [subject, setSubject] = useState(loadSubject);
+
+  // A layout effect, so the first paint is already in the stored theme rather
+  // than flashing the default one first.
+  useLayoutEffect(() => {
+    applyTheme(theme);
+    saveTheme(theme);
+  }, [theme]);
+
+  useEffect(() => saveSubject(subject), [subject]);
+
+  // Only once the first theme is on screen: turned on any earlier, the page
+  // would fade in from the registered defaults on every load. Two frames, so
+  // the first one has certainly been styled and painted in the stored theme.
+  useEffect(() => {
+    let id = requestAnimationFrame(() => {
+      id = requestAnimationFrame(() => animateThemeChanges());
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   const windows = useMemo(() => windowsOf(desktop), [desktop]);
   /** For the strip `ArchStage` keeps on screen while it slides away. */
@@ -166,6 +198,10 @@ function App() {
     <ArchDesktop
       workspace={desktop.workspace}
       language={desktop.language}
+      theme={theme}
+      onThemeChange={setTheme}
+      subject={subject}
+      onSubjectChange={setSubject}
       workspaceApps={workspaceApps}
       onWorkspaceChange={handleWorkspaceChange}
       onLanguageChange={handleLanguageChange}

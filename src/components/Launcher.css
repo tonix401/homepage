@@ -3,17 +3,15 @@
  * but the global reset in index.css zeroes every margin, so it has to be put
  * back here or the launcher lands in the top-left corner.
  *
- * The look is the compositor's own: the same accent the focused window is
- * outlined in (`--arch-window-border`, set on `.arch-desktop`), a monospace
- * face, and roomy rows with the selection drawn as a filled pill. A modal
- * dialog paints in the top layer but stays where it is in the DOM, so it is
- * still a child of `.arch-desktop` and inherits that variable — unlike the
- * browser's portalled menus, which had to be given their palette at `:root`.
+ * The look is the compositor's own: the theme's primary, which the focused
+ * window is outlined in too, a monospace face, and roomy rows with the
+ * selection drawn as a filled pill. The theme is on `<html>`, so the top layer
+ * a modal dialog paints in reaches it like everything else.
  */
 .arch-launcher {
-  --launcher-accent: var(--arch-window-border, #bac3ff);
-  --launcher-surface: #0b0d14;
-  --launcher-ink: #1c2150;
+  --launcher-accent: var(--theme-primary);
+  --launcher-surface: var(--theme-surface-lowest);
+  --launcher-ink: var(--theme-on-primary);
 
   width: min(460px, calc(100vw - 32px));
   margin: auto;
@@ -25,7 +23,7 @@
 }
 
 .arch-launcher::backdrop {
-  background: rgba(2, 4, 7, 0.55);
+  background: color-mix(in srgb, var(--theme-wall-outer) 55%, transparent);
   backdrop-filter: blur(3px);
 }
 
@@ -64,7 +62,7 @@
   max-height: 52vh;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(186, 195, 255, 0.25) transparent;
+  scrollbar-color: color-mix(in srgb, var(--theme-primary) 25%, transparent) transparent;
 }
 
 .arch-launcher-app {
@@ -97,12 +95,85 @@
   height: 31px;
   padding: 6px;
   border-radius: 8px;
-  background: rgba(186, 195, 255, 0.1);
+  background: color-mix(in srgb, var(--theme-primary) 10%, transparent);
   color: var(--launcher-accent);
 }
 
 .arch-launcher-app--active .arch-launcher-icon {
   background: var(--launcher-ink);
+}
+
+/* The way into a submenu rather than something to run: set apart from the
+   apps by a hairline, and marked with the chevron menus use for one. */
+.arch-launcher-submenu {
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px solid color-mix(in srgb, var(--theme-primary) 18%, transparent);
+}
+
+.arch-launcher-chevron {
+  margin-left: auto;
+  padding-right: 4px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+/*
+ * The Themes and Wallpapers submenus (`PickerMenu`): a preview and a list,
+ * split by a rule in the accent — the same pane divider kitty's file manager
+ * draws. The preview is the wallpaper as the highlighted choice would make it,
+ * zoomed in on its subject, so the glow and gradient are part of the choice.
+ */
+.arch-picker {
+  display: flex;
+  gap: 8px;
+  height: 188px;
+}
+
+.arch-picker-preview {
+  flex: 0 0 42%;
+  overflow: hidden;
+  border-radius: 9px;
+}
+
+.arch-picker-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 56%;
+  transform: scale(1.35);
+}
+
+.arch-picker-list {
+  flex: 1;
+  margin: 0;
+  padding: 0 0 0 10px;
+  border-left: 2px solid var(--launcher-accent);
+  list-style: none;
+  overflow-y: auto;
+  scrollbar-width: none;
+  outline: none;
+}
+
+.arch-picker-item {
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* The highlight is kitty's cursor, not the launcher's filled pill: this is a
+   list being browsed, and nothing happens until Enter. */
+.arch-picker-item--active {
+  background: var(--theme-primary-container);
+  color: var(--theme-on-primary-container);
+}
+
+/* The one that is on, marked for when the highlight has moved away. */
+.arch-picker-item--current::after {
+  content: " •";
+  opacity: 0.6;
 }
 
 .arch-launcher-empty {

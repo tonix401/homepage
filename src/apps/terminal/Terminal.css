@@ -2,21 +2,19 @@
  * One colour on a dark, see-through background, in the bar's monospace — a
  * terminal emulator with its opacity turned down, running a file manager.
  *
- * The colours are the desktop's matugen roles, the same palette Waybar.css
- * documents and the focused-window border uses: primary for text and rules,
- * primary_container behind the cursor with on_primary_container on it, and
- * surface_container_lowest underneath. They are repeated by value because
- * that palette is scoped to `.waybar`, and a maximized terminal renders
- * outside the desktop altogether. Re-run matugen as Waybar.css describes if
- * the wallpaper changes.
+ * The colours are the theme's (`src/themes/`), the palette the bar and the
+ * focused-window border use: primary for text and rules, primary_container
+ * behind the cursor with on_primary_container on it, and the lowest surface
+ * underneath. The theme is on `<html>`, so a maximized terminal — which
+ * renders outside the desktop — still has it.
  */
 .term {
-  --term-fg: #bac3ff; /* primary */
+  --term-fg: var(--theme-primary);
   --term-dim: color-mix(in srgb, var(--term-fg) 55%, transparent);
-  --term-cursor: #394379; /* primary_container */
-  --term-on-cursor: #dee1ff; /* on_primary_container */
-  --term-rule: #bac3ff; /* primary */
-  --term-bg: #0d0e13; /* surface_container_lowest */
+  --term-cursor: var(--theme-primary-container);
+  --term-on-cursor: var(--theme-on-primary-container);
+  --term-rule: var(--theme-primary);
+  --term-bg: var(--theme-surface-lowest);
 
   display: flex;
   flex-direction: column;
@@ -64,60 +62,6 @@
 
 .term-host {
   font-weight: 700;
-}
-
-.term-winbtns {
-  display: flex;
-  margin-left: auto;
-  align-self: stretch;
-}
-
-/* The same circle-behind-the-glyph hover as the browser's buttons. */
-.term-winbtn {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 100%;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--term-dim);
-  cursor: pointer;
-  transition: color 0.12s ease;
-}
-
-.term-winbtn::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  transition: background-color 0.12s ease;
-}
-
-.term-winbtn svg {
-  position: relative;
-  width: 11px;
-  height: 11px;
-}
-
-.term-winbtn:hover {
-  color: var(--term-on-cursor);
-}
-
-.term-winbtn:hover::before {
-  background-color: var(--term-cursor);
-}
-
-.term-winbtn--close:hover {
-  color: #fff;
-}
-
-.term-winbtn--close:hover::before {
-  background-color: #e81123;
 }
 
 /* ── The three panes ───────────────────────────────────────────────────── */

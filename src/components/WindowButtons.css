@@ -1,0 +1,54 @@
+.win-btns {
+  display: flex;
+  margin-left: auto;
+  align-self: stretch;
+}
+
+/* The same circle-behind-the-glyph hover as the browser's buttons, in the
+   theme's colours rather than Chrome's. */
+.win-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--theme-primary) 55%, transparent);
+  cursor: pointer;
+  transition: color 0.12s ease;
+}
+
+.win-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  transition: background-color 0.12s ease;
+}
+
+.win-btn svg {
+  position: relative;
+  width: 11px;
+  height: 11px;
+}
+
+.win-btn:hover {
+  color: var(--theme-on-primary-container);
+}
+
+.win-btn:hover::before {
+  background-color: var(--theme-primary-container);
+}
+
+.win-btn--close:hover {
+  color: #fff;
+}
+
+.win-btn--close:hover::before {
+  background-color: #e81123;
+}

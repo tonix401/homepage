@@ -1,8 +1,8 @@
 .arch-desktop {
-  /* The Waybar's primary role colour — see the palette note in Waybar.css */
-  --arch-window-border: #bac3ff;
+  /* The theme's primary, the colour the bar's own pills are filled with */
+  --arch-window-border: var(--theme-primary);
   /* What the compositor draws around a client that does not have focus */
-  --arch-window-border-idle: #3a3d4d;
+  --arch-window-border-idle: var(--theme-border-idle);
 
   --strip-gap: 10px;
   /* The bar is 42px tall and floats over the wallpaper, plus a 4px gap. */
@@ -30,17 +30,44 @@
 .arch-wallpaper {
   width: 100%;
   height: 100%;
-  background: #020407;
+  background: var(--theme-wall-outer);
   overflow: hidden;
   display: flex;
   position: relative;
   user-select: none;
 }
 
+/* Stacked, so a new wallpaper can fade in over the old one. */
 .arch-wallpaper-img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/*
+ * Hidden until it has loaded, then revealed over the one underneath by a
+ * circle growing from the middle of the screen — in the time the colours take
+ * to fade (`THEME_TRANSITION` in src/themes/theme.ts).
+ *
+ * A percentage radius in `circle()` is taken of the box's diagonal over √2, so
+ * reaching the corners from the centre needs √2⁄2 of it: 70.7%. 72% makes sure
+ * the last corner pixel is covered before the animation ends and the image
+ * underneath is dropped.
+ */
+.arch-wallpaper-img--in {
+  clip-path: circle(0% at 50% 50%);
+}
+
+.arch-wallpaper-img--in.arch-wallpaper-img--loaded {
+  animation: arch-wallpaper-in 0.8s ease-in-out forwards;
+}
+
+@keyframes arch-wallpaper-in {
+  to {
+    clip-path: circle(72% at 50% 50%);
+  }
 }
 
 /*
@@ -142,6 +169,13 @@
     transition: none;
     animation: none;
   }
+
+  /* A straight swap. The old image stays underneath, covered, until the next
+     change replaces it — there is no animation to end and drop it. */
+  .arch-wallpaper-img--in {
+    clip-path: none;
+    animation: none;
+  }
 }
 
 /*
@@ -184,16 +218,16 @@
 
 .arch-hint-card {
   padding: 13px 16px 14px;
-  border: 1px solid rgba(186, 195, 255, 0.18);
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 18%, transparent);
   border-radius: 14px;
-  background: rgba(13, 14, 19, 0.72);
+  background: color-mix(in srgb, var(--theme-surface-lowest) 72%, transparent);
   backdrop-filter: blur(8px);
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
 }
 
 .arch-hint-lead {
   margin: 0 0 11px;
-  color: #d7dae6;
+  color: var(--theme-on-surface);
   font-size: 13.5px;
 }
 
@@ -205,7 +239,7 @@
   align-items: center;
   gap: 7px 11px;
   margin: 0;
-  color: #9096a8;
+  color: var(--theme-outline);
   font-size: 12.5px;
 }
 
@@ -219,7 +253,7 @@
   display: block;
   padding: 2px 7px;
   border-radius: 6px;
-  background: rgba(186, 195, 255, 0.13);
+  background: color-mix(in srgb, var(--theme-primary) 13%, transparent);
   color: var(--arch-window-border);
   font-family: var(--font-mono);
   font-size: 12px;

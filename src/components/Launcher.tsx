@@ -1,6 +1,8 @@
 /**
  * The application launcher, in the middle of the screen the way rofi and wofi
- * put it: a filter box over a list of everything the registry can run.
+ * put it: a filter box over a list of everything the registry can run, and
+ * below the apps the Themes and Wallpapers entries, each of which opens its
+ * picker in the list's place.
  *
  * It is a native `<dialog>` opened with `showModal()`, which is where Escape,
  * the focus trap, the inertness of the desktop behind it, the dimmed backdrop
@@ -13,14 +15,54 @@ import { Icon } from "./Icon";
 import { APP_ICONS } from "../apps/icons";
 import { LAUNCHABLE } from "../apps/registry";
 import { type AppId } from "../apps/ids";
+import { PALETTES } from "../themes/palettes";
+import { type ThemeId } from "../themes/theme";
+import { SUBJECTS, type SubjectId } from "../themes/subjects";
+import { wallpaperUrl } from "../themes/wallpaper";
+import { PickerMenu } from "./PickerMenu";
 
 interface LauncherProps {
   open: boolean;
+  theme: ThemeId;
+  onThemeChange: (theme: ThemeId) => void;
+  subject: SubjectId;
+  onSubjectChange: (subject: SubjectId) => void;
   onLaunch: (app: AppId) => void;
   onClose: () => void;
 }
 
-export function Launcher({ open, onLaunch, onClose }: LauncherProps) {
+type Submenu = "themes" | "wallpapers";
+
+/** The rows below the apps, each a way into a submenu rather than an app. */
+const SUBMENUS: readonly { id: Submenu; name: string; icon: string; keywords: string[] }[] = [
+  {
+    id: "themes",
+    name: "Themes",
+    // A palette.
+    icon: "M12 3a9 9 0 1 0 0 18c.8 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.6-.4-1 0-.8.7-1.5 1.5-1.5H16a5 5 0 0 0 5-5c0-4.4-4-7.9-9-7.9M7.5 11.5h.01M9.5 7.5h.01M14.5 7.5h.01M17 11.5h.01",
+    keywords: ["themes", "colors", "colours"],
+  },
+  {
+    id: "wallpapers",
+    name: "Wallpapers",
+    // A framed picture.
+    icon: "M3 5h18v14H3zM3 16l5-5 5 5 3-3 5 5M15.5 9h.01",
+    keywords: ["wallpapers", "background", "tux", "penguin", "linux", "hyprland", "arch", "cat"],
+  },
+];
+
+/** One row of the launcher: an app, or the way into a submenu. */
+type Entry = { kind: "app"; id: AppId; name: string } | { kind: "submenu"; id: Submenu };
+
+export function Launcher({
+  open,
+  theme,
+  onThemeChange,
+  subject,
+  onSubjectChange,
+  onLaunch,
+  onClose,
+}: LauncherProps) {
   const dialog = useRef<HTMLDialogElement>(null);
 
   // `close()` on the way out matters: StrictMode double-invokes the effect,
@@ -48,27 +90,95 @@ export function Launcher({ open, onLaunch, onClose }: LauncherProps) {
     >
       {/* Mounted only while open, so the query and the selection start fresh
           each time rather than being reset by hand. */}
-      {open && <LauncherPanel onLaunch={onLaunch} onClose={onClose} />}
+      {open && (
+        <LauncherPanel
+          theme={theme}
+          onThemeChange={onThemeChange}
+          subject={subject}
+          onSubjectChange={onSubjectChange}
+          onLaunch={onLaunch}
+          onClose={onClose}
+        />
+      )}
     </dialog>
   );
 }
 
-function LauncherPanel({ onLaunch, onClose }: Omit<LauncherProps, "open">) {
+function LauncherPanel({
+  theme,
+  onThemeChange,
+  subject,
+  onSubjectChange,
+  onLaunch,
+  onClose,
+}: Omit<LauncherProps, "open">) {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
+  // A submenu replaces the list in the same panel rather than opening a
+  // second dialog, and the query survives the trip there and back.
+  const [view, setView] = useState<"apps" | Submenu>("apps");
 
   const needle = query.trim().toLowerCase();
-  const matches = needle
-    ? LAUNCHABLE.filter((app) => app.name.toLowerCase().includes(needle))
-    : LAUNCHABLE;
+  const entries: Entry[] = [
+    ...LAUNCHABLE.filter((app) => app.name.toLowerCase().includes(needle)).map(
+      (app): Entry => ({ kind: "app", id: app.id, name: app.name }),
+    ),
+    ...SUBMENUS.filter((menu) => menu.keywords.some((word) => word.includes(needle))).map(
+      (menu): Entry => ({ kind: "submenu", id: menu.id }),
+    ),
+  ];
   // Derived rather than stored, so a shrinking list can never leave the
   // selection pointing past the end.
-  const selected = Math.min(active, Math.max(0, matches.length - 1));
+  const selected = Math.min(active, Math.max(0, entries.length - 1));
 
-  const launch = (app: AppId) => {
-    onLaunch(app);
+  const choose = (entry: Entry) => {
+    if (entry.kind === "submenu") {
+      setView(entry.id);
+      return;
+    }
+    onLaunch(entry.id);
     onClose();
   };
+
+  const back = () => setView("apps");
+
+  // Each preview is the wallpaper as that choice would leave it: a theme
+  // shown with the current subject, a subject in the current theme.
+  if (view === "themes") {
+    return (
+      <div className="arch-launcher-panel">
+        <PickerMenu
+          label="Themes"
+          items={PALETTES}
+          current={theme}
+          preview={(id) => wallpaperUrl(id, subject)}
+          onPick={(picked) => {
+            onThemeChange(picked);
+            onClose();
+          }}
+          onBack={back}
+        />
+      </div>
+    );
+  }
+
+  if (view === "wallpapers") {
+    return (
+      <div className="arch-launcher-panel">
+        <PickerMenu
+          label="Wallpapers"
+          items={SUBJECTS}
+          current={subject}
+          preview={(id) => wallpaperUrl(theme, id)}
+          onPick={(picked) => {
+            onSubjectChange(picked);
+            onClose();
+          }}
+          onBack={back}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="arch-launcher-panel">
@@ -85,31 +195,47 @@ function LauncherPanel({ onLaunch, onClose }: Omit<LauncherProps, "open">) {
         onKeyDown={(event) => {
           if (event.key === "ArrowDown") {
             event.preventDefault();
-            setActive(Math.min(selected + 1, matches.length - 1));
+            setActive(Math.min(selected + 1, entries.length - 1));
           } else if (event.key === "ArrowUp") {
             event.preventDefault();
             setActive(Math.max(selected - 1, 0));
           } else if (event.key === "Enter") {
             event.preventDefault();
-            const app = matches[selected];
-            if (app) launch(app.id);
+            const entry = entries[selected];
+            if (entry) choose(entry);
+          } else if (event.key === "ArrowRight" && entries[selected]?.kind === "submenu") {
+            // → into a submenu, the way a menu opens one — but only on such a
+            // row, so the caret still moves through the query everywhere else.
+            event.preventDefault();
+            choose(entries[selected]);
           }
         }}
       />
       <ul className="arch-launcher-list">
-        {matches.map((app, i) => (
-          <li key={app.id}>
-            <button
-              className={`arch-launcher-app${i === selected ? " arch-launcher-app--active" : ""}`}
-              onMouseMove={() => setActive(i)}
-              onClick={() => launch(app.id)}
-            >
-              <Icon className="arch-launcher-icon" path={APP_ICONS[app.id]} />
-              <span>{app.name}</span>
-            </button>
-          </li>
-        ))}
-        {matches.length === 0 && (
+        {entries.map((entry, i) => {
+          const menu = entry.kind === "submenu" ? SUBMENUS.find((m) => m.id === entry.id)! : null;
+          // Only the first submenu row draws the hairline; the rest sit with it.
+          const firstMenu = menu !== null && entries[i - 1]?.kind !== "submenu";
+          return (
+            <li key={entry.id} className={firstMenu ? "arch-launcher-submenu" : undefined}>
+              <button
+                className={`arch-launcher-app${i === selected ? " arch-launcher-app--active" : ""}`}
+                onMouseMove={() => setActive(i)}
+                onClick={() => choose(entry)}
+              >
+                <Icon
+                  className="arch-launcher-icon"
+                  path={entry.kind === "app" ? APP_ICONS[entry.id] : menu!.icon}
+                />
+                <span>{entry.kind === "app" ? entry.name : menu!.name}</span>
+                {menu && (
+                  <span className="arch-launcher-chevron" aria-hidden="true">›</span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+        {entries.length === 0 && (
           <li className="arch-launcher-empty">No applications</li>
         )}
       </ul>

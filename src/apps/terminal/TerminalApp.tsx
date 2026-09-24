@@ -23,6 +23,7 @@ import {
   moveCursor,
   parentOf,
 } from "../../utils/fileManager";
+import { WindowButtons } from "../../components/WindowButtons";
 import { type AppRenderProps } from "../types";
 
 /** The name in the prompt and the root's parent pane — the bar says tom@box. */
@@ -139,37 +140,7 @@ export function TerminalApp({ arg, focused, maximized, handle }: AppRenderProps)
         <span className="term-prompt">
           <span className="term-host">{USER}@{HOST}</span> {homePath(cursor?.path ?? dir)}
         </span>
-        {/* A maximized window covers the bar, so its own restore button is the
-            only way back to the strip. Every app has to carry one. */}
-        <div className="term-winbtns">
-          <button
-            className="term-winbtn"
-            onClick={handle.toggleFullscreen}
-            aria-label={maximized ? "Restore" : "Maximize"}
-            title={maximized ? "Restore" : "Maximize"}
-          >
-            {maximized ? (
-              <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1">
-                <path d="M3.5 3.5v-2h7v7h-2" />
-                <rect x="1.5" y="3.5" width="7" height="7" />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1">
-                <rect x="1.5" y="1.5" width="9" height="9" />
-              </svg>
-            )}
-          </button>
-          <button
-            className="term-winbtn term-winbtn--close"
-            onClick={handle.close}
-            aria-label="Close"
-            title="Close"
-          >
-            <svg viewBox="0 0 12 12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
-              <line x1="2" y1="2" x2="10" y2="10" /><line x1="10" y1="2" x2="2" y2="10" />
-            </svg>
-          </button>
-        </div>
+        <WindowButtons handle={handle} maximized={maximized} />
       </div>
 
       <div className="term-panes">
