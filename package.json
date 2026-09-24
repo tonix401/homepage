@@ -9,8 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "prepare:semantic": "node scripts/prepare-semantic-model.ts ./open_folder"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@vscode/codicons": "^0.0.45",

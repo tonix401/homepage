@@ -9,15 +9,6 @@ import {
   transformHtml,
 } from "../utils/pluginHelpers";
 import { langHintToFileType } from "../utils/fileTypes";
-import { chunkFile } from "../utils/chunk";
-import {
-  type ModelMeta,
-  type StaticModel,
-  centerVector,
-  createModel,
-  decodeWeights,
-  embed,
-} from "../utils/model2vec";
 
 export type { FileNode, FolderNode, MenuItem, TreeNode } from "./types";
 
@@ -332,92 +323,6 @@ function resolveActivityText(
   };
 }
 
-// ── semantic search ─────────────────────────────────────────────────────────
-
-const SEMANTIC_DIR = "public/semantic";
-
-/**
- * Loads the pruned embedding table produced by
- * `scripts/prepare-semantic-model.ts`. Returns `null` when it has not been
- * generated, which leaves the site with lexical search only.
- */
-function loadSemanticModel(): StaticModel | null {
-  const metaPath = resolve(SEMANTIC_DIR, "model.json");
-  const binPath = resolve(SEMANTIC_DIR, "model.bin");
-  if (!existsSync(metaPath) || !existsSync(binPath)) return null;
-
-  const meta: ModelMeta = JSON.parse(readFileSync(metaPath, "utf-8"));
-  const file = readFileSync(binPath);
-  const buffer = file.buffer.slice(
-    file.byteOffset,
-    file.byteOffset + file.byteLength,
-  ) as ArrayBuffer;
-  const { scales, quant } = decodeWeights(buffer);
-  return createModel(meta, scales, quant);
-}
-
-/**
- * Embeds every passage of every file at build time.
- *
- * Document vectors are computed with the same pruned table the browser
- * downloads, so queries and documents share one vector space even though the
- * table is a subset of the original model.
- */
-function buildEmbeddings(tree: TreeNode[], model: StaticModel): string {
-  const chunks: { path: string; line: number; endLine: number; text: string }[] = [];
-  const raw: Float32Array[] = [];
-
-  const visit = (nodes: TreeNode[]) => {
-    for (const node of nodes) {
-      if (node.kind === "folder") {
-        visit(node.children);
-        continue;
-      }
-      for (const chunk of chunkFile(node.path, node.content)) {
-        const vector = embed(model, chunk.embedText);
-        if (!vector) continue;
-        chunks.push({
-          path: chunk.path,
-          line: chunk.line,
-          endLine: chunk.endLine,
-          text: chunk.text,
-        });
-        raw.push(vector);
-      }
-    }
-  };
-  visit(tree);
-
-  // The corpus mean is the direction every passage shares; the browser
-  // subtracts it from the query too, so both sides live in the same space.
-  const mean = new Float32Array(model.dim);
-  for (const vector of raw) {
-    for (let d = 0; d < model.dim; d++) mean[d] += vector[d] / raw.length;
-  }
-
-  const quantized: number[] = [];
-  for (const vector of raw) {
-    const centered = centerVector(vector, mean) ?? vector;
-    // Unit vectors, so one global scale of 1/127 is enough; the browser
-    // renormalizes after dequantising.
-    for (const value of centered) quantized.push(Math.round(value * 127));
-  }
-
-  return [
-    `export const dim = ${model.dim};`,
-    `export const chunks = ${JSON.stringify(chunks)};`,
-    `export const mean = new Float32Array([${[...mean].map((v) => v.toFixed(6)).join(",")}]);`,
-    `export const vectors = new Int8Array([${quantized.join(",")}]);`,
-  ].join("\n");
-}
-
-const EMPTY_EMBEDDINGS = [
-  "export const dim = 0;",
-  "export const chunks = [];",
-  "export const mean = new Float32Array(0);",
-  "export const vectors = new Int8Array(0);",
-].join("\n");
-
 export function openFolderPlugin(
   options: OpenFolderPluginOptions = {},
 ): Plugin {
@@ -440,11 +345,9 @@ export function openFolderPlugin(
   const filesModuleId = "virtual:open-folder-files";
   const langsModuleId = "virtual:open-folder-langs";
   const configModuleId = "virtual:open-folder-config";
-  const embeddingsModuleId = "virtual:open-folder-embeddings";
   const resolvedFilesId = "\0" + filesModuleId;
   const resolvedLangsId = "\0" + langsModuleId;
   const resolvedConfigId = "\0" + configModuleId;
-  const resolvedEmbeddingsId = "\0" + embeddingsModuleId;
 
   return {
     name: "vite-plugin-open-folder",
@@ -652,7 +555,6 @@ export function openFolderPlugin(
       if (id === filesModuleId) return resolvedFilesId;
       if (id === langsModuleId) return resolvedLangsId;
       if (id === configModuleId) return resolvedConfigId;
-      if (id === embeddingsModuleId) return resolvedEmbeddingsId;
     },
 
     load(id) {
@@ -686,19 +588,6 @@ export function openFolderPlugin(
         return `export default [\n${imports}\n];`;
       }
 
-      if (id === resolvedEmbeddingsId) {
-        const model = loadSemanticModel();
-        if (!model) {
-          this.warn(
-            `Semantic search is disabled: ${SEMANTIC_DIR}/model.bin is missing.\n` +
-              `  The site still has lexical search over file names and contents.\n` +
-              `  Fix: run "npm run prepare:semantic" to generate the embedding table.`,
-          );
-          return EMPTY_EMBEDDINGS;
-        }
-        return buildEmbeddings(tree, model);
-      }
-
       if (id === resolvedConfigId) {
         const resolvedSearchBarText = resolveConfigSearchBarText(
           searchBarText,
@@ -730,7 +619,7 @@ export function openFolderPlugin(
         if (!inFolder && !isTextFile) return;
 
         const ids = inFolder
-          ? [resolvedFilesId, resolvedLangsId, resolvedConfigId, resolvedEmbeddingsId]
+          ? [resolvedFilesId, resolvedLangsId, resolvedConfigId]
           : [resolvedConfigId];
 
         for (const id of ids) {

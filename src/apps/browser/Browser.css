@@ -14,6 +14,7 @@
   --brw-field: #202124;
   --brw-fg: #e8eaed;
   --brw-fg-dim: #9aa0a6;
+  --brw-star: #fdd663;
 }
 
 .brw-layout {
@@ -231,9 +232,13 @@
   outline: none;
 }
 
-.brw-omnibox-star {
+/* Every page is a file in the open folder, and every file is on the bookmarks
+   bar, so the star is always in its bookmarked state. The stroke stays on
+   under the fill so the points keep their rounded joins. */
+.ui-icon.brw-omnibox-star {
   flex-shrink: 0;
-  color: var(--brw-fg-dim);
+  color: var(--brw-star);
+  fill: currentColor;
 }
 
 /* ── Bookmarks ─────────────────────────────────────────── */

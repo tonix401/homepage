@@ -1,0 +1,191 @@
+/*
+ * One colour on a dark, see-through background, in the bar's monospace — a
+ * terminal emulator with its opacity turned down, running a file manager.
+ *
+ * The colours are the desktop's matugen roles, the same palette Waybar.css
+ * documents and the focused-window border uses: primary for text and rules,
+ * primary_container behind the cursor with on_primary_container on it, and
+ * surface_container_lowest underneath. They are repeated by value because
+ * that palette is scoped to `.waybar`, and a maximized terminal renders
+ * outside the desktop altogether. Re-run matugen as Waybar.css describes if
+ * the wallpaper changes.
+ */
+.term {
+  --term-fg: #bac3ff; /* primary */
+  --term-dim: color-mix(in srgb, var(--term-fg) 55%, transparent);
+  --term-cursor: #394379; /* primary_container */
+  --term-on-cursor: #dee1ff; /* on_primary_container */
+  --term-rule: #bac3ff; /* primary */
+  --term-bg: #0d0e13; /* surface_container_lowest */
+
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--term-bg);
+  color: var(--term-fg);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 26px;
+  user-select: none;
+}
+
+/*
+ * In a column the frame sets the size, and the wallpaper shows through — the
+ * reason a tiling-WM terminal looks the way it does. The column paints the
+ * editor's grey behind every window, so it has to go for this one. A maximized
+ * window has no wallpaper behind it, so it keeps the solid background above.
+ */
+.term--windowed {
+  height: 100%;
+  background: rgb(from var(--term-bg) r g b / 0.84);
+}
+
+.arch-column:has(> .term--windowed) {
+  background: transparent;
+}
+
+/* ── Top line: where the cursor is, and the window's own buttons ────────── */
+
+.term-topline {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 34px;
+  padding: 4px 6px 0 26px;
+}
+
+.term-prompt {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.term-host {
+  font-weight: 700;
+}
+
+.term-winbtns {
+  display: flex;
+  margin-left: auto;
+  align-self: stretch;
+}
+
+/* The same circle-behind-the-glyph hover as the browser's buttons. */
+.term-winbtn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--term-dim);
+  cursor: pointer;
+  transition: color 0.12s ease;
+}
+
+.term-winbtn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  transition: background-color 0.12s ease;
+}
+
+.term-winbtn svg {
+  position: relative;
+  width: 11px;
+  height: 11px;
+}
+
+.term-winbtn:hover {
+  color: var(--term-on-cursor);
+}
+
+.term-winbtn:hover::before {
+  background-color: var(--term-cursor);
+}
+
+.term-winbtn--close:hover {
+  color: #fff;
+}
+
+.term-winbtn--close:hover::before {
+  background-color: #e81123;
+}
+
+/* ── The three panes ───────────────────────────────────────────────────── */
+
+/* ranger's proportions, near enough: a narrow parent, the listing, and the
+   preview taking what is left. */
+.term-panes {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) minmax(0, 7fr);
+  padding: 8px 16px 16px;
+}
+
+/* No scrollbars: a terminal has none, and `index.css` puts one on everything. */
+.term-pane {
+  position: relative;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 0 12px;
+  scrollbar-width: none;
+}
+
+.term-pane::-webkit-scrollbar {
+  display: none;
+}
+
+.term-pane + .term-pane {
+  border-left: 2px solid var(--term-rule);
+}
+
+.term-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.term-row {
+  padding: 0 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.term-row--folder {
+  font-weight: 700;
+}
+
+.term-row--cursor {
+  background: var(--term-cursor);
+  color: var(--term-on-cursor);
+}
+
+.term-empty {
+  padding: 0 12px;
+  color: var(--term-dim);
+}
+
+/* The one pane that holds prose, so the one place text is selectable. */
+.term-pane--preview {
+  padding-left: 24px;
+  user-select: text;
+}
+
+.term-preview-text {
+  margin: 0;
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

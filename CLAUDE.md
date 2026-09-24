@@ -10,8 +10,6 @@ npm run build      # tsc type-check + Vite production build
 npm run lint       # ESLint
 npm run preview    # serve the production build locally
 npm test           # Vitest (single run); npm run test:watch to watch
-
-npm run prepare:semantic   # regenerate public/semantic/ (needs network, see below)
 ```
 
 ## Architecture
@@ -47,6 +45,10 @@ BrowserApp                 — the browser window, one instance per column
 ├── tab strip / toolbar
 ├── BookmarkBar            — the open folder as folders, plus `menuItems`
 └── FileView               — the same body renderer the editor uses
+
+TerminalApp                — kitty running a ranger-style file manager
+├── top line               — user@host, the cursor's path, window buttons
+└── panes                  — parent dir | current dir | preview (raw text)
 ```
 
 `App.tsx` owns one `Desktop` object and nothing else: it is the window
@@ -309,9 +311,9 @@ layout and the first thing a later change is tempted to "fix".
 `fullscreen` is simply whether the focused one fills the viewport. A maximized
 window renders bare, covering the bar, so **every app must put a restore button
 in its own title bar** — that is the only way back to the strip, and an app
-without one strands the workspace. Both current apps have one (`Header`'s
-maximize button, `.brw-winbtn` in the browser's tab strip), and a third app
-needs one too.
+without one strands the workspace. Every current app has one (`Header`'s
+maximize button, `.brw-winbtn` in the browser's tab strip, `.term-winbtn` in
+the terminal's top line), and the next app needs one too.
 
 Maximizing takes focus with it: the button belongs to a particular window, so
 pressing it on an unfocused one must maximize *that* window rather than
@@ -353,7 +355,8 @@ modifier class would fix it for every app at once.
 An app is an `AppDefinition` in `src/apps/registry.tsx`: an id, a name, how it
 titles itself, how it cleans up a payload that came back out of storage, and
 how it renders into a column. A window is `{ app, arg }` and nothing more;
-`arg` is app-defined, and both current apps read it as a file path.
+`arg` is app-defined. The editor and browser read it as a file path; the
+terminal reads it as the path under its cursor, which may be a folder.
 
 Everything an app may do to its own window arrives as a `WindowHandle`
 (`setArg`, `close`, `toggleFullscreen`, `focus`, `open`), so no app ever reaches
@@ -388,6 +391,20 @@ menu is rendered *outside* `.brw-layout`, so the `--brw-*` palette is declared
 on `:root` — scoped to the layout it would resolve to nothing and the menus
 would come out transparent.
 
+The terminal is a ranger-style file manager, and its logic is pure and tested
+in `src/utils/fileManager.ts`. The directory it lists is not stored anywhere:
+it is the parent of the cursor's path, so `j`/`k` (and `h`/`l`, `g`/`G`, the
+arrows) are all `setArg`. The row it last sat on in each directory is kept
+in a ref, so `h` then `l` comes back to the same row. `l`/`Enter` on a file
+opens it with `handle.open`: HTML in the browser, everything else in the
+editor, the way a file manager picks the program for a file's type. Keys follow the editor's rule: a window-level listener that only
+the focused window installs, and it ignores keystrokes aimed at text fields.
+
+A tiled terminal is translucent, so the wallpaper shows through. `.arch-column`
+paints the editor's grey behind every window, so `Terminal.css` clears it with
+`.arch-column:has(> .term--windowed)`. A maximized window has no wallpaper
+behind it and keeps a solid background.
+
 **Adding an app:** an id in `src/apps/ids.ts`, an icon and name in
 `src/apps/icons.ts`, a definition folder under `src/apps/`, and an entry in
 `APPS`/`LAUNCHABLE`. Nothing in the desktop model, the strip or the bar changes. The
@@ -396,47 +413,11 @@ its own, or a maximized window of it has no way back to the strip.
 
 ### Search
 
-The header search bar is a quick-open (`src/components/QuickOpen.tsx`) with two
-layers:
-
-1. **Lexical** — `src/utils/search.ts`, a pure linear scan of file paths (fuzzy
-   subsequence) and file contents (substring). The corpus is a handful of files
-   already in memory, so there is no index, worker or debounce.
-2. **Semantic** — a [model2vec](https://github.com/MinishLab/model2vec) static
-   embedding model (`minishlab/potion-base-4M`) running in the browser. Static
-   embeddings are a token -> vector lookup table, so "inference" is tokenize,
-   mean-pool, normalize — no ONNX, no WASM, and the site stays fully static.
-
-Semantic hits appear in a separate "Related" section, and **only when lexical
-search returns fewer than `LEXICAL_ENOUGH` hits**. That gate is deliberate:
-measured on this corpus an off-topic query still reaches ~0.38 cosine while a
-fair question can sit at ~0.24, so the score cannot be used to decide relevance.
-It ranks well; it does not separate on-topic from off-topic. Alongside good
-exact matches the suggestions would be noise — in place of an empty result list
-they are the whole point.
-
-Pipeline:
-
-- `scripts/prepare-semantic-model.ts` downloads the model, prunes the 29,528
-  token vocabulary to the most frequent 16k plus every token in the corpus,
-  quantizes to int8, and writes `public/semantic/model.{json,bin}` (~2.1 MB).
-  **That output is committed**, so CI builds need no network. Re-run it after
-  adding content with a lot of new vocabulary.
-- The open-folder plugin chunks every file (`src/utils/chunk.ts`), embeds each
-  passage at build time with that same committed table, subtracts the corpus
-  mean, and emits `virtual:open-folder-embeddings`. Document vectors therefore
-  always match the current content without re-running the script.
-- `src/services/semantic.ts` lazily fetches the table on first interaction with
-  the search box, centers the query by the shipped mean, and ranks by cosine.
-- `src/utils/model2vec.ts` is the shared inference core, used by both the Node
-  build step and the browser. Its tokenizer is a port of HuggingFace's
-  `BertNormalizer` + `BertPreTokenizer` + `WordPiece`; `model2vec.test.ts`
-  checks it against 54 tokenizations captured from the Python library, because
-  query and document vectors must come from the same tokenizer to be
-  comparable.
-
-Semantic search disables itself (with a build warning) when
-`public/semantic/model.bin` is absent; lexical search still works.
+The header search bar is a quick-open (`src/components/QuickOpen.tsx`) over
+`src/utils/search.ts`: a pure linear scan of file paths (fuzzy subsequence,
+scored like VSCode's quick open) and file contents (case-insensitive
+substring). The corpus is a handful of files already in memory, so there is no
+index, worker or debounce.
 
 ### Static assets
 
@@ -466,13 +447,6 @@ When changing any of the following, update **all** listed locations together:
 - `documentation/CONFIGURATION.md` — the Options section (add/remove/update the option's entry)
 
 Note: `documentation/CONFIGURATION.md` does not exist in this fork; skip it.
-
-### The embedding model (`minishlab/potion-base-4M`, vocab size, quantization)
-- `scripts/prepare-semantic-model.ts` — `MODEL_ID`, `VOCAB_LIMIT`
-- `src/utils/model2vec.fixture.json` — regenerate if the tokenizer or vocabulary
-  changes, or `model2vec.test.ts` will fail against the old expectations
-- `public/semantic/model.{json,bin}` — re-run `npm run prepare:semantic`
-- `CLAUDE.md` — the Search section above
 
 ### The desktop shape (`Desktop`, `WorkspaceRecord`, `WindowRecord`)
 - `src/utils/desktop.ts` — the types, the reducers, `repairDesktop`, `WORKSPACE_COUNT`, `WORKSPACE_LANGUAGES`, `MAX_WINDOWS`

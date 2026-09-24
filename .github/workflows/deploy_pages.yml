@@ -21,8 +21,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
 
-      # Node 24 runs scripts/prepare-semantic-model.ts directly: it is
-      # TypeScript, and native type stripping is unflagged from Node 23.6.
       - name: Setup Node
         uses: actions/setup-node@v7.0.0
         with:
@@ -32,41 +30,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Runs before the model is regenerated, so the tokenizer test checks the
-      # committed table against the committed fixture, which are in step.
       - name: Test
         run: npm test
 
-      # ~15 MB of upstream weights. Cached so a deploy does not re-download
-      # them; bump the key to force a refetch.
-      - name: Cache upstream embedding model
-        uses: actions/cache@v6
-        with:
-          path: .model-cache
-          key: model2vec-potion-base-4M-v1
-
-      # Keeps the pruned vocabulary in step with the content, so words added
-      # since the last local run are still tokenized whole.
-      #
-      # This reaches out to huggingface.co. A failure is not fatal: the pruned
-      # table committed in public/semantic/ is a complete, working model, and
-      # the script writes its output only after every download and computation
-      # has succeeded, so a failed run leaves those committed files untouched.
-      # The deploy continues with them and annotates the run instead.
-      - name: Regenerate semantic search model
-        run: |
-          if npm run prepare:semantic; then
-            if git diff --quiet -- public/semantic; then
-              echo "Committed model is up to date."
-            else
-              echo "::notice title=Semantic model refreshed::New content introduced vocabulary the committed table lacked, so the deployed model was rebuilt. The deployed site is correct and nothing needs doing. Only local development still uses the older table; run 'npm run prepare:semantic' and commit it if you want them to match."
-            fi
-          else
-            echo "::warning title=Model regeneration failed::Could not reach Hugging Face. Deploying with the model committed in public/semantic/, which is complete but may lack vocabulary for recently added content."
-          fi
-
-      # Embeds every passage with whichever table is now in public/semantic/,
-      # so document vectors always match the content being deployed.
       - name: Build
         run: npm run build
 

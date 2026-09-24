@@ -3,8 +3,7 @@
  *
  * The whole corpus is a handful of files already in memory, so this is a plain
  * linear scan per keystroke — no index, no worker, no debounce. Keeping it
- * pure also keeps it testable and lets the semantic layer in
- * `src/services/semantic.ts` reuse the same result shape.
+ * pure also keeps it testable.
  */
 
 import { type FileNode, type TreeNode } from "../services/types";
@@ -36,17 +35,7 @@ export interface ContentHit {
   ranges: MatchRange[];
 }
 
-/** A passage whose meaning is close to the query, found by embedding. */
-export interface SemanticHit {
-  kind: "semantic";
-  file: FileNode;
-  line: number;
-  text: string;
-  /** Cosine similarity in [-1, 1]. */
-  score: number;
-}
-
-export type SearchHit = NameHit | ContentHit | SemanticHit;
+export type SearchHit = NameHit | ContentHit;
 
 const MAX_CONTENT_HITS_PER_FILE = 5;
 const MAX_CONTENT_HITS = 50;

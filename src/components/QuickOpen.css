@@ -96,16 +96,6 @@
   min-width: 0;
 }
 
-.vscode-quickopen-section {
-  padding: 6px 10px 2px;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--fg-muted);
-  border-top: 1px solid var(--border);
-  margin-top: 4px;
-}
-
 .vscode-quickopen-empty {
   padding: 8px 10px;
   font-size: 14px;
