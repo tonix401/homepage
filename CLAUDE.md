@@ -69,6 +69,11 @@ BtopApp                    — btop: the desktop's window model as a process tre
 └── proc                   — systemd → Hyprland → workspaces → windows
 
 FastfetchApp               — fastfetch: the visitor's own browser, Tom's layout
+
+KdenliveApp                — Kdenlive: the open folder as a video project you read
+├── ProjectBin             — folders and clips, each with its reading time
+├── Project Monitor        — the file under the playhead, in a 16:9 frame
+└── Timeline               — a track per folder, the clips end to end, the playhead
 ```
 
 `App.tsx` owns one `Desktop` object and nothing else: it is the window
@@ -205,7 +210,7 @@ result to `repairDesktop` for consistency. It stays `sessionStorage` on
 purpose: per tab, so two tabs are two independent desktops that cannot clobber
 each other's writes, and a layout does not outlive the visit that built it. A
 first visit, or a session from an older shape, gets `defaultDesktop()` — one
-editor on the first file, maximized. Bump `SESSION_KEY` when the shape changes.
+editor on the first file, tiled on workspace 1. Bump `SESSION_KEY` when the shape changes.
 
 Stale payloads are not `session.ts`'s problem: it must not import the file
 tree, so `App` maps every restored window through `AppDefinition.normalizeArg`,
@@ -402,7 +407,7 @@ in its own title bar** — that is the only way back to the strip, and an app
 without one strands the workspace. Every current app has one (`Header`'s
 maximize button, `.brw-winbtn` in the browser's tab strip, and
 `src/components/WindowButtons.tsx` in the title bars of jīzǐ, Obsidian, btop and
-fastfetch), and
+fastfetch, and in Kdenlive's menu bar), and
 the next app needs one too. Any app can reuse `WindowButtons` rather than
 drawing its own. They're in the theme's colours unless the app sets
 `--win-btn-fg`, `--win-btn-hover-fg` and `--win-btn-hover-bg`, as Obsidian
@@ -584,6 +589,37 @@ fastfetch config (`~/.config/matugen/templates/colors-fastfetch.jsonc`):
   they arrive; a hidden tab gets no animation frames, so there the refresh
   rate waits.
 
+Kdenlive (`src/apps/video/`, app id `video`) shows the open folder as a
+video project, in Breeze Dark. Its payload is the file under the playhead.
+- **Timeline:** `src/utils/timeline.ts` (pure, tested). Each file is a clip
+  as long as it takes to read: words at `WPM` (230), HTML without its markup,
+  never under `MIN_CLIP`. Each folder that holds files is a track, the root's
+  files one named after the root folder. The clips run end to end in the
+  Explorer's order, across the tracks, so the timeline is a Gantt chart of
+  reading the whole folder.
+- **The playhead follows the monitor's scroll.** Scrolling a file moves the
+  red line through its clip, and pressing or dragging on the timeline, the
+  monitor's ruler or a bin clip opens that file scrolled that far down.
+  `FileView` takes two optional props for this: `onScrollFraction` reports the
+  body's scroll as 0–1, and `seekRef` receives a function that scrolls it. An
+  HTML file's frame has a null origin, so `HTML_NAV_SCRIPT` posts `{scroll}`
+  out and takes `{seek}` from its parent, and a seek made before the frame
+  loads waits for `onLoad`.
+- **Play** advances the playhead frame by frame, which scrolls the file at
+  reading speed and rolls into the next clip. ◀◀ and ▶▶ are Kdenlive's
+  shuttle, not skips: each press plays that way at double the speed, up to
+  `MAX_RATE`, and a speed other than 1× shows beside the timecode. While it plays, the monitor's
+  scroll events are ignored: they are playback's own seeks coming back a
+  frame late, rounded to whole pixels, and would stall it. A wheel or a press
+  on the monitor pauses it instead.
+- **The monitor is memoized** (`MonitorView`) and gets only stable callbacks.
+  Playback re-renders the app every frame, and a markdown body is far too
+  expensive to rebuild at that rate.
+- **Keys:** Space plays, J / K / L rewind, pause and play forwards (as ◀◀,
+  ⏸ and ▶▶), Home and End go to either end, and ↑ and ↓ step between clips. Only the focused window listens.
+- **Decoration:** the menus, the layout tabs, the toolbar and the dock tabs.
+  The bin's search, the transport and the timeline's zoom all work.
+
 **Adding an app:** an id in `src/apps/ids.ts`, an icon and name in
 `src/apps/icons.ts`, a definition folder under `src/apps/`, and an entry in
 `APPS`/`LAUNCHABLE`. Nothing in the desktop model, the strip or the bar changes. The
@@ -671,9 +707,9 @@ The generator makes a few deliberate choices, each commented in the script:
   The raw sources differ fivefold in brightness.
 - Blue keeps its hand-drawn logo and gradient exactly.
 
-**Codium, Chromium and Obsidian are not themed.** They keep the VSCode, Chrome
-and Obsidian palettes in `App.css`, `Browser.css` and `Notes.css`, like real
-apps that ignore your GTK theme. The desktop chrome and jīzǐ follow the
+**Codium, Chromium, Obsidian and Kdenlive are not themed.** They keep the
+VSCode, Chrome, Obsidian and Breeze Dark palettes in `App.css`, `Browser.css`,
+`Notes.css` and `Kdenlive.css`, like real apps that ignore your GTK theme. The desktop chrome and jīzǐ follow the
 theme. The one exception is markdown in Codium and Chromium: links take the
 theme's primary and inline code its tertiary (`.vscode-md-area` in
 `Content.css`). Obsidian overrides both with its own purple, `--obs-accent`.

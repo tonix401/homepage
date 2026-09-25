@@ -6,7 +6,7 @@
  * can show the same page without inheriting the tab bar and breadcrumb.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useImperativeHandle, useRef, type Ref } from "react";
 import type { ThemedToken } from "shiki";
 import { type FileNode } from "../services/types";
 import { highlighterReady, langFromType } from "../services/highlighter";
@@ -22,6 +22,19 @@ export interface FileViewProps {
   mode: "preview" | "code";
   onNavigate?: (href: string) => void;
   resolveFile?: (fromPath: string, href: string) => FileNode | null;
+  /**
+   * How far down the body is scrolled, 0–1, whenever it scrolls — 0 for a body
+   * too short to scroll. Kdenlive's playhead follows it.
+   */
+  onScrollFraction?: (fraction: number) => void;
+  /** Receives a function that scrolls the body to a fraction of the way down. */
+  seekRef?: Ref<((fraction: number) => void) | null>;
+}
+
+/** How far down an element is scrolled, 0–1, or 0 when it cannot scroll. */
+function scrollFraction(el: HTMLElement): number {
+  const max = el.scrollHeight - el.clientHeight;
+  return max > 0 ? Math.min(el.scrollTop / max, 1) : 0;
 }
 
 // Replaces <link rel="stylesheet" href="..."> tags with inline <style> blocks
@@ -62,7 +75,17 @@ const HTML_NAV_SCRIPT =
   "e.preventDefault();" +
   "if(h.charAt(0)==='/'||h.indexOf(':')!==-1){window.open(h,'_blank','noopener');return;}" +
   "window.parent.postMessage({navigate:h},'*');" +
-  "});</script>";
+  "});" +
+  // Scroll position out and seeks in, for a host that follows the frame's
+  // scroll (Kdenlive's playhead): the frame has a null origin, so the parent
+  // cannot read or set its scroll itself. Seeks are taken only from the parent.
+  "function se(){return document.scrollingElement||document.documentElement}" +
+  "addEventListener('scroll',function(){var s=se(),m=s.scrollHeight-s.clientHeight;" +
+  "window.parent.postMessage({scroll:m>0?Math.min(s.scrollTop/m,1):0},'*');},{passive:true});" +
+  "addEventListener('message',function(e){if(e.source!==window.parent)return;" +
+  "var f=e.data&&e.data.seek;if(typeof f!=='number')return;" +
+  "var s=se();s.scrollTop=f*(s.scrollHeight-s.clientHeight);});" +
+  "</script>";
 
 function CodeBlock({ lang, code }: { lang: string; code: string }) {
   const [tokenLines, setTokenLines] = useState<ThemedToken[][] | null>(null);
@@ -117,9 +140,43 @@ function tokenStyle(token: ThemedToken): React.CSSProperties {
   return style;
 }
 
-export function FileView({ file, mode, onNavigate, resolveFile }: FileViewProps) {
+export function FileView({ file, mode, onNavigate, resolveFile, onScrollFraction, seekRef }: FileViewProps) {
   const [tokenLines, setTokenLines] = useState<ThemedToken[][] | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  // The markdown or source body, whichever is showing: the element that scrolls.
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  // A frame cannot take a seek before its document has loaded, so one asked
+  // for earlier waits here for `onLoad`.
+  const frameLoaded = useRef(false);
+  const pendingSeek = useRef<number | null>(null);
+
+  useImperativeHandle(seekRef, () => (fraction: number) => {
+    const frame = iframeRef.current;
+    if (frame) {
+      if (frameLoaded.current) frame.contentWindow?.postMessage({ seek: fraction }, "*");
+      else pendingSeek.current = fraction;
+      return;
+    }
+    const el = scrollerRef.current;
+    if (el) el.scrollTop = fraction * (el.scrollHeight - el.clientHeight);
+  }, []);
+
+  // A new srcDoc is a new document, which has to load before it takes a seek.
+  useEffect(() => {
+    frameLoaded.current = false;
+  }, [file, mode]);
+
+  const handleFrameLoad = () => {
+    frameLoaded.current = true;
+    if (pendingSeek.current !== null) {
+      iframeRef.current?.contentWindow?.postMessage({ seek: pendingSeek.current }, "*");
+      pendingSeek.current = null;
+    }
+  };
+
+  const handleScroll = onScrollFraction
+    ? (e: React.UIEvent<HTMLDivElement>) => onScrollFraction(scrollFraction(e.currentTarget))
+    : undefined;
 
   useEffect(() => {
     let cancelled = false;
@@ -140,27 +197,31 @@ export function FileView({ file, mode, onNavigate, resolveFile }: FileViewProps)
     };
   }, [file]);
 
-  // Listen for navigation postMessages from the HTML iframe.
+  // Listen for navigation and scroll postMessages from the HTML iframe.
   // Validates source so only our iframe can trigger navigation — several of
   // these are mounted at once as soon as the desktop holds several windows.
   useEffect(() => {
-    if (!onNavigate || file.type !== "html") return;
+    if ((!onNavigate && !onScrollFraction) || file.type !== "html") return;
 
     const handler = (e: MessageEvent) => {
       if (e.source !== iframeRef.current?.contentWindow) return;
       const href = e.data?.navigate;
-      if (typeof href === "string" && isSafeRelativeHref(href)) {
+      if (onNavigate && typeof href === "string" && isSafeRelativeHref(href)) {
         onNavigate(href);
+      }
+      const scroll = e.data?.scroll;
+      if (onScrollFraction && typeof scroll === "number" && Number.isFinite(scroll)) {
+        onScrollFraction(Math.min(Math.max(scroll, 0), 1));
       }
     };
 
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
-  }, [file, onNavigate]);
+  }, [file, onNavigate, onScrollFraction]);
 
   if (mode === "preview" && file.type === "md") {
     return (
-      <div className="vscode-md-area">
+      <div className="vscode-md-area" ref={scrollerRef} onScroll={handleScroll}>
         {/* Keyed by file so a switch rebuilds the note. Reused, a <video>
             takes the next note's poster but keeps playing the last note's
             source: media elements only read <source> when they are created. */}
@@ -208,6 +269,7 @@ export function FileView({ file, mode, onNavigate, resolveFile }: FileViewProps)
         srcDoc={HTML_NAV_SCRIPT + processed}
         sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
         title={file.name}
+        onLoad={handleFrameLoad}
       />
     );
   }
@@ -215,7 +277,7 @@ export function FileView({ file, mode, onNavigate, resolveFile }: FileViewProps)
   const lines = file.content.split("\n");
 
   return (
-    <div className="vscode-editor-area">
+    <div className="vscode-editor-area" ref={scrollerRef} onScroll={handleScroll}>
       <div className="vscode-line-numbers" aria-hidden="true">
         {lines.map((_, i) => (
           <div key={i} className="vscode-line-number">{i + 1}</div>

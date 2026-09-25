@@ -81,12 +81,13 @@ describe("makeWindow", () => {
 });
 
 describe("defaultDesktop", () => {
-  it("opens one editor on the first file, maximized — what `/` always showed", () => {
+  it("opens one editor on the first file, tiled on the first workspace", () => {
     const desktop = defaultDesktop();
     expect(windowsOf(desktop)).toEqual([
       expect.objectContaining({ app: "editor", arg: null }),
     ]);
-    expect(desktop.fullscreen).toBe(true);
+    expect(desktop.workspace).toBe(1);
+    expect(desktop.fullscreen).toBe(false);
     expect(focusedId(desktop)).toBe(windowsOf(desktop)[0].id);
   });
 });

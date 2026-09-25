@@ -94,8 +94,14 @@ export function ActivityBar({ activities, activePanel, onPanelChange }: Activity
         ))}
       </div>
       <div className="vscode-activity-bar-bottom">
-        <ImgButton title="Accounts" icon={accountIcon} onClick={() => {}} />
-        <ImgButton title="Manage" icon={settingsGearIcon} onClick={() => {}} />
+        {/* Decoration: there is no account to sign in to and nothing to
+            manage, so these are pictures of buttons rather than buttons. */}
+        <span className="vscode-activity-btn vscode-activity-btn--inert" aria-hidden="true">
+          <img src={accountIcon} alt="" />
+        </span>
+        <span className="vscode-activity-btn vscode-activity-btn--inert" aria-hidden="true">
+          <img src={settingsGearIcon} alt="" />
+        </span>
       </div>
     </div>
   );

@@ -1,0 +1,769 @@
+/*
+ * Kdenlive in Breeze Dark — its own palette, not the desktop's, the way
+ * Codium and Obsidian keep theirs. Named after Breeze's colour roles
+ * (window, view, button, highlight, …).
+ */
+.kd {
+  --kd-window: #232629;
+  --kd-button: #31363b;
+  --kd-view: #1b1e20;
+  --kd-border: #3c4146;
+  --kd-text: #eff0f1;
+  --kd-muted: #a1a9b1;
+  --kd-faint: #6e757c;
+  --kd-highlight: #3daee9;
+  --kd-hover: rgba(61, 174, 233, 0.16);
+  --kd-selected: rgba(61, 174, 233, 0.32);
+  --kd-badge: #5fcf80;
+  --kd-badge-text: #102015;
+  --kd-lane-current: #253a4a;
+  --kd-clip: #3b5873;
+  --kd-clip-border: #52799b;
+  --kd-playhead: #ed1515;
+  --kd-monitor-bg: #585858;
+
+  --win-btn-fg: var(--kd-muted);
+  --win-btn-hover-fg: var(--kd-text);
+  --win-btn-hover-bg: var(--kd-button);
+
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--kd-window);
+  color: var(--kd-text);
+  font-family: "Noto Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
+  user-select: none;
+}
+
+.kd--windowed {
+  height: 100%;
+}
+
+/* Decoration — everything drawn for the look that does nothing — sits a
+   little back from the controls that work, so what can be pressed stands out. */
+.kd-menus,
+.kd-layouts,
+.kd-toolbar,
+.kd-dock-tabs,
+.kd-bin-toolbar,
+.kd-select,
+.kd-tl-menu,
+.kd-tl-tools,
+.kd-tl-corner,
+.kd-track-chevron,
+.kd-track-icon,
+.kd-tl-status-mode {
+  opacity: 0.5;
+}
+
+/* ── Menu bar, with the layout switcher on the right ────────────────────── */
+
+.kd-menubar {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  height: 30px;
+  border-bottom: 1px solid var(--kd-border);
+}
+
+.kd-menus {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  padding-left: 4px;
+}
+
+.kd-menu {
+  padding: 4px 7px;
+  white-space: nowrap;
+}
+
+.kd-menu u {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.kd-layouts {
+  display: flex;
+  border-left: 1px solid var(--kd-border);
+}
+
+.kd-layout {
+  display: grid;
+  place-items: center;
+  padding: 0 18px;
+  color: var(--kd-muted);
+  white-space: nowrap;
+}
+
+.kd-layout--on {
+  background: var(--kd-button);
+  color: var(--kd-text);
+  box-shadow: inset 0 -2px 0 var(--kd-highlight);
+}
+
+.kd .win-btns {
+  margin-left: 0;
+}
+
+/* ── Main toolbar: decoration ───────────────────────────────────────────── */
+
+.kd-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--kd-border);
+  overflow: hidden;
+}
+
+.kd-tb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+
+.kd-tb--off {
+  color: var(--kd-faint);
+}
+
+.kd-tb:nth-child(4),
+.kd-tb:nth-child(9) {
+  margin-left: 8px;
+}
+
+.kd-tb-icon {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.6;
+}
+
+.kd-render-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #e0404a;
+}
+
+/* ── Docks: the bin and the monitor, each with its tabs underneath ──────── */
+
+.kd-upper {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 120px;
+  gap: 4px;
+  padding: 4px 4px 0;
+}
+
+.kd-dock {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.kd-dock--bin {
+  flex: 0 0 260px;
+}
+
+.kd-dock--monitor {
+  flex: 1;
+}
+
+.kd-dock-tabs {
+  display: flex;
+  flex-shrink: 0;
+  gap: 2px;
+  padding-top: 3px;
+  overflow: hidden;
+}
+
+.kd-dock-tab {
+  padding: 4px 10px;
+  border: 1px solid var(--kd-border);
+  border-top: none;
+  border-radius: 0 0 3px 3px;
+  color: var(--kd-muted);
+  white-space: nowrap;
+}
+
+.kd-dock-tab--on {
+  background: var(--kd-button);
+  color: var(--kd-text);
+}
+
+/* ── Project Bin ────────────────────────────────────────────────────────── */
+
+.kd-bin {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--kd-border);
+  background: var(--kd-view);
+}
+
+.kd-bin-toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 5px 6px;
+  background: var(--kd-window);
+}
+
+.kd-tool-icon {
+  width: 18px;
+  height: 18px;
+  padding: 2px;
+  border-radius: 3px;
+  stroke-width: 1.7;
+  color: var(--kd-text);
+}
+
+.kd-tool-icon--on {
+  background: var(--kd-selected);
+}
+
+.kd-bin-search {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 4px 6px;
+  padding: 0 6px;
+  border: 1px solid var(--kd-border);
+  border-radius: 3px;
+  background: var(--kd-window);
+}
+
+.kd-bin-search:focus-within {
+  border-color: var(--kd-highlight);
+}
+
+.kd-bin-search-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--kd-muted);
+}
+
+.kd-bin-search input {
+  flex: 1;
+  min-width: 0;
+  height: 24px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--kd-text);
+  font: inherit;
+}
+
+.kd-bin-tree {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 2px 0 6px;
+}
+
+.kd-bin-folder,
+.kd-bin-clip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 8px;
+  cursor: pointer;
+}
+
+.kd-bin-folder {
+  height: 24px;
+}
+
+.kd-bin-folder:hover,
+.kd-bin-clip:hover {
+  background: var(--kd-hover);
+}
+
+.kd-bin-chevron {
+  width: 13px;
+  height: 13px;
+  color: var(--kd-muted);
+  transition: transform 0.12s ease;
+}
+
+.kd-bin-chevron--open {
+  transform: rotate(90deg);
+}
+
+.kd-bin-folder-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.7;
+  color: var(--kd-highlight);
+}
+
+.kd-bin-clip {
+  height: 38px;
+  padding-left: 25px;
+}
+
+.kd-bin-clip--current {
+  background: var(--kd-selected);
+}
+
+.kd-bin-clip--current:hover {
+  background: var(--kd-selected);
+}
+
+/* A clip's thumbnail: a little black frame, as a clip with no video has. */
+.kd-bin-thumb {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 28px;
+  margin-left: 19px;
+  background: #000;
+  border: 1px solid var(--kd-border);
+}
+
+.kd-bin-thumb-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.4;
+  color: var(--kd-faint);
+}
+
+.kd-bin-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.kd-bin-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.kd-bin-duration {
+  color: var(--kd-muted);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+}
+
+/* ── Project Monitor ────────────────────────────────────────────────────── */
+
+.kd-monitor {
+  display: grid;
+  place-items: center;
+  flex: 1;
+  min-height: 0;
+  container-type: size;
+  background: var(--kd-monitor-bg);
+  border: 1px solid var(--kd-border);
+}
+
+/* The frame: 16:9, as large as fits, the grey round it letterboxing it. */
+.kd-frame {
+  display: flex;
+  flex-direction: column;
+  width: min(100cqw, 100cqh * 16 / 9);
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #000;
+  user-select: text;
+}
+
+.kd-frame .vscode-md-content {
+  padding: 22px 28px;
+}
+
+.kd-frame .vscode-html-area {
+  background: #000;
+}
+
+.kd-frame-empty {
+  margin: auto;
+  color: var(--kd-faint);
+}
+
+.kd-monitor-ruler {
+  position: relative;
+  flex-shrink: 0;
+  height: 14px;
+  margin-top: 2px;
+  border-bottom: 1px solid var(--kd-border);
+  background: repeating-linear-gradient(
+      to right,
+      var(--kd-faint) 0 1px,
+      transparent 1px 10%
+    )
+    bottom / 100% 5px no-repeat;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.kd-monitor-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  margin-left: -5px;
+  background: var(--kd-highlight);
+  pointer-events: none;
+}
+
+.kd-monitor-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  height: 42px;
+  padding: 0 4px;
+}
+
+.kd-select {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 24px;
+  padding: 0 6px 0 8px;
+  border: 1px solid var(--kd-border);
+  border-radius: 3px;
+  background: var(--kd-button);
+  white-space: nowrap;
+}
+
+.kd-select-caret {
+  width: 12px;
+  height: 12px;
+  color: var(--kd-muted);
+}
+
+.kd-select-mark {
+  width: 10px;
+  height: 3px;
+  background: var(--kd-highlight);
+}
+
+.kd-transport {
+  display: flex;
+}
+
+.kd-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--kd-text);
+  cursor: pointer;
+}
+
+.kd-icon-btn:hover {
+  background: var(--kd-hover);
+}
+
+.kd-icon-btn:focus-visible {
+  outline: 1px solid var(--kd-highlight);
+}
+
+/* The transport is the monitor's main control, so it runs larger than the
+   timeline's zoom buttons, which share `.kd-icon-btn`. */
+.kd-transport .kd-icon-btn {
+  width: 34px;
+  height: 34px;
+}
+
+.kd-transport-icon {
+  width: 21px;
+  height: 21px;
+  fill: currentColor;
+  stroke-width: 1.5;
+}
+
+.kd-timecode {
+  color: var(--kd-highlight);
+  font-size: 15px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The shuttle speed, beside the timecode, while it is anything but 1×. */
+.kd-rate {
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: var(--kd-button);
+  color: var(--kd-highlight);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+}
+
+/* ── Timeline ───────────────────────────────────────────────────────────── */
+
+.kd-timeline {
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+  min-height: 140px;
+  max-height: 48%;
+  margin-top: 6px;
+  border-top: 1px solid var(--kd-border);
+}
+
+.kd-tl-title {
+  flex-shrink: 0;
+  padding: 5px 8px 3px;
+}
+
+.kd-tl-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 8px;
+  border-bottom: 2px solid var(--kd-border);
+  overflow: hidden;
+}
+
+.kd-tl-tools {
+  display: flex;
+  gap: 6px;
+}
+
+.kd-tl-timecode {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.kd-tl-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.kd-tl-headers {
+  flex: 0 0 170px;
+  border-right: 1px solid var(--kd-border);
+}
+
+.kd-tl-corner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--kd-border);
+}
+
+.kd-track-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 46px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--kd-view);
+}
+
+.kd-track-head--current {
+  background: var(--kd-lane-current);
+}
+
+.kd-track-chevron {
+  width: 14px;
+  height: 14px;
+  color: var(--kd-muted);
+}
+
+.kd-track-badge {
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: var(--kd-badge);
+  color: var(--kd-badge-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.kd-track-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.kd-track-icon {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.6;
+  color: var(--kd-muted);
+}
+
+.kd-tl-scroll {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--kd-view);
+}
+
+.kd-tl-canvas {
+  position: relative;
+  min-width: 100%;
+  cursor: text;
+  touch-action: none;
+}
+
+/* The minor ticks along the bottom, five to a label; the Timeline sets
+   `--kd-tick` to their spacing. */
+.kd-ruler {
+  position: relative;
+  height: 30px;
+  /* The last label would hang past the project's end and widen the scroll. */
+  overflow: hidden;
+  border-bottom: 1px solid var(--kd-border);
+  background:
+    linear-gradient(to right, var(--kd-faint) 1px, transparent 1px) 0 100% / var(--kd-tick, 20px) 5px repeat-x,
+    var(--kd-window);
+  cursor: pointer;
+}
+
+.kd-ruler-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  padding: 3px 0 0 3px;
+  border-left: 1px solid var(--kd-muted);
+  color: var(--kd-text);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.kd-lane {
+  position: relative;
+  height: 46px;
+  border-bottom: 1px solid var(--kd-window);
+}
+
+.kd-lane--current {
+  background: var(--kd-lane-current);
+}
+
+.kd-clip {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  overflow: hidden;
+  border: 1px solid var(--kd-clip-border);
+  border-radius: 2px;
+  background: var(--kd-clip);
+}
+
+.kd-clip--current {
+  border-color: var(--kd-highlight);
+  box-shadow: inset 0 0 0 1px var(--kd-highlight);
+}
+
+.kd-clip-name {
+  display: block;
+  padding: 2px 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.kd-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  width: 1px;
+  background: var(--kd-playhead);
+  pointer-events: none;
+}
+
+/* The head: a triangle hanging in the ruler, as Kdenlive's does. */
+.kd-playhead::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  left: -5px;
+  border: 5px solid transparent;
+  border-top: 7px solid var(--kd-playhead);
+  border-bottom: none;
+}
+
+.kd-tl-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+  height: 30px;
+  padding: 0 8px;
+  border-top: 1px solid var(--kd-border);
+}
+
+.kd-tl-status-mode {
+  margin-right: auto;
+  padding-left: 170px;
+  color: var(--kd-muted);
+}
+
+.kd-zoom {
+  width: 110px;
+  accent-color: var(--kd-highlight);
+}
+
+/* ── Narrow columns ─────────────────────────────────────────────────────── */
+
+@container (max-width: 1000px) {
+  .kd-layouts,
+  .kd-tl-tools {
+    display: none;
+  }
+
+  .kd-dock--bin {
+    flex-basis: 210px;
+  }
+
+  .kd-tl-headers {
+    flex-basis: 130px;
+  }
+
+  .kd-tl-status-mode {
+    padding-left: 0;
+  }
+}
+
+@container (max-width: 760px) {
+  .kd-toolbar,
+  .kd-dock--bin,
+  .kd-dock-tabs,
+  .kd-select {
+    display: none;
+  }
+
+  .kd-track-icon {
+    display: none;
+  }
+}

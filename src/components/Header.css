@@ -48,7 +48,8 @@ button.vscode-menu-item {
   cursor: pointer;
 }
 
-.vscode-menu-item:hover {
+a.vscode-menu-item:hover,
+button.vscode-menu-item:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 

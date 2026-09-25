@@ -107,15 +107,15 @@ export function makeWindow(
 }
 
 /**
- * What a first visit shows: one editor on the first file, maximized. The same
- * thing `/` has always opened, now that there is no URL to say so.
+ * What a first visit shows: one editor on the first file, tiled on the first
+ * workspace, so the bar and the wallpaper are visible from the start.
  */
 export function defaultDesktop(): Desktop {
   const editor = makeWindow({ app: DEFAULT_APP, arg: null });
   return {
     workspace: DEFAULT_WORKSPACE,
     language: DEFAULT_LANGUAGE,
-    fullscreen: true,
+    fullscreen: false,
     workspaces: { [DEFAULT_WORKSPACE]: { windows: [editor.id], focus: editor.id } },
     windows: { [editor.id]: editor },
   };

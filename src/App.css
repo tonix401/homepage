@@ -43,6 +43,21 @@
   overflow: hidden;
 }
 
+/* ── Decoration ────────────────────────────────────────── */
+
+/* What is drawn for the look and does nothing — the app icon, a menu label
+   with nowhere to go, Accounts and Manage, the breadcrumb, the status bar,
+   the read-only commit box — sits a little back from the controls that work,
+   as in Kdenlive. The Commit button greys itself, as a disabled one. */
+.vscode-appicon,
+span.vscode-menu-item,
+.vscode-activity-btn--inert,
+.vscode-breadcrumb,
+.vscode-footer-item,
+.vscode-scm-message {
+  opacity: 0.5;
+}
+
 /* ── Panel placeholder ─────────────────────────────────── */
 
 .vscode-panel-placeholder {

@@ -25,6 +25,8 @@ export const APP_ICONS: Record<AppId, string> = {
   // A load trace, as btop's own graphs draw one.
   monitor: "M2 12h4l3-8 4 16 3-8h6",
   fetch: WINDOW,
+  // A clapperboard: the board, and its open clapper striped on top.
+  video: "M4 10h16v10H4zM4 10 3.3 6.2 18.6 3.5l.7 3.8M7.3 5.5 9.5 8.6M11.8 4.7l2.2 3.1",
 };
 
 /** The name the launcher lists and the title segment falls back to. */
@@ -37,4 +39,5 @@ export const APP_NAMES: Record<AppId, string> = {
   notes: "Obsidian",
   monitor: "btop",
   fetch: "fastfetch",
+  video: "Kdenlive",
 };

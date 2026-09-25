@@ -14,6 +14,7 @@ import { terminalApp } from "./terminal";
 import { notesApp } from "./notes";
 import { monitorApp } from "./monitor";
 import { fetchApp } from "./fetch";
+import { videoApp } from "./video";
 
 export const APPS: Record<AppId, AppDefinition> = {
   editor: editorApp,
@@ -22,7 +23,8 @@ export const APPS: Record<AppId, AppDefinition> = {
   notes: notesApp,
   monitor: monitorApp,
   fetch: fetchApp,
+  video: videoApp,
 };
 
 /** The order the launcher lists them in. */
-export const LAUNCHABLE: readonly AppDefinition[] = [editorApp, browserApp, notesApp, terminalApp, monitorApp, fetchApp];
+export const LAUNCHABLE: readonly AppDefinition[] = [editorApp, browserApp, notesApp, videoApp, terminalApp, monitorApp, fetchApp];

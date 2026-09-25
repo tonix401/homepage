@@ -48,13 +48,14 @@ const PROCESSES: Record<AppId, { name: string; threads: number; mem: number; inK
   notes: { name: "obsidian", threads: 22, mem: 291 * MB },
   monitor: { name: "btop", threads: 1, mem: 6.2 * MB, inKitty: true },
   fetch: { name: "fastfetch", threads: 1, mem: 4.1 * MB, inKitty: true },
+  video: { name: "kdenlive", threads: 41, mem: 468 * MB },
 };
 
 /** The terminal the TUI programs run in, and what it claims to use. */
 const KITTY = { name: "kitty", threads: 10, memBytes: 58 * MB };
 
 /** The apps whose payload is a file, and that show the first file for none. */
-const FILE_APPS: readonly AppId[] = ["editor", "browser", "notes"];
+const FILE_APPS: readonly AppId[] = ["editor", "browser", "notes", "video"];
 
 /** btop's own byte formatting: "382M", "6.2M", "1.4G". */
 function formatMem(bytes: number): string {

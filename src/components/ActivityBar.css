@@ -45,7 +45,11 @@
   color: var(--fg);
 }
 
-.vscode-activity-btn:hover img {
+.vscode-activity-btn--inert {
+  cursor: default;
+}
+
+.vscode-activity-btn:not(.vscode-activity-btn--inert):hover img {
   filter: invert(1) opacity(0.8);
 }
 
