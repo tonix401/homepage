@@ -161,7 +161,10 @@ export function FileView({ file, mode, onNavigate, resolveFile }: FileViewProps)
   if (mode === "preview" && file.type === "md") {
     return (
       <div className="vscode-md-area">
-        <div className="vscode-md-content">
+        {/* Keyed by file so a switch rebuilds the note. Reused, a <video>
+            takes the next note's poster but keeps playing the last note's
+            source: media elements only read <source> when they are created. */}
+        <div className="vscode-md-content" key={file.path}>
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeRaw]}

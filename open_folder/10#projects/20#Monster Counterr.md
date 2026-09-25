@@ -7,7 +7,7 @@
 ![Git](https://img.shields.io/badge/Git-F05032?logo=git&logoColor=fff)
 ![GitHub Copilot](https://img.shields.io/badge/Copilot-000?logo=githubcopilot&logoColor=fff)
 
-<video width="100%" controls loop muted poster="monster_counterr/thumbnail.png" key="monster_counter">
+<video width="100%" controls loop muted poster="monster_counterr/thumbnail.png">
   <source src="monster_counterr/demo.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>

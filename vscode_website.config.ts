@@ -1,4 +1,5 @@
 import { type OpenFolderPluginOptions } from "./src/services/FilesConverterService";
+import { type SeoOptions } from "./src/services/seo";
 
 export const configuration: OpenFolderPluginOptions = {
   folderPath: "./open_folder",
@@ -26,7 +27,7 @@ export const configuration: OpenFolderPluginOptions = {
       name: "Source Control",
       iconPath: "source-control",
       title: "SOURCE CONTROL",
-      textFile: "./activities/source-control.md",
+      panel: "source-control", // The site's own latest commits, read from git at build time
     },
     {
       name: "Run and Debug",
@@ -41,4 +42,24 @@ export const configuration: OpenFolderPluginOptions = {
       textFile: "./activities/extensions.md",
     },
   ],
+};
+
+/** What search engines and link previews are told; see src/services/seo.ts. */
+export const seo: SeoOptions = {
+  title: "Tom Weise",
+  description:
+    "Tom Weise, web developer and dual informatics student at DHBW Lörrach. Projects, work experience and skills in an Arch Linux desktop in your browser.",
+  image: "og-image.png",
+  imageAlt: "An Arch Linux desktop with the site's README open in Codium",
+  locale: "en_US",
+  contentDir: "./open_folder",
+  person: {
+    name: "Tom Weise",
+    jobTitle: "Web Developer",
+    worksFor: { "@type": "Organization", name: "eschbach GmbH", url: "https://www.eschbach.com/" },
+    affiliation: { "@type": "CollegeOrUniversity", name: "DHBW Lörrach", url: "https://dhbw-loerrach.de/" },
+    knowsAbout: ["TypeScript", "React", "Vite", "C#", "Entity Framework", "Docker", "Arch Linux"],
+    knowsLanguage: ["de", "en", "ja", "zh"],
+    sameAs: ["https://github.com/tonix401"],
+  },
 };

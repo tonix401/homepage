@@ -38,7 +38,9 @@ EditorApp                  — the VSCode window, one instance per column
 ├── Header                 — title bar (menu, quick open, window buttons)
 ├── ActivityBar
 ├── Sidebar
-│   └── Explorer           — recursive file tree with collapsible folders
+│   ├── Explorer           — recursive file tree with collapsible folders
+│   ├── SourceControl      — every commit of the site's own repo, as VSCode's graph
+│   └── CustomPanel        — any other activity's markdown
 ├── Content                — tab bar + breadcrumb + FileView
 └── Footer                 — status bar (file type, line count, encoding)
 
@@ -73,6 +75,29 @@ context, router library or global store.
 markdown, or the sandboxed HTML preview) with no editor chrome around it, which
 is what lets the browser show the same page the editor does. `Content.tsx` is
 the chrome — tab bar, preview/code toggle, breadcrumb — wrapped around it.
+
+The sidebar collapses the way VSCode's does: clicking the active panel's
+icon, Ctrl+B in the focused window, or the layout button in `Header` beside
+the window buttons. `sidebarOpen` is the editor window's own state, and a
+collapsed `Sidebar` is `hidden` rather than unmounted, so the explorer keeps
+its expanded folders.
+
+An activity in the config either shows markdown (`text`/`textFile`) or names
+one of the app's own panels with `panel`. The only one is `"source-control"`:
+`SourceControl` lists every commit from
+`virtual:git-log`, which `gitLogPlugin` (`src/services/gitLog.ts`) reads with
+`git log` at build time. The repository is private, so rows link nowhere —
+the message, hash, author and age are in each row's tooltip — and the first
+carries the branch. The dev server polls the
+reflog, since Vite does not watch `.git`, and reloads on a commit. Import only
+*types* from `gitLog.ts` in components, with `import type`: it imports
+`node:child_process`, and under `verbatimModuleSyntax` a plain
+`import { type … }` still loads the module in the browser bundle.
+
+`FileView` keys a markdown note's content by the file's path, so switching
+files rebuilds it. A reused `<video>` would take the next note's poster but
+keep playing the last note's source, since media elements only read their
+`<source>` children when they are created.
 
 `Explorer` manages its own `openFolders: Set<string>` state (folder paths as keys). Clicking a folder toggles it; clicking a file calls `onSelect`.
 
@@ -646,6 +671,37 @@ The choice is kept in **`localStorage`** (`homepage.theme.v1`), not the
 session. The window layout deliberately ends with the visit, but a theme is a
 preference, so a new visit comes back to it. `App` applies it in a layout
 effect, so the first paint is already in the stored theme.
+
+### SEO
+
+The site is one URL whose content only exists once React runs, so the build
+gives crawlers what they need without it. None of it is written by hand:
+
+- **The site's address** is `public/CNAME`, the file GitHub Pages already
+  needs for the custom domain. `seoPlugin` (`src/services/seo.ts`) reads it,
+  and fails the build if it is missing, rather than keeping a second copy.
+- **`<head>`:** `seoPlugin` injects the description, canonical URL, Open Graph
+  and Twitter tags, and schema.org `WebSite` + `Person` JSON-LD. What they say
+  lives in the `seo` export of `vscode_website.config.ts`, so a new job or
+  account is an edit there, not in `index.html`.
+- **`robots.txt` and `sitemap.xml`** are emitted by the same plugin at build
+  time; neither is in `public/`. The sitemap's `lastmod` is the date of the
+  last commit to touch the open folder, which is why the deploy workflow checks
+  out with `fetch-depth: 0` — a shallow clone would date it by whatever commit
+  happened to be HEAD, or not at all.
+- **`public/og-image.png`** is generated and committed:
+  `npm run generate:og` (`scripts/generate-og-image.ts`) starts its own Vite
+  server on a spare port, lays out the desktop (teal over the cat, Codium on
+  the README with its sidebar collapsed, alone and tiled) and captures
+  1200×630 with headless Chromium over the DevTools protocol. Re-run it when
+  the desktop's look changes.
+- **The open folder, prerendered:** `src/services/prerender.ts` renders every
+  markdown file into `#root` as plain HTML, from the open-folder plugin's
+  `transformIndexHtml`. React replaces it on mount, and until then `.prerender`
+  (in `index.html`'s own `<style>`) hides it the way screen-reader text is
+  hidden. Anything that would fetch while the page loads is dropped: images
+  become their alt text, and videos, styles and scripts go. Links between files
+  are unlinked, since a file has no URL a crawler could follow.
 
 ### Static assets
 

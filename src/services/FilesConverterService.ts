@@ -1,7 +1,13 @@
 import { type Plugin } from "vite";
 import { readdirSync, readFileSync, existsSync, statSync } from "fs";
 import { resolve, extname } from "path";
-import { type FileType, type MenuItem, type TreeNode } from "./types";
+import {
+  type BuiltinPanel,
+  type CustomActivity,
+  type FileType,
+  type MenuItem,
+  type TreeNode,
+} from "./types";
 import {
   KNOWN_PLACEHOLDERS,
   detectUnknownPlaceholders,
@@ -9,6 +15,7 @@ import {
   transformHtml,
 } from "../utils/pluginHelpers";
 import { langHintToFileType } from "../utils/fileTypes";
+import { prerenderTree } from "./prerender";
 
 export type { FileNode, FolderNode, MenuItem, TreeNode } from "./types";
 
@@ -18,6 +25,8 @@ export interface CustomActivityConfig {
   title: string;
   text?: string;
   textFile?: string;
+  /** Draw one of the app's own panels instead of `text` — e.g. the commits. */
+  panel?: BuiltinPanel;
 }
 
 export interface OpenFolderPluginOptions {
@@ -305,21 +314,17 @@ function readTree(
 function resolveActivityText(
   activity: CustomActivityConfig,
   root: string,
-): { name: string; iconPath: string; title: string; text: string } {
-  if (activity.textFile !== undefined) {
-    const absPath = resolve(root, activity.textFile);
-    return {
-      name: activity.name,
-      iconPath: activity.iconPath,
-      title: activity.title,
-      text: readFileSync(absPath, "utf-8"),
-    };
-  }
+): CustomActivity {
+  const text =
+    activity.textFile !== undefined
+      ? readFileSync(resolve(root, activity.textFile), "utf-8")
+      : (activity.text ?? "");
   return {
     name: activity.name,
     iconPath: activity.iconPath,
     title: activity.title,
-    text: activity.text ?? "",
+    text,
+    ...(activity.panel !== undefined && { panel: activity.panel }),
   };
 }
 
@@ -435,7 +440,21 @@ export function openFolderPlugin(
           );
         }
 
-        if (activity.text === undefined && activity.textFile === undefined) {
+        if (
+          activity.panel !== undefined &&
+          (activity.text !== undefined || activity.textFile !== undefined)
+        ) {
+          this.warn(
+            `Activity "${label}" specifies "panel" and also "text" or "textFile".\n` +
+              `  The built-in panel is drawn and the text is ignored. Remove one of them.`,
+          );
+        }
+
+        if (
+          activity.panel === undefined &&
+          activity.text === undefined &&
+          activity.textFile === undefined
+        ) {
           this.warn(
             `Activity "${label}" specifies neither "text" nor "textFile".\n` +
               `  The panel body will be empty.\n` +
@@ -632,7 +651,12 @@ export function openFolderPlugin(
     },
 
     transformIndexHtml(html) {
-      return transformHtml(html, websiteTitle, faviconPath);
+      const tree = readTree(resolve(folderPath), collapsedFolderPaths);
+      const content = prerenderTree(tree, websiteTitle ?? rootFolderName);
+      return transformHtml(html, websiteTitle, faviconPath).replace(
+        '<div id="root"></div>',
+        `<div id="root">${content}</div>`,
+      );
     },
   };
 }

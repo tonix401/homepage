@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "generate:themes": "node scripts/generate-themes.ts"
+    "generate:themes": "node scripts/generate-themes.ts",
+    "generate:og": "node scripts/generate-og-image.ts"
   },
   "dependencies": {
     "@vscode/codicons": "^0.0.45",

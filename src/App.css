@@ -16,6 +16,8 @@
   --activity-active-border: #007acc;
   --fg-match: #4daafc;
   --font-mono: "JetBrains Mono", monospace;
+  /* Codium's and Chromium's chrome take the GTK font, Adwaita Sans, a fork of Inter */
+  --font-ui: Inter, "Adwaita Sans", system-ui, sans-serif;
   --line-h: 19px;
   --font-editor: 13px;
 }
@@ -23,6 +25,7 @@
 /* ── Layout ────────────────────────────────────────────── */
 
 .vscode-layout {
+  font-family: var(--font-ui);
   display: flex;
   flex-direction: column;
   height: 100vh;

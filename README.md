@@ -1,40 +1,56 @@
-![screenshot](./screenshot.png)
+[![The desktop: Codium on the README, tiled under the Waybar](./public/og-image.png)](https://tomweise.dev)
 
-# vscode_website
+# homepage
 
-A browser-based file viewer that looks and like VSCode. Drop files into `src/open_folder/`, run the dev server, and you get a read-only VSCode-style interface — sidebar tree, tab bar, line numbers, syntax highlighting via Shiki, the whole thing.
+My personal site, live at **[tomweise.dev](https://tomweise.dev)**: an Arch Linux + Hyprland desktop in the browser, modelled on my own rice. Projects, work experience and skills are files in a folder, and you browse them with the apps I actually use.
 
-The idea is to embed it in a portfolio or project page so visitors can browse source files without leaving the browser.
+It started as a fork of [vscode_website](https://tonix401.github.io/vscode_website/), a read-only VSCode-style file viewer, and grew a window manager around it.
 
-**Preview for html and md files**
+## What's on the desktop
 
-A custom Vite plugin reads everything in `src/open_folder/` at build time and bundles it into a virtual module. No runtime file I/O, no server — the output is a fully static site. See the in-app documentation for a full breakdown.
+- **Waybar** — workspace pills with an icon per open window, the focused window's title, and cpu/memory modules that measure the tab itself
+- **niri-style window strip** — one window fills the screen, more scroll sideways; focus follows the mouse, and any window can be maximized
+- **Apps**, all reading the same open folder:
+  - **Codium** — explorer, tabs, Shiki highlighting, markdown/HTML preview, quick open, and a source-control panel that lists this repo's own commits
+  - **Chromium** — the files as pages, with the folder as a bookmarks bar
+  - **jīzǐ** — a yazi-style terminal file manager in a kitty window
+  - **Obsidian** — the folder as a vault, with a graph view
+  - **btop** — the desktop's windows as a process tree under systemd and Hyprland
+  - **fastfetch** — the visitor's own browser, in my fastfetch layout
+- **Launcher** — opens apps and picks one of five matugen-generated themes and four wallpapers
+- **Nothing in the URL** — the whole layout lives in `sessionStorage`, so a reload restores it and a new tab starts fresh; the theme is kept in `localStorage`
+
+## Content
+
+Everything the apps show is in [`open_folder/`](./open_folder). A Vite plugin reads it at build time and bundles it into a virtual module, so the output is a fully static site with no runtime file I/O. A `10#` style prefix sets the sort order and is hidden in the explorer.
+
+Titles, bookmarks, sidebar activities and the SEO metadata (description, Open Graph, JSON-LD) are configured in [`vscode_website.config.ts`](./vscode_website.config.ts). The build also prerenders the markdown into the HTML for crawlers and emits `robots.txt` and `sitemap.xml`.
 
 ## Getting started
 
 ```bash
-cd vscode_website  # go into the folder
-npm install        # install dependencies
-```
-then
-```bash
+npm install
+npm run dev        # dev server on port 8080
+npm test           # Vitest
+npm run lint       # ESLint
 npm run build      # type-check + production build
 npm run preview    # serve the build locally
 ```
-or
+
+Two generated files are committed, because CI has neither tool:
+
 ```bash
-npm run dev        # run the development server to get life updates, when you change anything
+npm run generate:themes   # src/themes/palettes.ts, needs matugen
+npm run generate:og       # public/og-image.png, needs chromium
 ```
 
-You ***need*** to adjust the base path in the vite.config.ts file to fit your setup
-
-## Demo and Documentation
-
-On this [page](https://tonix401.github.io/vscode_website/) you can see and play with a demo and read the documentation
+Pushing to `main` runs the tests, builds, and deploys to GitHub Pages; the custom domain comes from `public/CNAME`.
 
 ## Stack
 
 - React 19
+- TypeScript
 - Vite 8
 - Shiki (syntax highlighting)
-- TypeScript
+- react-markdown
+- Vitest

@@ -1,0 +1,166 @@
+.vscode-scm {
+  /* VSCode's defaults for the graph's first lane and for a branch's badge */
+  --scm-lane: #ffb000;
+  --scm-ref: #59a4f9;
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+  font-size: 13px;
+}
+
+.vscode-scm-commit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 12px 10px;
+}
+
+.vscode-scm-message {
+  resize: none;
+  overflow: hidden;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--bg-editor);
+  color: var(--fg);
+  font: inherit;
+}
+
+.vscode-scm-message::placeholder {
+  color: var(--fg-muted);
+}
+
+.vscode-scm-message:focus {
+  outline: 1px solid var(--activity-active-border);
+  outline-offset: -1px;
+}
+
+.vscode-scm-commit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 26px;
+  border: none;
+  border-radius: 2px;
+  background: #0e639c;
+  color: #fff;
+  font: inherit;
+  opacity: 0.5;
+}
+
+.vscode-scm-section {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 22px;
+  padding: 0 4px;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.vscode-scm-graph {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.vscode-scm-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px 0 12px;
+  color: var(--fg);
+  white-space: nowrap;
+  cursor: default;
+}
+
+.vscode-scm-row:hover {
+  background: var(--hover);
+}
+
+/* The graph's one lane: a line through every row and a dot on each commit.
+   HEAD's dot is hollow, and the line stops at the root commit. */
+.vscode-scm-lane {
+  position: relative;
+  align-self: stretch;
+  flex-shrink: 0;
+  width: 12px;
+}
+
+.vscode-scm-lane::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--scm-lane);
+}
+
+.vscode-scm-lane--head::before {
+  top: 50%;
+}
+
+.vscode-scm-lane--root::before {
+  bottom: 50%;
+}
+
+.vscode-scm-lane::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--scm-lane);
+}
+
+.vscode-scm-lane--head::after {
+  background: var(--bg-sidebar);
+  box-shadow: inset 0 0 0 2px var(--scm-lane);
+}
+
+.vscode-scm-subject {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vscode-scm-ref {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--scm-ref);
+  color: var(--bg-editor);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.vscode-scm-ref .codicon {
+  font-size: 12px;
+}
+
+.vscode-scm-empty {
+  margin: 8px 20px;
+  color: var(--fg-muted);
+}

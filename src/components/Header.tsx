@@ -15,6 +15,8 @@ interface HeaderProps {
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
   onClose: () => void;
+  sidebarOpen: boolean;
+  onToggleSidebar: () => void;
 }
 
 export function Header({
@@ -27,6 +29,8 @@ export function Header({
   isFullscreen,
   onToggleFullscreen,
   onClose,
+  sidebarOpen,
+  onToggleSidebar,
 }: HeaderProps) {
   return (
     <header className="vscode-header">
@@ -65,6 +69,15 @@ export function Header({
       </div>
 
       <div className="vscode-header-right">
+        <button
+          className="vscode-layout-btn"
+          aria-label="Toggle Primary Side Bar"
+          aria-pressed={sidebarOpen}
+          title="Toggle Primary Side Bar (Ctrl+B)"
+          onClick={onToggleSidebar}
+        >
+          <i className={`codicon codicon-layout-sidebar-left${sidebarOpen ? "" : "-off"}`} />
+        </button>
         <button
           className="vscode-winbtn vscode-winbtn--max"
           aria-label={isFullscreen ? "Restore" : "Maximize"}

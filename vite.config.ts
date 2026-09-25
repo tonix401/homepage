@@ -3,7 +3,9 @@ import { resolve } from "path";
 import { defineConfig, type Plugin, type ResolvedConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { openFolderPlugin } from "./src/services/FilesConverterService";
-import { configuration } from "./vscode_website.config";
+import { gitLogPlugin } from "./src/services/gitLog";
+import { seoPlugin } from "./src/services/seo";
+import { configuration, seo } from "./vscode_website.config";
 
 /**
  * Every route lives at `/?…`, so nothing here is load-bearing for links. It
@@ -36,6 +38,8 @@ export default defineConfig({
   plugins: [
     react(),
     openFolderPlugin(configuration),
+    seoPlugin(seo),
+    gitLogPlugin(),
     spaFallbackPlugin(),
   ],
 });

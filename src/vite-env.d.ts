@@ -12,6 +12,14 @@ declare module "virtual:open-folder-langs" {
   export default langs;
 }
 
+declare module "virtual:git-log" {
+  import { type Commit } from "./services/gitLog";
+  /** Every commit, newest first. */
+  export const commits: Commit[];
+  /** The checked-out branch, or null on a detached HEAD. */
+  export const branch: string | null;
+}
+
 declare module "virtual:open-folder-config" {
   import { type CustomActivity, type MenuItem } from "./services/types";
   export const searchBarText: string;

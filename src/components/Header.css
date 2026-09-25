@@ -103,6 +103,27 @@ button.vscode-menu-item {
   -webkit-app-region: no-drag;
 }
 
+/* VSCodium's layout control: a codicon in a small rounded square, set a
+   little apart from the window buttons. */
+.vscode-layout-btn {
+  width: 28px;
+  height: 24px;
+  margin-right: 6px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  color: var(--fg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vscode-layout-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 /*
  * The hover highlight is a circle behind the glyph, not the whole button box.
  * The box stays its full size so the target is still easy to hit — the circle

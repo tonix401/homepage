@@ -41,11 +41,15 @@ export interface FolderNode {
 
 export type TreeNode = FileNode | FolderNode;
 
+/** A panel the app draws itself, in place of an activity's markdown. */
+export type BuiltinPanel = "source-control";
+
 export interface CustomActivity {
   name: string;
   iconPath: string;
   title: string;
   text: string;
+  panel?: BuiltinPanel;
 }
 
 export interface MenuItem {

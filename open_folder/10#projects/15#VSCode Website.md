@@ -6,7 +6,7 @@
 ![Claude](https://img.shields.io/badge/Claude-D97757?logo=claude&logoColor=white)
 ![Git](https://img.shields.io/badge/Git-F05032?logo=git&logoColor=fff)
 
-<video width="100%" controls loop muted poster="vscode_website/thumbnail.png" key="vscode_website">
+<video width="100%" controls loop muted poster="vscode_website/thumbnail.png">
   <source src="vscode_website/demo.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>

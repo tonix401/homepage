@@ -18,6 +18,7 @@ import { ActivityBar, type Panel } from "../../components/ActivityBar";
 import { Sidebar } from "../../components/Sidebar";
 import { Explorer } from "../../components/Explorer";
 import { CustomPanel } from "../../components/CustomPanel";
+import { SourceControl } from "../../components/SourceControl";
 import { Content } from "../../components/Content";
 import { Footer } from "../../components/Footer";
 import { flattenFiles } from "../../utils/search";
@@ -26,6 +27,7 @@ import { type AppRenderProps } from "../types";
 
 export function EditorApp({ arg, focused, maximized, handle }: AppRenderProps) {
   const [activePanel, setActivePanel] = useState<Panel>("explorer");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   /** Bumped by Ctrl/Cmd+P; QuickOpen focuses its input when it changes. */
   const [focusSignal, setFocusSignal] = useState(0);
 
@@ -36,18 +38,37 @@ export function EditorApp({ arg, focused, maximized, handle }: AppRenderProps) {
     [arg],
   );
 
-  // Only the focused window answers the shortcut: with three editors open,
+  // Only the focused window answers the shortcuts: with three editors open,
   // one keystroke must not put the caret in all three search boxes.
   useEffect(() => {
     if (!focused) return;
     const handler = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() !== "p" || !(event.ctrlKey || event.metaKey)) return;
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
+      const key = event.key.toLowerCase();
+      if (key === "p") setFocusSignal((signal) => signal + 1);
+      else if (key === "b") setSidebarOpen((open) => !open);
+      else return;
       event.preventDefault();
-      setFocusSignal((signal) => signal + 1);
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [focused]);
+
+  // VSCode's rule: the active panel's own icon hides the sidebar, and any icon
+  // shows it again, opened on that panel.
+  const handlePanelChange = useCallback(
+    (panel: Panel) => {
+      if (sidebarOpen && panel === activePanel) {
+        setSidebarOpen(false);
+      } else {
+        setActivePanel(panel);
+        setSidebarOpen(true);
+      }
+    },
+    [sidebarOpen, activePanel],
+  );
+
+  const toggleSidebar = useCallback(() => setSidebarOpen((open) => !open), []);
 
   const handleSelect = useCallback((file: FileNode) => handle.setArg(file.path), [handle]);
 
@@ -78,18 +99,23 @@ export function EditorApp({ arg, focused, maximized, handle }: AppRenderProps) {
         isFullscreen={maximized}
         onToggleFullscreen={handle.toggleFullscreen}
         onClose={handle.close}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={toggleSidebar}
       />
       <div className="vscode-body">
         <ActivityBar
           activities={activities}
-          activePanel={activePanel}
-          onPanelChange={setActivePanel}
+          activePanel={sidebarOpen ? activePanel : null}
+          onPanelChange={handlePanelChange}
         />
-        <Sidebar>
+        <Sidebar open={sidebarOpen}>
           {activePanel === "explorer" && (
             <Explorer nodes={folderFiles} selectedFile={selectedFile} onSelect={handleSelect} />
           )}
-          {activeActivity && (
+          {activeActivity?.panel === "source-control" && (
+            <SourceControl title={activeActivity.title} />
+          )}
+          {activeActivity && activeActivity.panel === undefined && (
             <CustomPanel title={activeActivity.title} text={activeActivity.text} />
           )}
         </Sidebar>

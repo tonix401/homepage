@@ -24,7 +24,7 @@
   overflow: hidden;
   background: var(--brw-chrome);
   color: var(--brw-fg);
-  font-family: "Segoe UI", Tahoma, sans-serif;
+  font-family: var(--font-ui);
 }
 
 /* Inside a desktop column the frame sets the size, not the viewport. */
@@ -332,7 +332,7 @@
   background: var(--brw-chrome-high);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   color: var(--brw-fg);
-  font-family: "Segoe UI", Tahoma, sans-serif;
+  font-family: var(--font-ui);
 }
 
 .brw-menu-item {
