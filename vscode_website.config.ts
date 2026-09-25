@@ -6,7 +6,7 @@ export const configuration: OpenFolderPluginOptions = {
   rootFolderName: "TOM WEISE",
   searchBarText: "$website_title - $open_file",
   websiteTitle: "Tom Weise",
-  faviconPath: "./blue_dot.svg",
+  faviconPath: "./general/blue_dot.svg",
   foldersFirst: false,
   collapsedFolders: ["work experience"],
   menuItems: [
@@ -21,7 +21,7 @@ export const configuration: OpenFolderPluginOptions = {
       name: "Search", // The tooltip text for the activity button
       iconPath: "search", // The icon for the activity button (can be a codicon name or a file path)
       title: "SEARCH", // The title displayed in the panel header when this activity is active
-      textFile: "./activities/search.md", // The text displayed below the title (markdown supported)
+      panel: "search", // Searches every file's contents, like VSCode's Search view
     },
     {
       name: "Source Control",

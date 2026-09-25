@@ -80,6 +80,45 @@
   font-size: 11px;
 }
 
+/*
+ * Styled like the seal in the Extensions activity (CustomPanel.css). The gif's
+ * own subtitle is burned in at a size that is unreadable this small, so the
+ * image is cropped just above it and the line is drawn again as text. The
+ * maker's watermark along the top is cropped too; the credit is the tooltip.
+ */
+.vscode-debug-image {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.vscode-debug-image img {
+  display: block;
+  width: 100%;
+  /* Rows 10–236 of 280: the watermark above, the subtitle below */
+  aspect-ratio: 500 / 226;
+  object-fit: cover;
+  object-position: 50% calc(100% * 10 / 54);
+}
+
+.vscode-debug-image figcaption {
+  position: absolute;
+  right: 0;
+  bottom: 6px;
+  left: 0;
+  padding: 0 4px;
+  color: #fff;
+  font-size: 12px;
+  white-space: nowrap;
+  font-style: italic;
+  font-weight: 600;
+  text-align: center;
+  text-shadow:
+    0 0 3px #000,
+    0 1px 2px #000;
+}
+
 .vscode-debug-error {
   color: #f48771;
 }

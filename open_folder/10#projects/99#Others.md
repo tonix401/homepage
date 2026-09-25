@@ -1,11 +1,11 @@
 ## <a href="https://github.com/DHBWLoerrach/TIF24B_AnwProjekt_A" target="_blank" rel="noopener noreferrer">Domus</a>
 
-![React](https://img.shields.io/badge/React-%2320232a.svg?logo=react&logoColor=%2361DAFB)
-![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=fff)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
-![CSS](https://img.shields.io/badge/CSS-1572B6?logo=css&logoColor=fff)
-![Entity Framework](https://custom-icon-badges.demolab.com/badge/Entity%20Framework-512BD4?logo=dotnet&logoColor=white)
-![C#](https://custom-icon-badges.demolab.com/badge/C%23-%23239120.svg?logo=cshrp&logoColor=white)
+![React](badges/react-dark.svg)
+![Docker](badges/docker.svg)
+![TypeScript](badges/typescript.svg)
+![CSS](badges/css.svg)
+![Entity Framework](badges/entity-framework.svg)
+![C#](badges/csharp.svg)
 
 A self-hosted shared living management app, deployable via Docker. Manage shopping lists expenses and more comfortably
 
@@ -14,9 +14,9 @@ A self-hosted shared living management app, deployable via Docker. Manage shoppi
 
 ## <a href="https://github.com/akoSiThaesler/uniplanner3000" target="_blank" rel="noopener noreferrer">Uniplanner 3000</a>
 
-![HTML](https://img.shields.io/badge/HTML-E34C26?logo=html5&logoColor=fff)
-![CSS](https://img.shields.io/badge/CSS-1572B6?logo=css&logoColor=fff)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
+![HTML](badges/html.svg)
+![CSS](badges/css.svg)
+![TypeScript](badges/typescript.svg)
 
 A web app for managing university resources — teachers, courses, schedules, and more.
 
@@ -27,7 +27,7 @@ A web app for managing university resources — teachers, courses, schedules, an
 
 ## <a href="https://github.com/tonix401/quarrelships" target="_blank" rel="noopener noreferrer">Quarrelships</a>
 
-![Java](https://img.shields.io/badge/☕-Java-E34C26?labelColor=E34C26)
+![Java](badges/java.svg)
 
 A game of battleships in the form of a java desktop app with processing as the graphics library
 

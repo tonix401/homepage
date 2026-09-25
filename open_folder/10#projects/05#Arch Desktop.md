@@ -1,13 +1,13 @@
 ## <a href="https://github.com/tonix401/box-dots" target="_blank" rel="noopener noreferrer">Desktop and System Configuration</a>
 
-![Lua](https://img.shields.io/badge/Lua-%23000080.svg?logo=Lua&logoColor=white)
-![Python](https://img.shields.io/badge/Python-%233776AB.svg?logo=Python&logoColor=white)
-![Arch](https://img.shields.io/badge/Arch%20Linux-1793D1?logo=arch-linux&logoColor=fff)
-![Hyprland](https://img.shields.io/badge/Hyprland-%2358E1FF.svg?logo=Hyprland&logoColor=white)
-![Waybar](https://img.shields.io/badge/Waybar-%2358E1FF.svg?logo=Hyprland&logoColor=white)
-![Fish](https://img.shields.io/badge/Fish-%2334C534.svg?logo=FishShell&logoColor=white)
-![Rofi](https://img.shields.io/badge/Rofi-%23CFCF9E.svg)
-![Kitty](https://img.shields.io/badge/Kitty-%23343434.svg?)
+![Lua](badges/lua.svg)
+![Python](badges/python.svg)
+![Arch](badges/arch-linux.svg)
+![Hyprland](badges/hyprland.svg)
+![Waybar](badges/waybar.svg)
+![Fish](badges/fish.svg)
+![Rofi](badges/rofi.svg)
+![Kitty](badges/kitty.svg)
 
 <video width="100%" controls loop muted poster="arch/thumbnail.png">
   <source src="arch/demo.mp4" type="video/mp4">

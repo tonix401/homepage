@@ -84,7 +84,9 @@ function createDock(): { dock: HTMLElement; container: HTMLElement } {
     </div>
     <div class="debugger-dock-body"><div></div></div>`;
   bindResize(aside.querySelector<HTMLElement>(".debugger-dock-resize")!);
-  aside.querySelector(".debugger-dock-close")!.addEventListener("click", hideDebugger);
+  // Closing it ends the session, as in Chrome; the panel's Hide Debugger is
+  // what keeps it running out of sight.
+  aside.querySelector(".debugger-dock-close")!.addEventListener("click", stopDebugging);
   document.body.append(aside);
   // Eruda puts `all: initial` on its container, so it gets a bare element of
   // its own inside the body rather than the body, which must keep its layout.
@@ -93,7 +95,7 @@ function createDock(): { dock: HTMLElement; container: HTMLElement } {
 }
 
 /**
- * Inline mode makes `eruda.hide()` a no-op, so closing the dock never tells
+ * Inline mode makes `eruda.hide()` a no-op, so hiding the dock never tells
  * the Elements tool it went away — and a highlight it drew over the page,
  * outside the dock, would stay. Hiding the tool clears it; `active` (untyped,
  * but what Eruda's own tab switching reads) still says it is the open tab, so
@@ -192,7 +194,7 @@ export async function startDebugging(): Promise<void> {
   }
 }
 
-/** Closes the dock and gives the page its width back; Eruda keeps running. */
+/** Hides the dock and gives the page its width back; Eruda keeps running. */
 export function hideDebugger(): void {
   if (status !== "open" || !dock) return;
   elementsTool()?.hide();

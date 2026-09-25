@@ -1,0 +1,225 @@
+.vscode-search {
+  /* VSCode's Dark Modern values for the toggles, the badge and a match */
+  --search-input-bg: #313131;
+  --search-input-border: #3c3c3c;
+  --search-toggle-active-bg: rgba(36, 137, 219, 0.51);
+  --search-toggle-active-border: #2488db;
+  --search-badge-bg: #616161;
+  --search-match-bg: rgba(234, 92, 0, 0.33);
+  --search-error-bg: #5a1d1d;
+  --search-error-border: #be1100;
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+  font-size: 13px;
+}
+
+.vscode-search-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vscode-search-actions {
+  display: flex;
+  gap: 2px;
+  margin: -4px 0;
+}
+
+.vscode-search-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.vscode-search-action:hover:not(:disabled) {
+  background: rgba(90, 93, 94, 0.31);
+}
+
+.vscode-search-action:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.vscode-search-action .codicon {
+  font-size: 16px;
+}
+
+.vscode-search-box {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 12px 0 20px;
+  padding: 2px 2px 2px 6px;
+  border: 1px solid var(--search-input-border);
+  border-radius: 2px;
+  background: var(--search-input-bg);
+}
+
+.vscode-search-box:focus-within {
+  border-color: var(--activity-active-border);
+}
+
+.vscode-search-box--error,
+.vscode-search-box--error:focus-within {
+  border-color: var(--search-error-border);
+}
+
+.vscode-search-input {
+  flex: 1;
+  min-width: 0;
+  height: 20px;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+}
+
+.vscode-search-input::placeholder {
+  color: var(--fg-muted);
+  opacity: 1;
+}
+
+.vscode-search-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: none;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.vscode-search-toggle:hover {
+  background: rgba(90, 93, 94, 0.5);
+}
+
+.vscode-search-toggle[aria-pressed="true"] {
+  border-color: var(--search-toggle-active-border);
+  background: var(--search-toggle-active-bg);
+}
+
+.vscode-search-toggle .codicon {
+  font-size: 16px;
+}
+
+.vscode-search-error {
+  margin: 0 12px 0 20px;
+  padding: 4px 6px;
+  border: 1px solid var(--search-error-border);
+  border-top: none;
+  background: var(--search-error-bg);
+  color: var(--fg);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.vscode-search-summary {
+  margin: 0;
+  padding: 6px 12px 6px 20px;
+  color: var(--fg-muted);
+}
+
+.vscode-search-results {
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.vscode-search-results ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vscode-search-file,
+.vscode-search-match {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 22px;
+  border: none;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.vscode-search-file:hover,
+.vscode-search-match:hover {
+  background: var(--hover);
+}
+
+.vscode-search-file:focus-visible,
+.vscode-search-match:focus-visible {
+  outline: 1px solid var(--activity-active-border);
+  outline-offset: -1px;
+}
+
+.vscode-search-file {
+  gap: 4px;
+  padding: 0 12px 0 4px;
+}
+
+.vscode-search-file .codicon {
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.vscode-search-file-name {
+  flex-shrink: 0;
+}
+
+.vscode-search-file-dir {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+
+.vscode-search-count {
+  flex-shrink: 0;
+  min-width: 18px;
+  margin-left: auto;
+  padding: 0 5px;
+  border-radius: 11px;
+  background: var(--search-badge-bg);
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.vscode-search-match {
+  display: block;
+  padding: 0 12px 0 44px;
+  line-height: 22px;
+  text-overflow: ellipsis;
+}
+
+.vscode-search-match mark {
+  background: var(--search-match-bg);
+  color: inherit;
+}

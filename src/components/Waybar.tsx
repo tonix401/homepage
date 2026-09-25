@@ -135,7 +135,7 @@ const WS_LANGUAGES: Record<WorkspaceLanguage, { label: string; glyphs: string[] 
 };
 
 /**
- * The Arch "A" from public/white_arch.svg, inlined so it can take the
+ * The Arch "A" from public/general/white_arch.svg, inlined so it can take the
  * segment's on_* colour — the asset itself is white and vanishes on the
  * light primary fill.
  */

@@ -1,7 +1,7 @@
 ## <a href="https://github.com/tonix401/dndcli" target="_blank" rel="noopener noreferrer">DnDCLI</a>
 
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
-![NodeJS](https://img.shields.io/badge/node.js-%236DA55F.svg?logo=node.js&logoColor=white)
+![TypeScript](badges/typescript.svg)
+![NodeJS](badges/nodejs.svg)
 
 <video width="100%" controls loop muted poster="dndcli/thumbnail.png">
   <source src="dndcli/demo.mp4" type="video/mp4">

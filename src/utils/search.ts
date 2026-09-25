@@ -185,3 +185,111 @@ export function searchFiles(files: FileNode[], query: string): SearchHit[] {
   nameHits.sort((a, b) => b.score - a.score);
   return [...nameHits, ...contentHits];
 }
+
+/** The three toggles beside the Search view's input, as in VSCode. */
+export interface FindOptions {
+  matchCase: boolean;
+  wholeWord: boolean;
+  regex: boolean;
+}
+
+/** What the Search view has been asked: the text and its toggles. */
+export interface FindQuery {
+  query: string;
+  options: FindOptions;
+}
+
+export const EMPTY_FIND: FindQuery = {
+  query: "",
+  options: { matchCase: false, wholeWord: false, regex: false },
+};
+
+/** One line of a file with every match on it. */
+export interface LineMatch {
+  /** 1-based line number, matching the editor gutter. */
+  line: number;
+  /** The line, trimmed to a window around the first match. */
+  text: string;
+  /** Ranges into `text`. */
+  ranges: MatchRange[];
+}
+
+/** Every matching line in one file, in line order. */
+export interface FileMatches {
+  file: FileNode;
+  lines: LineMatch[];
+  /** Matches, not lines: a line matching twice counts twice. */
+  count: number;
+}
+
+export type FindResult =
+  | { ok: true; files: FileMatches[]; total: number; truncated: boolean }
+  | { ok: false; error: string };
+
+/** Enough for any real query over this corpus, and a bound on a stray `.`. */
+const MAX_FIND_LINES = 2000;
+
+/** Letters, digits and `_` in any script, so "Lörrach" is one word. */
+const WORD_CHAR = String.raw`[\p{L}\p{N}_]`;
+
+/** Escapes what the `u` flag treats as syntax, and nothing else: under `u` a
+ *  needless escape such as `\/` is itself a syntax error. */
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * The Search view: every line in every file that matches `query`, grouped by
+ * file in tree order.
+ *
+ * The query is always compiled to a regular expression with the `u` flag, so
+ * case folding and whole-word boundaries work beyond ASCII. With `regex` off
+ * it is escaped first; with it on, an invalid pattern is reported rather than
+ * thrown. Matches of zero length (`^`, `a*`) are skipped, since there is
+ * nothing to highlight.
+ */
+export function findInFiles(files: FileNode[], query: string, options: FindOptions): FindResult {
+  if (query === "") return { ok: true, files: [], total: 0, truncated: false };
+
+  let source = options.regex ? query : escapeRegExp(query);
+  if (options.wholeWord) source = `(?<!${WORD_CHAR})(?:${source})(?!${WORD_CHAR})`;
+  let pattern: RegExp;
+  try {
+    pattern = new RegExp(source, options.matchCase ? "gu" : "giu");
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+
+  const results: FileMatches[] = [];
+  let total = 0;
+  let lineCount = 0;
+  let truncated = false;
+
+  for (const file of files) {
+    if (truncated) break;
+    const lines: LineMatch[] = [];
+    let count = 0;
+    const content = file.content.split("\n");
+    for (let i = 0; i < content.length; i++) {
+      const ranges: MatchRange[] = [];
+      for (const match of content[i].matchAll(pattern)) {
+        if (match[0] === "") continue;
+        ranges.push({ start: match.index, end: match.index + match[0].length });
+      }
+      if (ranges.length === 0) continue;
+      if (lineCount === MAX_FIND_LINES) {
+        truncated = true;
+        break;
+      }
+      lines.push({ line: i + 1, ...windowLine(content[i], ranges) });
+      count += ranges.length;
+      lineCount++;
+    }
+    if (lines.length > 0) {
+      results.push({ file, lines, count });
+      total += count;
+    }
+  }
+
+  return { ok: true, files: results, total, truncated };
+}

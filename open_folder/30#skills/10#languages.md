@@ -1,15 +1,24 @@
-## German
+## 🇩🇪 German - native
 
-of course
+Joa, ich denke das erklärt sich von selbst
 
-## English
+## 🇬🇧 English - fluent
+- Learned at school since first grade
+- Practiced by consuming international media 
+- Went to New Zealand for a year to work and travel
+- Speaking English at work
 
-learned in school, practiced on the www, went to new zealand
+## 🇯🇵 Japanese - N4/N3?
 
-## Japanese
+- Studied for around three years, maybe around N4/N3
+- Nowadays quite rusty
+- アニメ好きだから勉強したんですー
 
-Some; Studied for three years, maybe around N4/N3
+## 🇨🇳 Chinese - Starting out
 
-## Chinese
+- Studying currently
+- 早上好中国！现在我有冰淇淋。 我很喜欢冰淇淋
 
-Studying currently, 
+<br>
+
+<img width="200" src="general/bingqilin.png">

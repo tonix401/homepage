@@ -1,11 +1,11 @@
 ## <a href="https://tonix401.github.io/monster-counterr/" target="_blank" rel="noopener noreferrer">Monster Counter</a>
 
-![React](https://img.shields.io/badge/React-555?logo=react&logoColor=%2361DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
-![Vite](https://img.shields.io/badge/Vite-8d25f9?logo=Vite&logoColor=white)
-![Zustand](https://img.shields.io/badge/🐻-Zustand-be652f?labelColor=be652f)
-![Git](https://img.shields.io/badge/Git-F05032?logo=git&logoColor=fff)
-![GitHub Copilot](https://img.shields.io/badge/Copilot-000?logo=githubcopilot&logoColor=fff)
+![React](badges/react.svg)
+![TypeScript](badges/typescript.svg)
+![Vite](badges/vite.svg)
+![Zustand](badges/zustand.svg)
+![Git](badges/git.svg)
+![GitHub Copilot](badges/copilot-black.svg)
 
 <video width="100%" controls loop muted poster="monster_counterr/thumbnail.png">
   <source src="monster_counterr/demo.mp4" type="video/mp4">

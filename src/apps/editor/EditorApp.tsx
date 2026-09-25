@@ -3,7 +3,8 @@
  *
  * This is the whole of what `App.tsx` used to render directly. Everything that
  * describes *one* editor now lives here — which panel is open, what the quick
- * open box has been typed into, which folders the explorer has expanded — so
+ * open box and the Search view have been typed into, which folders the
+ * explorer has expanded — so
  * two editors side by side are genuinely two editors rather than one state
  * shared by both. The file it shows is its window's payload, and opening
  * another one is `handle.setArg`.
@@ -19,10 +20,11 @@ import { Sidebar } from "../../components/Sidebar";
 import { Explorer } from "../../components/Explorer";
 import { CustomPanel } from "../../components/CustomPanel";
 import { RunAndDebug } from "../../components/RunAndDebug";
+import { SearchPanel } from "../../components/SearchPanel";
 import { SourceControl } from "../../components/SourceControl";
 import { Content } from "../../components/Content";
 import { Footer } from "../../components/Footer";
-import { flattenFiles } from "../../utils/search";
+import { EMPTY_FIND, type FindQuery, flattenFiles } from "../../utils/search";
 import { findFirstFile, findFileByPath, resolvePath } from "../../utils/files";
 import { type AppRenderProps } from "../types";
 
@@ -31,6 +33,10 @@ export function EditorApp({ arg, focused, maximized, handle }: AppRenderProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   /** Bumped by Ctrl/Cmd+P; QuickOpen focuses its input when it changes. */
   const [focusSignal, setFocusSignal] = useState(0);
+  /** Kept here, not in the panel, so it survives switching to another one. */
+  const [search, setSearch] = useState<FindQuery>(EMPTY_FIND);
+  /** Bumped by Ctrl/Cmd+Shift+F; the Search view focuses its input. */
+  const [searchSignal, setSearchSignal] = useState(0);
 
   const files = useMemo(() => flattenFiles(folderFiles), []);
   /** A payload naming a file that is not in the tree falls back to the first. */
@@ -43,10 +49,17 @@ export function EditorApp({ arg, focused, maximized, handle }: AppRenderProps) {
   // one keystroke must not put the caret in all three search boxes.
   useEffect(() => {
     if (!focused) return;
+    const searchPanel = activities.findIndex((activity) => activity.panel === "search");
     const handler = (event: KeyboardEvent) => {
-      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
       const key = event.key.toLowerCase();
-      if (key === "p") setFocusSignal((signal) => signal + 1);
+      if (event.shiftKey) {
+        // VSCode's Find in Files: opens the Search view, or refocuses it.
+        if (key !== "f" || searchPanel === -1) return;
+        setActivePanel(searchPanel);
+        setSidebarOpen(true);
+        setSearchSignal((signal) => signal + 1);
+      } else if (key === "p") setFocusSignal((signal) => signal + 1);
       else if (key === "b") setSidebarOpen((open) => !open);
       else return;
       event.preventDefault();
@@ -112,6 +125,16 @@ export function EditorApp({ arg, focused, maximized, handle }: AppRenderProps) {
         <Sidebar open={sidebarOpen}>
           {activePanel === "explorer" && (
             <Explorer nodes={folderFiles} selectedFile={selectedFile} onSelect={handleSelect} />
+          )}
+          {activeActivity?.panel === "search" && (
+            <SearchPanel
+              title={activeActivity.title}
+              files={files}
+              search={search}
+              onSearchChange={setSearch}
+              onOpen={handleSelect}
+              focusSignal={searchSignal}
+            />
           )}
           {activeActivity?.panel === "source-control" && (
             <SourceControl title={activeActivity.title} />

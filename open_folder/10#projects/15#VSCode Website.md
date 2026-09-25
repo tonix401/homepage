@@ -1,10 +1,10 @@
 ## <a href="https://github.com/tonix401/vscode_website" target="_blank" rel="noopener noreferrer">VSCode Website</a>
 
-![React](https://img.shields.io/badge/React-555?logo=react&logoColor=%2361DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff)
-![Vite](https://img.shields.io/badge/Vite-8d25f9?logo=Vite&logoColor=white)
-![Claude](https://img.shields.io/badge/Claude-D97757?logo=claude&logoColor=white)
-![Git](https://img.shields.io/badge/Git-F05032?logo=git&logoColor=fff)
+![React](badges/react.svg)
+![TypeScript](badges/typescript.svg)
+![Vite](badges/vite.svg)
+![Claude](badges/claude.svg)
+![Git](badges/git.svg)
 
 <video width="100%" controls loop muted poster="vscode_website/thumbnail.png">
   <source src="vscode_website/demo.mp4" type="video/mp4">

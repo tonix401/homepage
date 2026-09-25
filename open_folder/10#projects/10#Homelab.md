@@ -1,9 +1,9 @@
 ## Jellyfin on a homelab
 
-![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?logo=Ubuntu&logoColor=fff)
-![Tailscale](https://img.shields.io/badge/Tailscale-242424?logo=Tailscale&logoColor=fff)
-![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=fff)
-![Jellyfin](https://img.shields.io/badge/Jellyfin-00A4DC?logo=jellyfin&logoColor=fff)
+![Ubuntu](badges/ubuntu.svg)
+![Tailscale](badges/tailscale.svg)
+![Docker](badges/docker.svg)
+![Jellyfin](badges/jellyfin.svg)
 
 
 <img src="/mini/songs.png" alt="Jellyfin Dashboard" class="md-image">

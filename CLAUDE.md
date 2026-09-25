@@ -43,6 +43,7 @@ EditorApp                  — the VSCode window, one instance per column
 ├── ActivityBar
 ├── Sidebar
 │   ├── Explorer           — recursive file tree with collapsible folders
+│   ├── SearchPanel        — VSCode's Search view: find in every file's contents
 │   ├── SourceControl      — every commit of the site's own repo, as VSCode's graph
 │   ├── RunAndDebug        — starts Eruda, a DevTools docked on the right of the page
 │   └── CustomPanel        — any other activity's markdown
@@ -88,7 +89,9 @@ collapsed `Sidebar` is `hidden` rather than unmounted, so the explorer keeps
 its expanded folders.
 
 An activity in the config either shows markdown (`text`/`textFile`) or names
-one of the app's own panels with `panel`. There are two.
+one of the app's own panels with `panel`. There are three.
+
+`"search"` is `SearchPanel`, VSCode's Search view (see Search below).
 
 `"run-and-debug"` is `RunAndDebug`, whose button starts Eruda — a DevTools the
 page draws itself, since nothing a page can call opens the browser's own.
@@ -107,7 +110,7 @@ things inline mode does that are easy to trip over:
 - It sets `all: initial` on the container it is given, so Eruda gets a bare
   element inside `.debugger-dock-body`, never a styled one.
 - It has no close button or resizer, so the dock brings its own.
-- `eruda.hide()` is a no-op, so closing the dock hides the Elements tool by
+- `eruda.hide()` is a no-op, so hiding the dock hides the Elements tool by
   hand, or a highlight it drew stays over the page.
 
 Eruda itself highlights the *selected* element whenever the Elements detail
@@ -119,8 +122,9 @@ the box-model diagram highlights, as in Chrome. Those are Eruda 3.4 internals,
 guarded: if they move, Eruda simply keeps its own behaviour. That is why `eruda`
 is pinned exactly — check the overlay by hand before bumping it.
 
-Closing the dock keeps Eruda running (and its console history); Stop
-Debugging calls `destroy` and removes the dock.
+The dock's close button stops the debugger, exactly as Stop Debugging does:
+`destroy`, and the dock removed. Only the panel's Hide Debugger puts it away
+and keeps it running, console history and all.
 
 `"source-control"` is `SourceControl`, which lists every commit from
 `virtual:git-log`, which `gitLogPlugin` (`src/services/gitLog.ts`) reads with
@@ -593,6 +597,18 @@ The header search bar is a quick-open (`src/components/QuickOpen.tsx`) over
 scored like VSCode's quick open) and file contents (case-insensitive
 substring). The corpus is a handful of files already in memory, so there is no
 index, worker or debounce.
+
+The Search activity (`src/components/SearchPanel.tsx`) is the other half:
+contents only, grouped by file, over `findInFiles` in the same module. Its
+Match Case, Whole Word and Regex toggles (Alt+C/W/R) always compile to a
+`u`-flag `RegExp`, so case folding and word boundaries work on "Lörrach"; an
+invalid pattern is shown under the box, not thrown. There is no replace.
+- The query and toggles are the editor window's state, not the panel's, so
+  they survive switching panels; which files are collapsed is the panel's own.
+- They are updated with functional `setState`: a toggle and a keystroke in
+  the same tick would otherwise each write back a stale copy of the other.
+- Ctrl/Cmd+Shift+F opens the view in the focused window and focuses the box.
+- A match opens its file; nothing scrolls to the line.
 
 ### Themes
 

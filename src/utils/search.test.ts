@@ -2,7 +2,9 @@ import { describe, it, expect } from "vitest";
 import { type FileNode, type TreeNode } from "../services/types";
 import {
   type ContentHit,
+  type FindOptions,
   type NameHit,
+  findInFiles,
   flattenFiles,
   fuzzyMatch,
   searchFiles,
@@ -155,5 +157,89 @@ describe("searchFiles", () => {
 
   it("returns nothing when nothing matches", () => {
     expect(searchFiles(files, "zzzzqqq")).toEqual([]);
+  });
+});
+
+// ── findInFiles ─────────────────────────────────────────────────────────────
+
+describe("findInFiles", () => {
+  const files = flattenFiles(tree);
+  const plain: FindOptions = { matchCase: false, wholeWord: false, regex: false };
+
+  /** Each file's path with the matched text on each of its lines. */
+  function matched(query: string, options: FindOptions = plain, corpus = files) {
+    const result = findInFiles(corpus, query, options);
+    if (!result.ok) throw new Error(result.error);
+    return result.files.map(({ file, lines }) => [
+      file.path,
+      lines.map(({ line, text, ranges }) => [line, ranges.map((r) => text.slice(r.start, r.end))]),
+    ]);
+  }
+
+  it("groups matching lines by file, in tree order", () => {
+    expect(matched("react")).toEqual([
+      ["README.md", [[2, ["React"]]]],
+      ["projects/Monster.md", [[2, ["react"]]]],
+    ]);
+  });
+
+  it("counts every match, not every line", () => {
+    const result = findInFiles([file("a.md", "aa a\na")], "a", plain);
+    expect(result).toMatchObject({ ok: true, total: 4 });
+    if (result.ok) expect(result.files[0].count).toBe(4);
+  });
+
+  it("returns nothing for an empty query", () => {
+    expect(findInFiles(files, "", plain)).toEqual({ ok: true, files: [], total: 0, truncated: false });
+  });
+
+  it("respects Match Case", () => {
+    expect(matched("React", { ...plain, matchCase: true })).toEqual([["README.md", [[2, ["React"]]]]]);
+  });
+
+  it("folds case beyond ASCII", () => {
+    expect(matched("lörrach", plain, [file("a.md", "DHBW LÖRRACH")])).toEqual([
+      ["a.md", [[1, ["LÖRRACH"]]]],
+    ]);
+  });
+
+  it("takes the query literally unless Regex is on", () => {
+    const corpus = [file("a.md", "a.b axb (x)")];
+    expect(matched("a.b", plain, corpus)).toEqual([["a.md", [[1, ["a.b"]]]]]);
+    expect(matched("(x)", plain, corpus)).toEqual([["a.md", [[1, ["(x)"]]]]]);
+    expect(matched("a.b", { ...plain, regex: true }, corpus)).toEqual([
+      ["a.md", [[1, ["a.b", "axb"]]]],
+    ]);
+  });
+
+  it("matches whole words only, with letters outside ASCII counting as word characters", () => {
+    const corpus = [file("a.md", "cat category cat_ Lörrach örr")];
+    expect(matched("cat", { ...plain, wholeWord: true }, corpus)).toEqual([["a.md", [[1, ["cat"]]]]]);
+    expect(matched("örr", { ...plain, wholeWord: true }, corpus)).toEqual([["a.md", [[1, ["örr"]]]]]);
+  });
+
+  it("applies Whole Word to a whole alternation", () => {
+    const corpus = [file("a.md", "cat dog category")];
+    expect(matched("cat|dog", { ...plain, regex: true, wholeWord: true }, corpus)).toEqual([
+      ["a.md", [[1, ["cat", "dog"]]]],
+    ]);
+  });
+
+  it("reports an invalid pattern instead of throwing", () => {
+    const result = findInFiles(files, "(", { ...plain, regex: true });
+    expect(result.ok).toBe(false);
+  });
+
+  it("skips matches of zero length", () => {
+    expect(matched("^", { ...plain, regex: true })).toEqual([]);
+    expect(matched("x*", { ...plain, regex: true }, [file("a.md", "a xx")])).toEqual([
+      ["a.md", [[1, ["xx"]]]],
+    ]);
+  });
+
+  it("stops after a bounded number of lines and says so", () => {
+    const big = file("big.md", Array.from({ length: 3000 }, () => "x").join("\n"));
+    const result = findInFiles([big], "x", plain);
+    expect(result).toMatchObject({ ok: true, truncated: true, total: 2000 });
   });
 });

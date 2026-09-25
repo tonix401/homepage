@@ -54,17 +54,12 @@ export function RunAndDebug({ title }: RunAndDebugProps) {
           <p className="vscode-debug-error">The debugger could not be loaded. Try again?</p>
         )}
         <p>
-          A page can't open your browser's DevTools, so this starts{" "}
-          <a href="https://github.com/liriliri/eruda" target="_blank" rel="noopener noreferrer">
-            Eruda
-          </a>
-          , a DevTools that runs inside the page, docked on the right: elements, console, network,
-          storage and sources. Drag its left edge to resize it.
+          There are no bugs on this website! 
         </p>
-        <p>
-          The real thing is still one keypress away: <kbd>F12</kbd> or <kbd>Ctrl</kbd>+
-          <kbd>Shift</kbd>+<kbd>I</kbd>.
-        </p>
+        <figure className="vscode-debug-image" title="GIF by avatarparallels">
+          <img src="general/basingse.gif" alt="Basingse" />
+          <figcaption>There's no war in Ba Sing Se.</figcaption>
+        </figure>
       </div>
     </div>
   );
