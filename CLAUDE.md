@@ -4,6 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
+Every dependency in `package.json` is pinned to an exact version, and
+`.npmrc` sets `save-exact`, so `npm install <pkg>` pins new ones too. Upgrade
+deliberately, one package at a time, rather than widening a range.
+
 ```bash
 npm run dev        # start Vite dev server
 npm run build      # tsc type-check + Vite production build
@@ -40,6 +44,7 @@ EditorApp                  — the VSCode window, one instance per column
 ├── Sidebar
 │   ├── Explorer           — recursive file tree with collapsible folders
 │   ├── SourceControl      — every commit of the site's own repo, as VSCode's graph
+│   ├── RunAndDebug        — starts Eruda, a DevTools docked on the right of the page
 │   └── CustomPanel        — any other activity's markdown
 ├── Content                — tab bar + breadcrumb + FileView
 └── Footer                 — status bar (file type, line count, encoding)
@@ -83,8 +88,41 @@ collapsed `Sidebar` is `hidden` rather than unmounted, so the explorer keeps
 its expanded folders.
 
 An activity in the config either shows markdown (`text`/`textFile`) or names
-one of the app's own panels with `panel`. The only one is `"source-control"`:
-`SourceControl` lists every commit from
+one of the app's own panels with `panel`. There are two.
+
+`"run-and-debug"` is `RunAndDebug`, whose button starts Eruda — a DevTools the
+page draws itself, since nothing a page can call opens the browser's own.
+`src/utils/debugger.ts` imports it on the first click, so its half a megabyte
+is a chunk of its own and never in the main bundle. There is one per page (it
+hooks the page's console and network), so its status lives in that module and
+every editor's panel reads it with `useSyncExternalStore`.
+
+Eruda only docks at the bottom, so it runs in its `inline` mode inside a dock
+of our own down the right edge, created outside React under `<body>`. It opens
+on the Elements tab. The dock narrows `#root` by `--debugger-width` (a third of
+the screen, then whatever its left edge is dragged to) rather than covering the
+page, like docked DevTools; below 700px it covers the page instead. Three
+things inline mode does that are easy to trip over:
+
+- It sets `all: initial` on the container it is given, so Eruda gets a bare
+  element inside `.debugger-dock-body`, never a styled one.
+- It has no close button or resizer, so the dock brings its own.
+- `eruda.hide()` is a no-op, so closing the dock hides the Elements tool by
+  hand, or a highlight it drew stays over the page.
+
+Eruda itself highlights the *selected* element whenever the Elements detail
+pane shows, which in a dock 680px or wider is always — and the selection
+starts on `<body>`, so the whole page sat under a blue overlay.
+`highlightOnHoverOnly` swaps the pane's private `_highlight` (and the box
+model's listener, which holds the same function) so only hovering a part of
+the box-model diagram highlights, as in Chrome. Those are Eruda 3.4 internals,
+guarded: if they move, Eruda simply keeps its own behaviour. That is why `eruda`
+is pinned exactly — check the overlay by hand before bumping it.
+
+Closing the dock keeps Eruda running (and its console history); Stop
+Debugging calls `destroy` and removes the dock.
+
+`"source-control"` is `SourceControl`, which lists every commit from
 `virtual:git-log`, which `gitLogPlugin` (`src/services/gitLog.ts`) reads with
 `git log` at build time. The repository is private, so rows link nowhere —
 the message, hash, author and age are in each row's tooltip — and the first

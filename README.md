@@ -11,7 +11,7 @@ It started as a fork of [vscode_website](https://tonix401.github.io/vscode_websi
 - **Waybar** — workspace pills with an icon per open window, the focused window's title, and cpu/memory modules that measure the tab itself
 - **niri-style window strip** — one window fills the screen, more scroll sideways; focus follows the mouse, and any window can be maximized
 - **Apps**, all reading the same open folder:
-  - **Codium** — explorer, tabs, Shiki highlighting, markdown/HTML preview, quick open, and a source-control panel that lists this repo's own commits
+  - **Codium** — explorer, tabs, Shiki highlighting, markdown/HTML preview, quick open, a source-control panel that lists this repo's own commits, and Run and Debug, which docks [Eruda](https://github.com/liriliri/eruda), an in-page DevTools, on the right
   - **Chromium** — the files as pages, with the folder as a bookmarks bar
   - **jīzǐ** — a yazi-style terminal file manager in a kitty window
   - **Obsidian** — the folder as a vault, with a graph view

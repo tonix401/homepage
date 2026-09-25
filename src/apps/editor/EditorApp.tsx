@@ -18,6 +18,7 @@ import { ActivityBar, type Panel } from "../../components/ActivityBar";
 import { Sidebar } from "../../components/Sidebar";
 import { Explorer } from "../../components/Explorer";
 import { CustomPanel } from "../../components/CustomPanel";
+import { RunAndDebug } from "../../components/RunAndDebug";
 import { SourceControl } from "../../components/SourceControl";
 import { Content } from "../../components/Content";
 import { Footer } from "../../components/Footer";
@@ -114,6 +115,9 @@ export function EditorApp({ arg, focused, maximized, handle }: AppRenderProps) {
           )}
           {activeActivity?.panel === "source-control" && (
             <SourceControl title={activeActivity.title} />
+          )}
+          {activeActivity?.panel === "run-and-debug" && (
+            <RunAndDebug title={activeActivity.title} />
           )}
           {activeActivity && activeActivity.panel === undefined && (
             <CustomPanel title={activeActivity.title} text={activeActivity.text} />

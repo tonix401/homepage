@@ -33,7 +33,7 @@ export const configuration: OpenFolderPluginOptions = {
       name: "Run and Debug",
       iconPath: "debug-alt",
       title: "RUN AND DEBUG",
-      textFile: "./activities/run-and-debug.md",
+      panel: "run-and-debug", // Starts Eruda, a DevTools drawn inside the page
     },
     {
       name: "Extensions",

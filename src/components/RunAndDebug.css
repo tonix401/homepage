@@ -1,0 +1,196 @@
+.vscode-debug {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+  font-size: 13px;
+}
+
+.vscode-debug-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 20px 10px;
+  overflow-y: auto;
+  color: var(--fg);
+  line-height: 1.4;
+}
+
+/* The same button as Source Control's Commit, VSCode's primary button */
+.vscode-debug-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 26px;
+  border: none;
+  border-radius: 2px;
+  background: #0e639c;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.vscode-debug-btn:hover:not(:disabled) {
+  background: #1177bb;
+}
+
+.vscode-debug-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.vscode-debug-btn:focus-visible {
+  outline: 1px solid var(--activity-active-border);
+  outline-offset: 2px;
+}
+
+.vscode-debug-btn .codicon {
+  font-size: 16px;
+}
+
+.vscode-debug-btn--secondary {
+  background: #3a3d41;
+}
+
+.vscode-debug-btn--secondary:hover:not(:disabled) {
+  background: #45494e;
+}
+
+.vscode-debug-body p {
+  margin: 0;
+}
+
+.vscode-debug-body a {
+  color: var(--fg-match);
+  text-decoration: none;
+}
+
+.vscode-debug-body a:hover {
+  text-decoration: underline;
+}
+
+.vscode-debug-body kbd {
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: var(--bg-editor);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.vscode-debug-error {
+  color: #f48771;
+}
+
+/*
+ * The dock Eruda runs in (`src/utils/debugger.ts`), down the right edge.
+ * It is created outside React, straight under <body>, since it belongs to the
+ * page rather than to any one window, and it narrows `#root` by its own width
+ * the way docked DevTools narrows a page. Its frame is in Eruda's Dark
+ * palette, so the two read as one panel.
+ */
+:root {
+  --debugger-dock-width: min(var(--debugger-width, 0px), calc(100vw - 320px));
+}
+
+:root.debugger-docked #root {
+  margin-right: var(--debugger-dock-width);
+}
+
+:root.debugger-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.debugger-dock {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  width: var(--debugger-dock-width);
+  border-left: 1px solid #3d3d3d;
+  background: #242424;
+  font-family: var(--font-ui);
+}
+
+.debugger-dock[hidden] {
+  display: none;
+}
+
+/* Too narrow to share: the dock covers the page, and its close uncovers it. */
+@media (max-width: 700px) {
+  :root.debugger-docked #root {
+    margin-right: 0;
+  }
+
+  .debugger-dock {
+    width: 100%;
+    border-left: none;
+  }
+
+  .debugger-dock-resize {
+    display: none;
+  }
+}
+
+.debugger-dock-resize {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  z-index: 1;
+  width: 6px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.debugger-dock-resize:hover,
+:root.debugger-resizing .debugger-dock-resize {
+  background: #7cacf8;
+}
+
+.debugger-dock-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 4px 0 10px;
+  border-bottom: 1px solid #3d3d3d;
+  background: #333;
+  color: #a5a5a5;
+  font-size: 12px;
+}
+
+.debugger-dock-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 3px;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.debugger-dock-close:hover {
+  background: #4a4a4a;
+  color: #eaeaea;
+}
+
+.debugger-dock-close .codicon {
+  font-size: 16px;
+}
+
+.debugger-dock-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
