@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import "./Explorer.css";
 import {
   type FileNode,
@@ -31,30 +31,34 @@ function collectOpenFolderPaths(
   }
 }
 
+/** `open` plus every folder above `file`, or `open` itself if none is new. */
+function withAncestors(open: Set<string>, file: FileNode | null): Set<string> {
+  const parts = file ? file.path.split("/") : [];
+  const ancestors = parts.slice(0, -1).map((_, i) => parts.slice(0, i + 1).join("/"));
+  if (ancestors.every((path) => open.has(path))) return open;
+  return new Set([...open, ...ancestors]);
+}
+
 export function Explorer({ nodes, selectedFile, onSelect }: ExplorerProps) {
   const [openFolders, setOpenFolders] = useState<Set<string>>(() => {
     const paths = new Set(["__root__"]);
     collectOpenFolderPaths(nodes, "", paths);
-    return paths;
+    return withAncestors(paths, selectedFile);
   });
 
-  useEffect(() => {
-    if (!selectedFile) return;
-    const parts = selectedFile.path.split("/");
-    if (parts.length <= 1) return;
-    setOpenFolders(prev => {
-      const next = new Set(prev);
-      for (let i = 1; i < parts.length; i++) {
-        next.add(parts.slice(0, i).join("/"));
-      }
-      return next;
-    });
-  }, [selectedFile]);
+  // Selecting a file expands its folders. Adjusted during render rather than
+  // in an effect, so the tree never paints once with the file hidden.
+  const [revealed, setRevealed] = useState(selectedFile);
+  if (selectedFile !== revealed) {
+    setRevealed(selectedFile);
+    setOpenFolders((prev) => withAncestors(prev, selectedFile));
+  }
 
   const toggle = (path: string) => {
     setOpenFolders((prev) => {
       const next = new Set(prev);
-      next.has(path) ? next.delete(path) : next.add(path);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
       return next;
     });
   };

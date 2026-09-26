@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import "./Content.css";
 import { type FileNode } from "../services/types";
 import { SetiIcon } from "./SetiIcon";
@@ -36,9 +36,13 @@ function Breadcrumb({ file }: { file: FileNode }) {
 export function Content({ file, onNavigate, resolveFile }: ContentProps) {
   const [viewMode, setViewMode] = useState<"preview" | "code">("preview");
 
-  useEffect(() => {
+  // A new file opens in preview. Adjusted during render rather than in an
+  // effect, so the new file never paints once in the old file's mode.
+  const [shownFile, setShownFile] = useState(file);
+  if (file !== shownFile) {
+    setShownFile(file);
     setViewMode("preview");
-  }, [file]);
+  }
 
   if (!file) {
     return (
