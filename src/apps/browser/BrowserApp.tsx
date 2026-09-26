@@ -15,8 +15,8 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import "./Browser.css";
 import folderFiles from "virtual:open-folder-files";
-import { menuItems } from "virtual:open-folder-config";
-import { findFileByPath, findFirstFile, resolvePath } from "../../utils/files";
+import { defaultFile, menuItems } from "virtual:open-folder-config";
+import { findFileByPath, findDefaultFile, resolvePath } from "../../utils/files";
 import { flattenFiles, searchFiles } from "../../utils/search";
 import { type Bookmark, bookmarksFromMenu, bookmarksFromTree } from "../../utils/bookmarks";
 import { BookmarkBar } from "./BookmarkBar";
@@ -45,9 +45,9 @@ export function BrowserApp({ arg, maximized, handle }: AppRenderProps) {
   // The tree is a build-time constant, so both halves of the bar are derived
   // once per window rather than on every navigation.
   const treeBookmarks = useMemo(() => bookmarksFromTree(folderFiles), []);
-  const menuBookmarks = useMemo(() => bookmarksFromMenu(menuItems, folderFiles), []);
-  /** No payload means the home page, the same first file `/` opens. */
-  const file = arg ? findFileByPath(folderFiles, arg) : findFirstFile(folderFiles);
+  const menuBookmarks = useMemo(() => bookmarksFromMenu(menuItems, folderFiles, defaultFile), []);
+  /** No payload means the home page, the default file, the same page `/` opens. */
+  const file = arg ? findFileByPath(folderFiles, arg) : findDefaultFile(folderFiles, defaultFile);
 
   /**
    * This window's own back/forward, kept out of `window.history` on purpose.

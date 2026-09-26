@@ -90,6 +90,7 @@ describe("bookmarksFromMenu", () => {
           { label: "Resume", file: "work experience/eschbach.md" },
         ],
         tree,
+        null,
       ),
     ).toEqual([
       { kind: "link", label: "Github", url: "https://github.com/tonix401" },
@@ -98,19 +99,25 @@ describe("bookmarksFromMenu", () => {
   });
 
   it("resolves a null file — the home page — to the first file", () => {
-    expect(bookmarksFromMenu([{ label: "Home", file: null }], tree)).toEqual([
+    expect(bookmarksFromMenu([{ label: "Home", file: null }], tree, null)).toEqual([
       { kind: "page", label: "Home", path: null, type: "md" },
     ]);
   });
 
+  it("resolves a null file to the configured default file", () => {
+    expect(bookmarksFromMenu([{ label: "Home", file: null }], tree, "legal/imprint.html")).toEqual([
+      { kind: "page", label: "Home", path: null, type: "html" },
+    ]);
+  });
+
   it("keeps a file that has left the tree, so the browser can say so", () => {
-    expect(bookmarksFromMenu([{ label: "Gone", file: "nowhere.md" }], tree)).toEqual([
+    expect(bookmarksFromMenu([{ label: "Gone", file: "nowhere.md" }], tree, null)).toEqual([
       { kind: "page", label: "Gone", path: "nowhere.md", type: "unsupported" },
     ]);
   });
 
   it("skips an item with neither a file nor a url", () => {
-    expect(bookmarksFromMenu([{ label: "File" }, { label: "Home", file: null }], tree)).toEqual([
+    expect(bookmarksFromMenu([{ label: "File" }, { label: "Home", file: null }], tree, null)).toEqual([
       { kind: "page", label: "Home", path: null, type: "md" },
     ]);
   });

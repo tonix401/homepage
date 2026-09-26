@@ -12,7 +12,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import folderFiles from "virtual:open-folder-files";
-import { activities } from "virtual:open-folder-config";
+import { activities, defaultFile } from "virtual:open-folder-config";
 import { type FileNode } from "../../services/types";
 import { Header } from "../../components/Header";
 import { ActivityBar, type Panel } from "../../components/ActivityBar";
@@ -25,7 +25,7 @@ import { SourceControl } from "../../components/SourceControl";
 import { Content } from "../../components/Content";
 import { Footer } from "../../components/Footer";
 import { EMPTY_FIND, type FindQuery, flattenFiles } from "../../utils/search";
-import { findFirstFile, findFileByPath, resolvePath } from "../../utils/files";
+import { findDefaultFile, findFileByPath, resolvePath } from "../../utils/files";
 import { type AppRenderProps } from "../types";
 
 export function EditorApp({ arg, focused, maximized, handle }: AppRenderProps) {
@@ -41,7 +41,7 @@ export function EditorApp({ arg, focused, maximized, handle }: AppRenderProps) {
   const files = useMemo(() => flattenFiles(folderFiles), []);
   /** A payload naming a file that is not in the tree falls back to the first. */
   const selectedFile = useMemo(
-    () => (arg ? findFileByPath(folderFiles, arg) : null) ?? findFirstFile(folderFiles),
+    () => (arg ? findFileByPath(folderFiles, arg) : null) ?? findDefaultFile(folderFiles, defaultFile),
     [arg],
   );
 

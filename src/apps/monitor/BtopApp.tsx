@@ -14,9 +14,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import "./Btop.css";
 import folderFiles from "virtual:open-folder-files";
+import { defaultFile } from "virtual:open-folder-config";
 import { type AppId } from "../ids";
 import { type WindowRecord } from "../../utils/desktop";
-import { findFirstFile } from "../../utils/files";
+import { findDefaultFile } from "../../utils/files";
 import { homePath } from "../../utils/fileManager";
 import { readHeap, useSystemStats } from "../../utils/systemStats";
 import { sessionStart } from "../../utils/sessionStart";
@@ -54,7 +55,7 @@ const PROCESSES: Record<AppId, { name: string; threads: number; mem: number; inK
 /** The terminal the TUI programs run in, and what it claims to use. */
 const KITTY = { name: "kitty", threads: 10, memBytes: 58 * MB };
 
-/** The apps whose payload is a file, and that show the first file for none. */
+/** The apps whose payload is a file, and that show the default file for none. */
 const FILE_APPS: readonly AppId[] = ["editor", "browser", "notes", "video"];
 
 /** btop's own byte formatting: "382M", "6.2M", "1.4G". */
@@ -203,10 +204,10 @@ export function BtopApp({ focused, maximized, handle, desktop }: AppRenderProps)
   // ── The process tree ──────────────────────────────────────────────────
   const describe = (window: WindowRecord): WindowProcess => {
     const proc = PROCESSES[window.app];
-    // The command line: the file a file app shows (the first one, for none),
+    // The command line: the file a file app shows (the default file, for none),
     // jīzǐ's directory, and nothing for a program that takes no argument.
     const args = FILE_APPS.includes(window.app)
-      ? (window.arg ?? findFirstFile(folderFiles)?.path)
+      ? (window.arg ?? findDefaultFile(folderFiles, defaultFile)?.path)
       : window.app === "terminal"
         ? homePath(window.arg ?? "")
         : undefined;

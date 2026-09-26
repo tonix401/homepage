@@ -1,4 +1,5 @@
 import folderFiles from "virtual:open-folder-files";
+import { defaultFile } from "virtual:open-folder-config";
 import { findFileByPath, pageName } from "../../utils/files";
 import { noteName } from "../../utils/graph";
 import { APP_NAMES } from "../icons";
@@ -10,10 +11,10 @@ export const notesApp: AppDefinition = {
   name: APP_NAMES.notes,
   // Named the way Obsidian names a note: without its `.md`.
   title: (arg) => {
-    const name = pageName(folderFiles, arg);
+    const name = pageName(folderFiles, arg, defaultFile);
     return name ? `${noteName(name)} — ${APP_NAMES.notes}` : APP_NAMES.notes;
   },
-  // A note that has left the vault opens the first one instead, as in Codium.
+  // A note that has left the vault opens the default file instead, as in Codium.
   normalizeArg: (arg) => (arg ? (findFileByPath(folderFiles, arg)?.path ?? null) : null),
   render: (props) => <NotesApp {...props} />,
 };

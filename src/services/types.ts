@@ -57,7 +57,7 @@ export interface MenuItem {
   /**
    * A file in the open folder, opened **in the window the menu belongs to** —
    * these are not links and never load a page. `null` is the window's default
-   * page, which is the first file.
+   * page, the `defaultFile` option.
    */
   file?: string | null;
   /** Somewhere off the site; opens a real browser tab. */

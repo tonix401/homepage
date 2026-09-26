@@ -11,7 +11,7 @@
  */
 
 import { type FileType, type MenuItem, type TreeNode } from "../services/types";
-import { findFileByPath, findFirstFile } from "./files";
+import { findFileByPath, findDefaultFile } from "./files";
 
 export type Bookmark =
   /** A file in the open folder. Opening it calls `setArg(path)`. */
@@ -50,18 +50,22 @@ export function bookmarksFromTree(nodes: TreeNode[], prefix = ""): Bookmark[] {
  * The configured menu items as bookmarks.
  *
  * A `file` needs its node looked up for the icon; `file: null` means the
- * window's default page, which is the first file. An item with neither a file
+ * window's default page (`defaultFile`). An item with neither a file
  * nor a url is a label with nothing behind it — the bar used to render those
  * greyed out, but it now carries the whole site as well, so they are dropped
  * rather than taking up room.
  */
-export function bookmarksFromMenu(items: MenuItem[], nodes: TreeNode[]): Bookmark[] {
+export function bookmarksFromMenu(
+  items: MenuItem[],
+  nodes: TreeNode[],
+  defaultPath: string | null,
+): Bookmark[] {
   const bookmarks: Bookmark[] = [];
   for (const { label, file, url } of items) {
     if (url !== undefined) {
       bookmarks.push({ kind: "link", label, url });
     } else if (file !== undefined) {
-      const node = file === null ? findFirstFile(nodes) : findFileByPath(nodes, file);
+      const node = file === null ? findDefaultFile(nodes, defaultPath) : findFileByPath(nodes, file);
       bookmarks.push({ kind: "page", label, path: file, type: node?.type ?? "unsupported" });
     }
   }

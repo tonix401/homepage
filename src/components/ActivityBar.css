@@ -16,13 +16,23 @@
   align-items: center;
 }
 
+/*
+ * Every icon is white at one strength, `--activity-icon-alpha`, whether it is
+ * an image (Explorer, Accounts, Manage: drawn black, inverted) or a codicon
+ * (the configured activities: a font, coloured). One value for both keeps a
+ * codicon exactly as bright as the Explorer's image in every state.
+ *
+ * Resting is brighter than VSCode's own inactive icons (about 40%), so the
+ * working buttons stand clear of Accounts and Manage, which are decoration.
+ */
 .vscode-activity-btn {
+  --activity-icon-alpha: 0.6;
   width: 48px;
   height: 48px;
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--fg-dim);
+  color: rgb(255 255 255 / var(--activity-icon-alpha));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -38,32 +48,29 @@
 .vscode-activity-btn img {
   width: 24px;
   height: 24px;
-  filter: invert(1) opacity(0.4);
-}
-
-.vscode-activity-btn:hover {
-  color: var(--fg);
-}
-
-.vscode-activity-btn--inert {
-  cursor: default;
-}
-
-.vscode-activity-btn:not(.vscode-activity-btn--inert):hover img {
-  filter: invert(1) opacity(0.8);
-}
-
-.vscode-activity-btn--active {
-  color: var(--fg);
-}
-
-.vscode-activity-btn--active img {
-  filter: invert(1);
+  filter: invert(1) opacity(var(--activity-icon-alpha));
 }
 
 .vscode-activity-btn .codicon {
   font-size: 24px;
   color: inherit;
+}
+
+.vscode-activity-btn:not(.vscode-activity-btn--inert):hover {
+  --activity-icon-alpha: 0.8;
+}
+
+/* After hover and as specific, so the open panel's icon stays at full
+   strength under the pointer too. */
+.vscode-activity-btn.vscode-activity-btn--active {
+  --activity-icon-alpha: 1;
+}
+
+/* The decoration stays where it was, VSCode's 40% under the half opacity
+   every decorative part gets (App.css), and does not answer the pointer. */
+.vscode-activity-btn--inert {
+  --activity-icon-alpha: 0.4;
+  cursor: default;
 }
 
 .vscode-activity-btn--active::before {

@@ -49,7 +49,7 @@ export interface AppDefinition {
   /**
    * Canonicalizes a payload before it reaches the URL or sessionStorage — the
    * editor turns a file path that has left the tree into `null`, meaning "the
-   * first file", rather than leaving an empty window behind.
+   * default file", rather than leaving an empty window behind.
    */
   normalizeArg(arg: string | null): string | null;
   /**

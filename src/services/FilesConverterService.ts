@@ -39,6 +39,12 @@ export interface OpenFolderPluginOptions {
   menuItems?: MenuItem[];
   foldersFirst?: boolean;
   collapsedFolders?: string[];
+  /**
+   * The file every window opens on when it is given none, as the explorer
+   * shows its path (no sort prefixes), e.g. "README.md". Where the folder's
+   * sort order puts it in the tree is unaffected. Unset, the first file.
+   */
+  defaultFile?: string;
 }
 
 const fileTypeToShikiLang: Partial<Record<FileType, string>> = {
@@ -341,6 +347,7 @@ export function openFolderPlugin(
     menuItems = [],
     foldersFirst = true,
     collapsedFolders = [],
+    defaultFile,
   } = options;
 
   const collapsedFolderPaths = new Set(
@@ -517,10 +524,18 @@ export function openFolderPlugin(
         ) {
           this.warn(
             `Menu item "${itemLabel}" points at "${item.file}", which is not in the open folder.\n` +
-              `  The editor would fall back to the first file and the browser would show its not-found page.\n` +
+              `  The editor would fall back to the default file and the browser would show its not-found page.\n` +
               `  Fix: Use the path as the explorer shows it (no sort prefixes), e.g. "legal/imprint.html".`,
           );
         }
+      }
+
+      if (defaultFile !== undefined && !treeFiles.has(defaultFile)) {
+        this.warn(
+          `defaultFile "${defaultFile}" is not in the open folder.\n` +
+            `  Windows with no file set will open on the first file instead.\n` +
+            `  Fix: Use the path as the explorer shows it (no sort prefixes), e.g. "README.md".`,
+        );
       }
 
       if (collapsedFolderPaths.size > 0) {
@@ -619,6 +634,7 @@ export function openFolderPlugin(
           `export const activities = ${JSON.stringify(activities.map((a) => resolveActivityText(a, process.cwd())))};`,
           `export const menuItems = ${JSON.stringify(menuItems)};`,
           `export const foldersFirst = ${JSON.stringify(foldersFirst)};`,
+          `export const defaultFile = ${JSON.stringify(defaultFile ?? null)};`,
         ].join("\n");
       }
     },

@@ -17,9 +17,9 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type Ref } from "react";
 import "./Kdenlive.css";
 import folderFiles from "virtual:open-folder-files";
-import { rootFolderName } from "virtual:open-folder-config";
+import { defaultFile, rootFolderName } from "virtual:open-folder-config";
 import { type FileNode } from "../../services/types";
-import { findFileByPath, findFirstFile, resolvePath } from "../../utils/files";
+import { findFileByPath, findDefaultFile, resolvePath } from "../../utils/files";
 import { type Clip, buildTimeline, clipAt, formatTimecode, timeOf } from "../../utils/timeline";
 import { FileView } from "../../components/FileView";
 import { Icon } from "../../components/Icon";
@@ -87,7 +87,7 @@ function resolveFile(fromPath: string, href: string) {
 
 export function KdenliveApp({ arg, focused, maximized, handle }: AppRenderProps) {
   const timeline = useMemo(() => buildTimeline(folderFiles, rootFolderName), []);
-  const file = (arg ? findFileByPath(folderFiles, arg) : null) ?? findFirstFile(folderFiles);
+  const file = (arg ? findFileByPath(folderFiles, arg) : null) ?? findDefaultFile(folderFiles, defaultFile);
   const clip = file ? (timeline.clips.find((c) => c.file.path === file.path) ?? null) : null;
 
   const [position, setPosition] = useState(() => clip?.start ?? 0);

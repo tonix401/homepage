@@ -9,6 +9,7 @@ export const configuration: OpenFolderPluginOptions = {
   faviconPath: "./general/blue_dot.svg",
   foldersFirst: false,
   collapsedFolders: ["work experience"],
+  defaultFile: "README.md", // Opens first, though "99#" sorts it last in the tree
   menuItems: [
     { label: "Github", url: "https://github.com/tonix401" },
     { label: "Experience", file: "work experience/eschbach.md" },

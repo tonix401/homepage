@@ -14,9 +14,9 @@
 import { useMemo, useState } from "react";
 import "./Notes.css";
 import folderFiles from "virtual:open-folder-files";
-import { rootFolderName } from "virtual:open-folder-config";
+import { defaultFile, rootFolderName } from "virtual:open-folder-config";
 import { type FileNode, type TreeNode } from "../../services/types";
-import { findFileByPath, findFirstFile, resolvePath } from "../../utils/files";
+import { findFileByPath, findDefaultFile, resolvePath } from "../../utils/files";
 import { buildGraph, noteName } from "../../utils/graph";
 import { FileView } from "../../components/FileView";
 import { Icon } from "../../components/Icon";
@@ -50,7 +50,7 @@ function ancestorsOf(path: string): string[] {
 }
 
 export function NotesApp({ arg, maximized, handle }: AppRenderProps) {
-  const note = arg ? findFileByPath(folderFiles, arg) : findFirstFile(folderFiles);
+  const note = arg ? findFileByPath(folderFiles, arg) : findDefaultFile(folderFiles, defaultFile);
   const graph = useMemo(() => buildGraph(folderFiles), []);
 
   // Opens on the graph: it is the one view the other apps cannot show, so it

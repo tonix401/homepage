@@ -107,7 +107,7 @@ export function makeWindow(
 }
 
 /**
- * What a first visit shows: one editor on the first file, tiled on the first
+ * What a first visit shows: one editor on the default file, tiled on the first
  * workspace, so the bar and the wallpaper are visible from the start.
  */
 export function defaultDesktop(): Desktop {

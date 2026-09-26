@@ -17,6 +17,15 @@ export function findFirstFile(nodes: TreeNode[]): FileNode | null {
   return null;
 }
 
+/**
+ * The page a window opens on when it is given none: the `defaultFile` option,
+ * wherever the folder's sort order puts it in the tree. Without the option,
+ * or if it names a file that is not there, the first file.
+ */
+export function findDefaultFile(nodes: TreeNode[], defaultPath: string | null): FileNode | null {
+  return (defaultPath ? findFileByPath(nodes, defaultPath) : null) ?? findFirstFile(nodes);
+}
+
 export function findFileByPath(nodes: TreeNode[], path: string): FileNode | null {
   for (const node of nodes) {
     if (node.kind === "file" && node.path === path) return node;
@@ -31,13 +40,13 @@ export function findFileByPath(nodes: TreeNode[], path: string): FileNode | null
 /**
  * The name of the page a window with this payload is showing, for its title.
  *
- * `null` is not "nothing": the editor and the browser both show the first file
- * for it, so the title names that file too. A path that is not in the tree
+ * `null` is not "nothing": every file app shows the default file for it (see
+ * `findDefaultFile`), so the title names that file too. A path that is not in the tree
  * keeps its own last segment — the browser shows its error page for exactly
  * that name, and the title should agree with the address bar.
  */
-export function pageName(nodes: TreeNode[], path: string | null): string | null {
-  const file = path === null ? findFirstFile(nodes) : findFileByPath(nodes, path);
+export function pageName(nodes: TreeNode[], path: string | null, defaultPath: string | null): string | null {
+  const file = path === null ? findDefaultFile(nodes, defaultPath) : findFileByPath(nodes, path);
   return file?.name ?? path?.split("/").pop() ?? null;
 }
 

@@ -157,6 +157,13 @@ sort prefixes — `"work experience"`, `"projects/demos"`) that start closed
 instead. A `co#`/`ex#` prefix on the folder name is more specific and overrides
 the option. Selecting a file still expands its ancestors.
 
+Which file a window opens on when it has none is the `defaultFile` option,
+exported from `virtual:open-folder-config` (`"README.md"` here). It picks the
+page, not the order: the README sorts last in the tree with `99#` and still
+opens first. Unset, or naming a file that isn't there (the build warns), it
+is the first file in the tree. `findDefaultFile` in `src/utils/files.ts` takes
+the path as an argument, so it and `pageName` stay pure.
+
 ### Desktop state
 
 **Nothing is in the URL.** The address bar stays `/` however many windows are
@@ -212,7 +219,7 @@ result to `repairDesktop` for consistency. It stays `sessionStorage` on
 purpose: per tab, so two tabs are two independent desktops that cannot clobber
 each other's writes, and a layout does not outlive the visit that built it. A
 first visit, or a session from an older shape, gets `defaultDesktop()` — one
-editor on the first file, tiled on workspace 1. Bump `SESSION_KEY` when the shape changes.
+editor on the default file, tiled on workspace 1. Bump `SESSION_KEY` when the shape changes.
 
 Stale payloads are not `session.ts`'s problem: it must not import the file
 tree, so `App` maps every restored window through `AppDefinition.normalizeArg`,
@@ -255,8 +262,8 @@ default page, reusing the focused window when that is already an editor rather
 than stacking up more; the window-title segment reports the focused window
 (`AppDefinition.title`) and opens the launcher. Every app's title names the
 file it shows, as in `Homelab.md — Codium`: a window with no file set names
-the first file, because that's what it shows (`pageName` in
-`src/utils/files.ts`), and jīzǐ names the entry under its cursor; the keyboard segment cycles the
+the default file, because that's what it shows (`findDefaultFile` and
+`pageName` in `src/utils/files.ts`), and jīzǐ names the entry under its cursor; the keyboard segment cycles the
 numerals (`WORKSPACE_LANGUAGES` lives in `src/utils/desktop.ts`).
 On an empty workspace the title segment reads "App Launcher" and pulses: its label and
 icon glow towards the primary. The background can't pulse, because the
