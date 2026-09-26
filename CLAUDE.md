@@ -296,6 +296,14 @@ below 1150px does `.wb-center` hide outright — the window title is capped at
 260px, which puts the left cluster at 438px at its widest, so the pill's half
 plus the gutter stops fitting around there.
 
+`.wb-center` sits above both side clusters (`z-index: 1`), so a long window
+title runs *under* the pill rather than into it. Once either cluster comes
+within `CROWD_GAP` of the pill, a `ResizeObserver` in `Waybar.tsx` sets
+`data-crowded` and the pill casts a shadow over what passes beneath; with
+room to spare it casts none, since it would only be a halo on the wallpaper.
+It is a data attribute rather than a class because the numeral spin edits the
+pill's class list by hand, and a `className` change would drop the spin.
+
 Both are the *tab's* numbers, not the machine's, because nothing a page can
 call reports what other processes are doing. The modules' labels say so.
 

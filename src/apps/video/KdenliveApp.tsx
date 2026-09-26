@@ -162,10 +162,15 @@ export function KdenliveApp({ arg, focused, maximized, handle }: AppRenderProps)
     if (rate === 0) return;
     let last = performance.now();
     let frame = requestAnimationFrame(function tick(now) {
-      const dt = Math.min((now - last) / 1000, MAX_FRAME);
-      last = now;
+      // A frame's timestamp is when the frame began, which can be before the
+      // press that started playback — so the first step can come out negative.
+      // Unclamped, that stepped back past 0:00 and stopped playback at once.
+      const dt = Math.min(Math.max((now - last) / 1000, 0), MAX_FRAME);
+      last = Math.max(now, last);
       const next = live.current.position + dt * rate;
-      if (next >= timeline.total || next <= 0) {
+      // Only the end it is heading for stops it: playing forwards from 0:00
+      // has not reached the start, it began there.
+      if (rate > 0 ? next >= timeline.total : next <= 0) {
         seek(next);
         setRate(0);
         return;

@@ -297,6 +297,16 @@ button.wb-clickable:focus-visible {
   padding: 0;
   border-radius: 999px;
   background: var(--wb-surface-container-lowest);
+  /* Above both side clusters, which run beneath it when they grow too long. */
+  z-index: 1;
+  box-shadow: 0 0 0 0 transparent;
+  transition: box-shadow 0.3s ease;
+}
+
+/* A side cluster has reached the pill (see Waybar.tsx): the shadow darkens
+   what passes under its edges, so the pill reads as lifted above it. */
+.wb-center[data-crowded] {
+  box-shadow: 0 0 10px 8px color-mix(in srgb, var(--wb-surface-container-lowest) 85%, transparent);
 }
 
 .wb-ws {

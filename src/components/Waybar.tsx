@@ -128,6 +128,9 @@ const icons = {
  */
 const WS_SPIN_MS = 420;
 
+/** How close, in px, a side cluster may come to the pill before it is crowded. */
+const CROWD_GAP = 12;
+
 const WS_LANGUAGES: Record<WorkspaceLanguage, { label: string; glyphs: string[] }> = {
   en: { label: "Eng", glyphs: ["1", "2", "3", "4", "5"] },
   cn: { label: "中文", glyphs: ["一", "二", "三", "四", "五"] },
@@ -176,7 +179,10 @@ export function Waybar({
   const [now, setNow] = useState(() => new Date());
   const [ringing, setRinging] = useState(false);
   const [shownLanguage, setShownLanguage] = useState(language);
+  const [crowded, setCrowded] = useState(false);
   const wsRef = useRef<HTMLDivElement>(null);
+  const leftRef = useRef<HTMLDivElement>(null);
+  const rightRef = useRef<HTMLDivElement>(null);
   const ringTimer = useRef<number | undefined>(undefined);
   const { cpu, cpuTitle, memory, memoryTitle } = useSystemStats();
 
@@ -212,6 +218,31 @@ export function Waybar({
     return () => clearTimeout(id);
   }, [language, shownLanguage]);
 
+  /*
+   * The pill sits above both side clusters, so a long window title runs under
+   * it rather than into it. Once either cluster comes within `CROWD_GAP` of
+   * it, the pill casts a shadow over what passes beneath; with room to spare
+   * there is nothing to cast it on, and it would only be a halo on the
+   * wallpaper. Every box involved is observed: the title changes the left
+   * cluster's width, a window opening changes the pill's, a resize the bar's.
+   */
+  useEffect(() => {
+    const center = wsRef.current;
+    const left = leftRef.current;
+    const right = rightRef.current;
+    if (!center || !left || !right) return;
+    const measure = () => {
+      const c = center.getBoundingClientRect();
+      setCrowded(
+        left.getBoundingClientRect().right > c.left - CROWD_GAP ||
+          right.getBoundingClientRect().left < c.right + CROWD_GAP,
+      );
+    };
+    const observer = new ResizeObserver(measure);
+    for (const el of [center, left, right, center.parentElement!]) observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
@@ -231,7 +262,7 @@ export function Waybar({
 
   return (
     <header className="waybar">
-      <div className="wb-side">
+      <div className="wb-side" ref={leftRef}>
         <Cap fill={FILL.primary} side="l" />
         <button
           className="wb-seg wb-on-primary wb-clickable"
@@ -290,7 +321,9 @@ export function Waybar({
         <Arrow from={FILL.containerHigh} to={FILL.none} dir="r" />
       </div>
 
-      <div className="wb-center" ref={wsRef}>
+      {/* A data attribute rather than a class: the spin effect above edits the
+          class list by hand, and a className change would drop its class. */}
+      <div className="wb-center" ref={wsRef} data-crowded={crowded || undefined}>
         {WS_LANGUAGES[shownLanguage].glyphs.map((glyph, idx) => {
           const ws = idx + 1;
           const apps = workspaceApps.get(ws) ?? [];
@@ -332,7 +365,7 @@ export function Waybar({
         })}
       </div>
 
-      <div className="wb-side">
+      <div className="wb-side" ref={rightRef}>
         <Arrow from={FILL.none} to={FILL.container} dir="l" />
         <button
           className="wb-seg wb-on-surface wb-clickable"
