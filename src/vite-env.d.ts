@@ -18,6 +18,8 @@ declare module "virtual:git-log" {
   export const commits: Commit[];
   /** The checked-out branch, or null on a detached HEAD. */
   export const branch: string | null;
+  /** The repository on GitHub, from the `origin` remote, or null. */
+  export const repoUrl: string | null;
 }
 
 declare module "virtual:open-folder-config" {

@@ -88,8 +88,18 @@
   cursor: default;
 }
 
+a.vscode-scm-row {
+  text-decoration: none;
+  cursor: pointer;
+}
+
 .vscode-scm-row:hover {
   background: var(--hover);
+}
+
+.vscode-scm-row:focus-visible {
+  outline: 1px solid var(--activity-active-border);
+  outline-offset: -1px;
 }
 
 /* The graph's one lane: a line through every row and a dot on each commit.

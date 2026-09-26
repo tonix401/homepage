@@ -54,3 +54,15 @@ Pushing to `main` runs the tests, builds, and deploys to GitHub Pages; the custo
 - Shiki (syntax highlighting)
 - react-markdown
 - Vitest
+
+## License
+
+The **code** is [MIT](./LICENSE): use it for your own site, as long as you keep
+the copyright notice. A link back to [tomweise.dev](https://tomweise.dev) or
+this repository in your README or footer is appreciated.
+
+The **content** — everything in `open_folder/` and `activities/`, the images
+and videos in `public/`, and the personal details in the site config — is
+© Tom Weise, all rights reserved, and not covered by the MIT license. See
+[`CONTENT-LICENSE.md`](./CONTENT-LICENSE.md). If you fork this for your own
+site, swap in your own content.

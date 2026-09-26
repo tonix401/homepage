@@ -2,11 +2,10 @@
  * VSCode's Source Control view, over this site's own repository: the commit
  * box, which only looks the part, and the Graph section listing every
  * commit, newest first. They are read from git at build time
- * (`src/services/gitLog.ts`). The repository is private, so a commit links
- * nowhere; its tooltip is all there is to it.
+ * (`src/services/gitLog.ts`), and each opens its page on GitHub in a new tab.
  */
 import { useState } from "react";
-import { branch, commits } from "virtual:git-log";
+import { branch, commits, repoUrl } from "virtual:git-log";
 import type { Commit } from "../services/gitLog";
 import { timeAgo } from "../utils/timeAgo";
 import "./SourceControl.css";
@@ -26,8 +25,8 @@ function CommitRow({ commit, index }: { commit: Commit; index: number }) {
   const tooltip =
     `${commit.subject}\n\n${commit.hash.slice(0, 7)} · ${commit.author} · ` +
     `${timeAgo(date)} (${date.toLocaleString()})`;
-  return (
-    <li className="vscode-scm-row" title={tooltip}>
+  const content = (
+    <>
       <span className={lane} aria-hidden="true" />
       <span className="vscode-scm-subject">{commit.subject}</span>
       {first && branch && (
@@ -35,6 +34,26 @@ function CommitRow({ commit, index }: { commit: Commit; index: number }) {
           <i className="codicon codicon-git-branch" aria-hidden="true" />
           {branch}
         </span>
+      )}
+    </>
+  );
+  return (
+    <li>
+      {/* Without a GitHub remote there is nowhere to link, and the row is text. */}
+      {repoUrl ? (
+        <a
+          className="vscode-scm-row"
+          href={`${repoUrl}/commit/${commit.hash}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={tooltip}
+        >
+          {content}
+        </a>
+      ) : (
+        <div className="vscode-scm-row" title={tooltip}>
+          {content}
+        </div>
       )}
     </li>
   );

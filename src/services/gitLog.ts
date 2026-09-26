@@ -6,6 +6,10 @@
  * than the build failing: the panel then says there is no history. CI checks
  * out the full history (`fetch-depth: 0`), so the deployed list is complete.
  *
+ * The repository's GitHub page comes from the `origin` remote, so each commit
+ * can link to its page there; a remote that isn't on GitHub, or none, gives
+ * no links.
+ *
  * In the dev server a commit reloads the page: `.git` is outside Vite's
  * watcher, so the reflog is polled instead.
  */
@@ -41,6 +45,18 @@ export function parseLog(output: string): Commit[] {
     });
 }
 
+/**
+ * A GitHub remote's web address, from any of the forms git accepts:
+ * `git@github.com:owner/repo.git` locally, `https://github.com/owner/repo` in
+ * CI. Credentials in the URL are dropped. Anything else is null.
+ */
+export function repoWebUrl(remote: string): string | null {
+  const match = remote
+    .trim()
+    .match(/^(?:git@github\.com:|(?:ssh|https?):\/\/(?:[^@/]+@)?github\.com\/)([^/]+)\/([^/]+?)(?:\.git)?\/?$/);
+  return match ? `https://github.com/${match[1]}/${match[2]}` : null;
+}
+
 function git(args: string[]): string | null {
   try {
     return execFileSync("git", args, { encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] });
@@ -52,10 +68,12 @@ function git(args: string[]): string | null {
 function readLog() {
   const log = git(["log", `--format=${LOG_FORMAT}`]);
   const branch = git(["rev-parse", "--abbrev-ref", "HEAD"])?.trim();
+  const remote = git(["remote", "get-url", "origin"]);
   return {
     commits: log ? parseLog(log) : [],
     // A detached HEAD names no branch, only itself.
     branch: branch && branch !== "HEAD" ? branch : null,
+    repoUrl: remote ? repoWebUrl(remote) : null,
   };
 }
 
@@ -69,10 +87,11 @@ export function gitLogPlugin(): Plugin {
     },
     load(id) {
       if (id !== resolvedId) return;
-      const { commits, branch } = readLog();
+      const { commits, branch, repoUrl } = readLog();
       return [
         `export const commits = ${JSON.stringify(commits)};`,
         `export const branch = ${JSON.stringify(branch)};`,
+        `export const repoUrl = ${JSON.stringify(repoUrl)};`,
       ].join("\n");
     },
     configureServer(server) {

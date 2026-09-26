@@ -133,9 +133,11 @@ and keeps it running, console history and all.
 
 `"source-control"` is `SourceControl`, which lists every commit from
 `virtual:git-log`, which `gitLogPlugin` (`src/services/gitLog.ts`) reads with
-`git log` at build time. The repository is private, so rows link nowhere —
-the message, hash, author and age are in each row's tooltip — and the first
-carries the branch. The dev server polls the
+`git log` at build time. Each row links to its commit on GitHub, in a new
+tab; the address comes from the `origin` remote (`repoWebUrl`), so a fork
+links to its own repository and a checkout with no GitHub remote gets plain
+rows. The message, hash, author and age are in each row's tooltip, and the
+first carries the branch. The dev server polls the
 reflog, since Vite does not watch `.git`, and reloads on a commit. Import only
 *types* from `gitLog.ts` in components, with `import type`: it imports
 `node:child_process`, and under `verbatimModuleSyntax` a plain
