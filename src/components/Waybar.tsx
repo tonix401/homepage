@@ -233,8 +233,8 @@ export function Waybar({
 
   /*
    * On an empty workspace a line runs round the launcher segment every
-   * `SNAKE_EVERY`, on top of its pulse. The first waits a whole interval: the
-   * close that emptied the workspace has just run one as the window landed.
+   * `SNAKE_EVERY`, on top of its pulse, the first a whole interval after the
+   * workspace emptied.
    * A hidden tab skips its turn rather than queue a line for when it returns.
    * With less motion asked for, each run is skipped and the outline is simply
    * held round the segment for as long as the workspace stays empty.

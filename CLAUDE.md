@@ -273,8 +273,8 @@ On an empty workspace the title segment reads "App Launcher" and pulses: its lab
 icon glow towards the primary. The background can't pulse, because the
 powerline arrow tips are separate pieces in its fill colour. Every
 `SNAKE_EVERY` (5s) a line in the primary also runs once round the segment
-(`snakeAround` in `src/utils/snake.ts`), as it does when a closed window lands
-in it. The segment's shape takes in the separators either side, the notch the
+(`snakeAround` in `src/utils/snake.ts`), only here, to lead a visitor with
+nothing open to it; closing a window does not run one. The segment's shape takes in the separators either side, the notch the
 previous arrow cuts into it and the arrow it points out with, so the line is
 an SVG laid over all three, not markup in the bar. A `ResizeObserver` refits
 it whenever the segment or its cluster changes size, before that frame is
@@ -447,7 +447,7 @@ repainted whole as it fades and when it is removed, stale stripes included. The 
 `--arch-window-border` is declared on `:root`: scoped to `.arch-desktop`, it
 resolved to nothing under `<body>`. Iframes reload when re-attached (and load
 once per band), so an HTML preview redraws inside the ghost. As it lands, the
-launcher's icon nudges and the snake runs round it. A timer backs up `finished`, which
+launcher's icon nudges. A timer backs up `finished`, which
 settles only on a rendering step and so never in a hidden tab. Reduced motion
 skips it.
 

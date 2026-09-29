@@ -1,7 +1,7 @@
 /**
  * A line in the theme's primary that runs once round the bar's launcher
- * segment: when a closed window lands in it, and every few seconds while the
- * workspace is empty and the launcher is the only thing to click. With less
+ * segment every few seconds while the workspace is empty, leading the eye to
+ * the only thing there is to click. With less
  * motion asked for, an empty workspace gets the whole outline, held still.
  *
  * The segment is not its own box. It is a powerline block, so its outline
