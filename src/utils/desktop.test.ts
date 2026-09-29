@@ -4,6 +4,7 @@ import {
   WORKSPACE_COUNT,
   closeWindow,
   columnFraction,
+  columnSpan,
   defaultDesktop,
   focusWindow,
   focusedId,
@@ -98,6 +99,22 @@ describe("columnFraction", () => {
     expect(columnFraction(1)).toBe(1);
     expect(columnFraction(2)).toBe(0.5);
     expect(columnFraction(5)).toBe(0.5);
+  });
+});
+
+describe("columnSpan", () => {
+  // A 1000px content box with 10px gaps: two columns of 495 fill it exactly.
+  it("fills the content box with a lone column", () => {
+    expect(columnSpan(0, 1, 1000, 10)).toEqual({ left: 0, right: 1000 });
+  });
+
+  it("fits a second window beside the first, so opening it needs no scroll", () => {
+    expect(columnSpan(0, 2, 1000, 10)).toEqual({ left: 0, right: 495 });
+    expect(columnSpan(1, 2, 1000, 10)).toEqual({ left: 505, right: 1000 });
+  });
+
+  it("puts a third window a whole column past the edge", () => {
+    expect(columnSpan(2, 3, 1000, 10)).toEqual({ left: 1010, right: 1505 });
   });
 });
 

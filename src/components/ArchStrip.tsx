@@ -22,10 +22,18 @@ import {
 } from "react";
 import {
   columnFraction,
+  columnSpan,
   scrollShiftFor,
   type WindowId,
   type WindowRecord,
 } from "../utils/desktop";
+
+/**
+ * How long the survivors of a close wait before growing into the gap, so the
+ * closed window's genie gets a head start and they are not seen to fill its
+ * place before it has visibly left.
+ */
+const CLOSE_DELAY = 90;
 
 /** Which way a strip is sliding during a workspace switch, and why. */
 export interface Slide {
@@ -84,8 +92,9 @@ export function ArchStrip({
    *
    * So the columns are FLIPped: put each one back where it was with a
    * transform, then let the transform animate to zero alongside the width. The
-   * two must share a duration and easing (see `.arch-column` in
-   * ArchDesktop.css) — that is the whole trick. With content width C and gap g,
+   * two must share a duration and easing, which is why the transform reads
+   * `--column-move` and `--column-ease` from `.arch-column` in
+   * ArchDesktop.css — that is the whole trick. With content width C and gap g,
    * the survivor of a 2 -> 1 close starts at translateX((C+g)/2) with basis
    * (C-g)/2 and ends at translateX(0) with basis C, so `left + width` is C at
    * every moment in between: the right edge never moves and the window widens
@@ -97,6 +106,18 @@ export function ArchStrip({
    * child #0, whose left edge is the strip's padding whatever its width is
    * doing. Closing one of three changes no basis at all, so those rects are
    * settled too.
+   *
+   * The transform is a Web Animation rather than a transition, because the
+   * way to set a transition's start value is `transition: none`, and that
+   * cancels the flex-basis transition already running on the same column: the
+   * survivor snapped to its full width and only slid.
+   *
+   * Both wait `CLOSE_DELAY` first, and must wait it together or the right edge
+   * moves after all. The transition's delay goes on before anything is
+   * measured, because measuring is what starts it, and comes off straight
+   * after: a running transition keeps the delay it started with, and every
+   * later one (a focus border, say) starts at once. The transform holds its
+   * start value through the delay (`fill: "backwards"`).
    */
   useLayoutEffect(() => {
     const before = lastLefts.current;
@@ -106,6 +127,10 @@ export function ArchStrip({
     const closed =
       windows.length < before.size && windows.every((window) => before.has(window.id));
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const survivors = columns.current.slice(0, windows.length);
+    if (closed && !still) {
+      for (const column of survivors) if (column) column.style.transitionDelay = `${CLOSE_DELAY}ms`;
+    }
 
     windows.forEach((record, i) => {
       const column = columns.current[i];
@@ -115,12 +140,18 @@ export function ArchStrip({
 
       const was = before.get(record.id);
       if (!closed || still || was === undefined || was === left) return;
-      column.style.transition = "none";
-      column.style.transform = `translateX(${was - left}px)`;
-      void column.offsetWidth; // commit the start value before releasing it
-      column.style.transition = "";
-      column.style.transform = "";
+      const style = getComputedStyle(column);
+      column.animate([{ transform: `translateX(${was - left}px)` }, { transform: "none" }], {
+        duration: parseFloat(style.getPropertyValue("--column-move")),
+        easing: style.getPropertyValue("--column-ease").trim(),
+        delay: CLOSE_DELAY,
+        fill: "backwards",
+      });
     });
+
+    if (closed && !still) {
+      for (const column of survivors) if (column) column.style.transitionDelay = "";
+    }
 
     lastLefts.current = after;
   });
@@ -148,13 +179,18 @@ export function ArchStrip({
     const scroller = column?.parentElement;
     if (!column || !scroller) return;
 
-    // The gutter is the strip's own padding, so the gap around a column that
-    // has just been scrolled to is whatever the stylesheet says it is.
-    const box = scroller.getBoundingClientRect();
+    // Where the column will be, not where it is: widths may be mid-transition
+    // (see `columnSpan`). Both ranges are in the content box's coordinates,
+    // whose visible part starts at `scrollLeft`; the gutter is the strip's own
+    // padding, so the gap around a column that has just been scrolled to is
+    // whatever the stylesheet says it is.
     const style = getComputedStyle(scroller);
-    const shift = scrollShiftFor(column.getBoundingClientRect(), {
-      left: box.left + parseFloat(style.paddingLeft),
-      right: box.right - parseFloat(style.paddingRight),
+    const content =
+      scroller.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const span = columnSpan(focusIndex, windows.length, content, parseFloat(style.columnGap));
+    const shift = scrollShiftFor(span, {
+      left: scroller.scrollLeft,
+      right: scroller.scrollLeft + content,
     });
     // Arriving on a route is not a journey, and neither is any of this to
     // someone who has asked for less motion.
@@ -213,6 +249,7 @@ export function ArchStrip({
       {windows.map((window, i) => (
         <div
           key={window.id}
+          data-window-id={window.id}
           ref={(el) => {
             columns.current[i] = el;
           }}

@@ -329,6 +329,29 @@ export function columnFraction(count: number): number {
 }
 
 /**
+ * Where column `index` of `count` sits once the strip's layout has settled,
+ * measured from the start of the strip's content box: `content` is that box's
+ * width and `gap` the space between columns, as `.arch-column`'s flex-basis
+ * works them out.
+ *
+ * Settled is the point. Opening a second window starts the first one's width
+ * transition from the whole viewport down to half of it, so for a moment the
+ * two overflow the strip, and a new column measured then looks off-screen to
+ * the right. Scrolling to that dragged the first window left for a frame or
+ * two, until its shrinking took the scroll range away and it snapped back.
+ */
+export function columnSpan(
+  index: number,
+  count: number,
+  content: number,
+  gap: number,
+): { left: number; right: number } {
+  const width = columnFraction(count) * (content + gap) - gap;
+  const left = index * (width + gap);
+  return { left, right: left + width };
+}
+
+/**
  * How far the strip must scroll to bring a column fully into view: negative to
  * the left, positive to the right, `0` when it is already there. The minimal
  * shift, so a column just off the edge slides in rather than being centred.
@@ -338,9 +361,10 @@ export function columnFraction(count: number): number {
  * arithmetic here say exactly where the strip lands, let the caller choose the
  * animation, and can be checked without a browser.
  *
- * Both ranges are in the same coordinate space; the caller passes viewport
- * rectangles, with the view's edges already pulled in by the strip's gutter so
- * the gap around a scrolled-to column survives.
+ * Both ranges are in the same coordinate space; the caller passes the
+ * column's `columnSpan` and the part of the content box on screen, which
+ * already leaves out the strip's gutter, so the gap around a scrolled-to
+ * column survives.
  */
 export function scrollShiftFor(
   column: { left: number; right: number },

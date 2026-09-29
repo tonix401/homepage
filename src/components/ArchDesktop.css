@@ -1,9 +1,13 @@
-.arch-desktop {
+/* On the root rather than the desktop, so a closing window keeps its border
+   while it pours into the launcher as a ghost under <body> (see genie.ts). */
+:root {
   /* The theme's primary, the colour the bar's own pills are filled with */
   --arch-window-border: var(--theme-primary);
   /* What the compositor draws around a client that does not have focus */
   --arch-window-border-idle: var(--theme-border-idle);
+}
 
+.arch-desktop {
   --strip-gap: 10px;
   /* The bar is 42px tall and floats over the wallpaper, plus a 4px gap. */
   --strip-top: 46px;
@@ -111,12 +115,13 @@
   overflow: hidden;
   background: var(--bg-editor);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
-  /* `transform` must keep flex-basis's duration and easing exactly: ArchStrip
-     FLIPs the survivors of a close, and it is the two interpolating in step
-     that holds a widening column's right edge still. */
+  /* How a column's width moves. ArchStrip reads both for the FLIP it runs on
+     the survivors of a close, since it is the transform and the width
+     interpolating in step that holds a widening column's right edge still. */
+  --column-move: 280ms;
+  --column-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   transition:
-    flex-basis 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    flex-basis var(--column-move) var(--column-ease),
     border-color 0.18s ease,
     box-shadow 0.18s ease;
 }
@@ -135,10 +140,11 @@
 
 /*
  * A column opening into a strip that is already on screen rises into place. A
- * closing one still has no animation of its own — React unmounts it at once, which is what a compositor killing a client
- * looks like — but the motion of the columns that remain is not left to
- * flex-basis alone: `ArchStrip` FLIPs them, so a window widening into the gap
- * grows sideways from where it stood instead of snapping there first.
+ * closing one is unmounted at once and pours into the bar's launcher segment
+ * as a ghost (`genieInto` in src/utils/genie.ts), outside the strip entirely.
+ * The motion of the columns that remain is not left to flex-basis alone:
+ * `ArchStrip` FLIPs them, so a window widening into the gap grows sideways
+ * from where it stood instead of snapping there first.
  */
 @keyframes arch-column-in {
   from {

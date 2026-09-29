@@ -359,10 +359,15 @@ flex-basis transition would: `--strip-fraction` lives on the strip, so when two
 windows become one the survivor is child #0 — pinned to the left gutter — from
 the first frame, while its width is still growing from a half. `ArchStrip`
 FLIPs instead, putting each survivor back where it was with a `translateX` and
-letting that animate to zero. `.arch-column` therefore transitions `transform`
-at *exactly* `flex-basis`'s duration and easing: the two interpolating in step
-is what holds the widening column's right edge still, so it grows leftward into
-the space instead of jumping there. Only a close animates — an opening column
+letting that animate to zero. The transform takes *exactly* `flex-basis`'s
+duration and easing, from `--column-move` and `--column-ease` on
+`.arch-column`: the two interpolating in step is what holds the widening
+column's right edge still, so it grows leftward into the space instead of
+jumping there. The transform is a Web Animation, not a transition: setting a
+transition's start value takes `transition: none`, which cancels the
+flex-basis transition already running, and the survivor snapped to full width.
+Both wait `CLOSE_DELAY` (90ms) so the closed window's genie visibly leaves
+before anything fills its place. Only a close animates — an opening column
 has its own `arch-column-in` keyframe, whose transform would fight it — and
 `prefers-reduced-motion` skips it entirely.
 
@@ -370,6 +375,10 @@ Where a focus change scrolls to is `scrollShiftFor` — the minimal shift that
 brings a column fully inside the strip's gutter, or none if it is already
 there. `scrollIntoView({ inline: "nearest" })` would be the one-line version,
 but it picks the alignment itself and cannot be tested; the arithmetic can.
+The column's position is `columnSpan`, where it will be once the layout
+settles, never a measured rect: opening a second window starts the first's
+width transition from full to half, a column measured then looks off-screen,
+and scrolling to it jerked the first window left and back.
 The first run after mount is instant, because arriving on a route is not a
 journey worth animating, and so is every run under `prefers-reduced-motion`.
 
@@ -381,6 +390,41 @@ under a still cursor (which happens every time the strip scrolls) has not been
 pointed at and must not steal focus from the window just opened. A press
 focuses too, for touch, on the capture phase and without preventing anything,
 so the control underneath still gets its click.
+
+**Closing a window pours it into the launcher**, the bar's window-title
+segment (`data-launcher`), like macOS's genie into the Dock. The desktop still
+closes the window at once and the survivors FLIP on the same frame; what flies
+is the closed window's own DOM. React detaches only a deleted subtree's top
+node, so the window's `close` handle snapshots its root (`data-window-id`, on
+`.arch-column` or on the wrapper round a maximized window) — rect and every
+scroll offset, since detaching resets them — and a layout effect in `App` hands
+it to `genieInto` (`src/utils/genie.ts`) once the commit has removed it. That
+re-attaches it under `<body>` as an inert ghost, at `z-index: 0` so it passes
+behind the bar (`z-index: 1`) and into the launcher from underneath.
+`genieOutline` shapes it with a funnel: the mouth is the launcher itself, and
+an S-curve runs from each side of it down to the window's bottom corners. The
+window bends into the funnel at once (ease-out, so the click answers on the
+first frame), then every row travels up to its place in the launcher, as wide
+as the funnel is where it has got to. Nothing moves the window sideways as a
+whole, so one beside the launcher bends straight into it rather than shrinking
+first and floating over.
+
+The window is **squeezed, not clipped**, so its border stays on show all the
+way in. A transform cannot bend sides into a curve, so the ghost is cut into
+`BANDS` horizontal slices: the window itself is the top one and a
+`cloneNode` copy each of the others, each shifted up inside a band-sized
+`overflow: hidden` box. Each box's `matrix3d` maps its rectangle exactly onto
+its slice of the outline. The top and bottom edges stay horizontal, which
+makes the map affine along every row, so neighbouring bands agree point for
+point on their shared edge. The frames are held with `step-end` rather than
+blended, because CSS interpolates a `matrix3d` by decomposing it, and that
+tore the seams apart between keyframes. At 120 frames they are finer than any
+refresh rate. The window keeps its focused border because
+`--arch-window-border` is declared on `:root`: scoped to `.arch-desktop`, it
+resolved to nothing under `<body>`. Iframes reload when re-attached (and load
+once per band), so an HTML preview redraws inside the ghost. A timer backs up `finished`, which
+settles only on a rendering step and so never in a hidden tab. Reduced motion
+skips it.
 
 **Switching workspaces travels rather than cuts.** `ArchStage` sits between
 `App` and `ArchStrip` for this one reason: going to a higher-numbered workspace

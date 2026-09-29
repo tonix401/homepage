@@ -311,6 +311,8 @@ export function Waybar({
           // pulses — the only thing on screen asking to be clicked.
           className={`wb-seg wb-on-surface wb-window wb-clickable${empty ? " wb-window--pulse" : ""}`}
           onClick={onAppMenu}
+          // Where a closing window goes: see `genieInto`.
+          data-launcher
           // It opens the launcher, so the label leads with that; the focused
           // window is on screen but would otherwise not be announced at all.
           aria-label={focusedTitle ? `Applications — ${focusedTitle}` : "Applications"}

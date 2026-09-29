@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 import { ArchDesktop } from "./components/ArchDesktop";
 import { ArchStage } from "./components/ArchStage";
@@ -22,6 +22,7 @@ import {
   type WorkspaceLanguage,
 } from "./utils/desktop";
 import { loadDesktop, saveDesktop } from "./utils/session";
+import { genieInto, snapshotWindow, type WindowSnapshot } from "./utils/genie";
 import {
   animateThemeChanges,
   applyTheme,
@@ -126,6 +127,19 @@ function App() {
     });
   }, []);
 
+  /**
+   * The window a close has just removed, for the genie into the launcher.
+   * Taken before the close, while it is still laid out, and flown once the
+   * commit has detached it — in a layout effect, so no frame goes by without it.
+   */
+  const closing = useRef<WindowSnapshot | null>(null);
+  useLayoutEffect(() => {
+    const snapshot = closing.current;
+    if (!snapshot) return;
+    closing.current = null;
+    genieInto(snapshot, document.querySelector("[data-launcher]"));
+  });
+
   const handleFocus = useCallback((id: WindowId) => {
     setDesktop((current) => focusWindow(current, id));
   }, []);
@@ -149,7 +163,13 @@ function App() {
             id: window.id,
             setArg: (arg) =>
               setDesktop((current) => setArg(focusWindow(current, window.id), window.id, arg)),
-            close: () => setDesktop((current) => closeWindow(current, window.id)),
+            close: () => {
+              const node = document.querySelector<HTMLElement>(
+                `[data-window-id="${window.id}"]`,
+              );
+              closing.current = node ? snapshotWindow(node) : null;
+              setDesktop((current) => closeWindow(current, window.id));
+            },
             toggleFullscreen: () =>
               setDesktop((current) =>
                 setFullscreen(focusWindow(current, window.id), !current.fullscreen),
@@ -193,7 +213,10 @@ function App() {
 
   // A maximized window renders bare, covering the bar, which is why every app
   // has to carry a restore button of its own.
-  if (desktop.fullscreen && focused) return <>{renderWindow(focused)}</>;
+  // The wrapper is only there to be found by the close's snapshot.
+  if (desktop.fullscreen && focused) {
+    return <div data-window-id={focused.id}>{renderWindow(focused)}</div>;
+  }
 
   return (
     <ArchDesktop
