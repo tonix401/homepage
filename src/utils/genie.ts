@@ -16,6 +16,8 @@
  * nothing at all.
  */
 
+import { snakeAround } from "./snake";
+
 export interface Rect {
   left: number;
   top: number;
@@ -261,11 +263,13 @@ export function genieInto(snapshot: WindowSnapshot, target: Element | null): voi
   fading.finished.then(drop, drop);
   setTimeout(drop, GENIE_DURATION + 200);
 
-  // The segment takes the window in with a nudge, as a Dock icon does.
+  // The segment takes the window in with a nudge, as a Dock icon does, and a
+  // line runs round it.
   target.querySelector(".wb-icon")?.animate(
     [{ transform: "scale(1)" }, { transform: "scale(1.3)" }, { transform: "scale(1)" }],
     { duration: 260, delay: GENIE_DURATION * 0.85, easing: "ease-out" },
   );
+  snakeAround(target, GENIE_DURATION * 0.85);
 }
 
 function clamp(value: number, min: number, max: number): number {

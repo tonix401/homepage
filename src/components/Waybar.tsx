@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import "./Waybar.css";
 import { WORKSPACE_LANGUAGES, type WorkspaceLanguage } from "../utils/desktop";
 import { useSystemStats } from "../utils/systemStats";
+import { holdOutline, snakeAround } from "../utils/snake";
 import { Icon } from "./Icon";
 import { APP_ICONS } from "../apps/icons";
 import { type AppId } from "../apps/ids";
@@ -128,6 +129,9 @@ const icons = {
  */
 const WS_SPIN_MS = 420;
 
+/** How often, in ms, a line runs round the launcher while the workspace is empty. */
+const SNAKE_EVERY = 5000;
+
 /** How close, in px, a side cluster may come to the pill before it is crowded. */
 const CROWD_GAP = 12;
 
@@ -183,6 +187,7 @@ export function Waybar({
   const wsRef = useRef<HTMLDivElement>(null);
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
   const ringTimer = useRef<number | undefined>(undefined);
   const { cpu, cpuTitle, memory, memoryTitle } = useSystemStats();
 
@@ -217,6 +222,26 @@ export function Waybar({
     const id = window.setTimeout(() => setShownLanguage(language), WS_SPIN_MS / 2);
     return () => clearTimeout(id);
   }, [language, shownLanguage]);
+
+  /*
+   * On an empty workspace a line runs round the launcher segment every
+   * `SNAKE_EVERY`, on top of its pulse. The first waits a whole interval: the
+   * close that emptied the workspace has just run one as the window landed.
+   * A hidden tab skips its turn rather than queue a line for when it returns.
+   * With less motion asked for, each run is skipped and the outline is simply
+   * held round the segment for as long as the workspace stays empty.
+   */
+  useEffect(() => {
+    if (!empty) return;
+    const id = window.setInterval(() => {
+      if (!document.hidden) snakeAround(launcherRef.current);
+    }, SNAKE_EVERY);
+    const release = holdOutline(launcherRef.current);
+    return () => {
+      clearInterval(id);
+      release();
+    };
+  }, [empty]);
 
   /*
    * The pill sits above both side clusters, so a long window title runs under
@@ -313,6 +338,7 @@ export function Waybar({
           onClick={onAppMenu}
           // Where a closing window goes: see `genieInto`.
           data-launcher
+          ref={launcherRef}
           // It opens the launcher, so the label leads with that; the focused
           // window is on screen but would otherwise not be announced at all.
           aria-label={focusedTitle ? `Applications — ${focusedTitle}` : "Applications"}

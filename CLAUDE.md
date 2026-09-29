@@ -267,8 +267,21 @@ the default file, because that's what it shows (`findDefaultFile` and
 numerals (`WORKSPACE_LANGUAGES` lives in `src/utils/desktop.ts`).
 On an empty workspace the title segment reads "App Launcher" and pulses: its label and
 icon glow towards the primary. The background can't pulse, because the
-powerline arrow tips are separate pieces in its fill colour. It is the only
-nudge an empty desktop gives; there is no hint card.
+powerline arrow tips are separate pieces in its fill colour. Every
+`SNAKE_EVERY` (5s) a line in the primary also runs once round the segment
+(`snakeAround` in `src/utils/snake.ts`), as it does when a closed window lands
+in it. The segment's shape takes in the separators either side, the notch the
+previous arrow cuts into it and the arrow it points out with, so the line is
+an SVG laid over all three, not markup in the bar. A `ResizeObserver` refits
+it whenever the segment or its cluster changes size, before that frame is
+painted: opening an app mid-lap retitles the segment and widens it, and the
+dash, measured in hundredths of the outline, keeps its place along the new one.
+Its lap starts mid-way along the top edge, so it fades in and out there and
+passes the tail and tip at full strength. A hidden tab skips its turn. Under
+`prefers-reduced-motion` there is no snake: `holdOutline` draws the whole
+outline and holds it for as long as the workspace stays empty, refitted the
+same way, and follows the preference being changed mid-visit. These
+are the only nudges an empty desktop gives; there is no hint card.
 
 **Nothing in the bar has a `title`.** Every label is an `aria-label`, so the bar
 carries no native tooltips at all; the three that are not on a button — the cpu
@@ -422,7 +435,8 @@ tore the seams apart between keyframes. At 120 frames they are finer than any
 refresh rate. The window keeps its focused border because
 `--arch-window-border` is declared on `:root`: scoped to `.arch-desktop`, it
 resolved to nothing under `<body>`. Iframes reload when re-attached (and load
-once per band), so an HTML preview redraws inside the ghost. A timer backs up `finished`, which
+once per band), so an HTML preview redraws inside the ghost. As it lands, the
+launcher's icon nudges and the snake runs round it. A timer backs up `finished`, which
 settles only on a rendering step and so never in a hidden tab. Reduced motion
 skips it.
 
