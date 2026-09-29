@@ -123,6 +123,14 @@ const GLOW = 3.5;
  */
 const SUBJECT_SIZE = 0.9;
 
+/** Where every subject is drawn, and how large at most: the fitted box, at `SUBJECT_SIZE`. */
+export const SUBJECT_FRAME = {
+  x: CENTRE_X,
+  y: CENTRE_Y,
+  width: BOX_W * SUBJECT_SIZE,
+  height: BOX_H * SUBJECT_SIZE,
+} as const;
+
 /** Scale and offset that centre a `width`×`height` frame in the box, at `SUBJECT_SIZE`. */
 function fit(width: number, height: number): { scale: number; x: number; y: number } {
   const scale = Math.min(BOX_W / width, BOX_H / height) * SUBJECT_SIZE;

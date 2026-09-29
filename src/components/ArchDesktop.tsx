@@ -88,6 +88,7 @@ export function ArchDesktop({
         focusedTitle={focusedTitle}
         onAppMenu={setLauncherAt}
         empty={empty}
+        menuOpen={launcherAt !== null}
       />
       <Wallpaper url={wallpaperUrl(theme, subject)} />
       {children}

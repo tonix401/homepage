@@ -1,15 +1,14 @@
 /**
  * A launcher submenu for picking one of a few things — the colour theme, or
  * what the wallpaper shows. It opens beside the row that leads to it, as a
- * context menu's submenu does, with a preview of the highlighted choice above
- * the list: the wallpaper as it would be with that choice, zoomed in on its
- * subject.
+ * context menu's submenu does, and each choice can carry a small picture of
+ * itself at the end of its row: a theme its colours, a wallpaper its subject.
  *
- * Moving the highlight only changes the preview; browsing the list leaves
- * the desktop alone until something is actually picked.
+ * Moving the highlight changes nothing; the desktop is left alone until
+ * something is actually picked.
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { placeSubmenu, type Point } from "../utils/menuPlacement";
 
 /** Where a submenu hangs from: the menu's sides, and the top of its row. */
@@ -25,8 +24,8 @@ interface PickerMenuProps<T extends string> {
   items: readonly { id: T; name: string }[];
   /** The one that is on now, which the highlight starts on. */
   current: T;
-  /** The wallpaper image for a choice. */
-  preview: (id: T) => string;
+  /** What a choice shows at the end of its row, if anything. */
+  aside?: (id: T) => ReactNode;
   anchor: SubmenuAnchor;
   /** Take the keys: it was opened from the keyboard rather than by hovering. */
   autoFocus: boolean;
@@ -39,7 +38,7 @@ export function PickerMenu<T extends string>({
   label,
   items,
   current,
-  preview,
+  aside,
   anchor,
   autoFocus,
   onPick,
@@ -55,8 +54,8 @@ export function PickerMenu<T extends string>({
   const highlighted = items[active].id;
 
   // Beside its row and inside the screen before the first paint. The inset
-  // is how far the first choice sits below the submenu's top edge, past the
-  // preview, so that choice is what lines up with the row that opened it.
+  // is how far the first choice sits below the submenu's top edge, so that
+  // choice is what lines up with the row that opened it.
   useLayoutEffect(() => {
     const el = panel.current;
     const first = list.current?.firstElementChild;
@@ -82,9 +81,6 @@ export function PickerMenu<T extends string>({
       className="arch-menu arch-picker"
       style={{ left: place.x, top: place.y }}
     >
-      <div className="arch-picker-preview">
-        <img src={preview(highlighted)} alt="" draggable={false} />
-      </div>
       <ul
         ref={list}
         className="arch-picker-list"
@@ -127,7 +123,12 @@ export function PickerMenu<T extends string>({
             onMouseMove={() => setActive(i)}
             onClick={() => onPick(id)}
           >
-            {name.toLowerCase()}
+            <span className="arch-picker-name">{name.toLowerCase()}</span>
+            {aside && (
+              <span className="arch-picker-aside" aria-hidden="true">
+                {aside(id)}
+              </span>
+            )}
           </li>
         ))}
       </ul>

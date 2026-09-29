@@ -28,7 +28,7 @@ import { type AppId } from "../apps/ids";
 import { PALETTES } from "../themes/palettes";
 import { type ThemeId } from "../themes/theme";
 import { SUBJECTS, type SubjectId } from "../themes/subjects";
-import { wallpaperUrl } from "../themes/wallpaper";
+import { subjectIconUrl } from "../themes/wallpaper";
 import { placeMenu, type Point } from "../utils/menuPlacement";
 import { PickerMenu, type SubmenuAnchor } from "./PickerMenu";
 
@@ -86,6 +86,7 @@ function fold(text: string): string {
 }
 
 const rowId = (entry: Entry) => `arch-menu-${entry.id}`;
+
 
 export function Launcher({ at, onClose, ...menu }: LauncherProps) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -215,7 +216,7 @@ function LauncherMenu({
     const last = ENTRIES.length - 1;
     const move = (to: number) => {
       setActive(to);
-      if (submenu) setSubmenu(null);
+      if (submenu) closeSubmenu();
     };
     if (event.key === "ArrowDown") move(active === last ? 0 : active + 1);
     else if (event.key === "ArrowUp") move(active === 0 ? last : active - 1);
@@ -271,14 +272,16 @@ function LauncherMenu({
         ))}
       </ul>
 
-      {/* Each preview is the wallpaper as that choice would leave it: a theme
-          shown with the current subject, a subject in the current theme. */}
+      {/* Each choice shows itself at the end of its row: the current subject
+          in each theme, or each subject in the current theme. */}
       {submenu?.id === "themes" && (
         <PickerMenu
           label="Themes"
           items={PALETTES}
           current={theme}
-          preview={(id) => wallpaperUrl(id, subject)}
+          aside={(id) => (
+            <img className="arch-picker-glyph" src={subjectIconUrl(id, subject)} alt="" />
+          )}
           anchor={submenu.anchor}
           autoFocus={submenu.focus}
           onPick={pick(onThemeChange)}
@@ -290,7 +293,9 @@ function LauncherMenu({
           label="Wallpapers"
           items={SUBJECTS}
           current={subject}
-          preview={(id) => wallpaperUrl(theme, id)}
+          aside={(id) => (
+            <img className="arch-picker-glyph" src={subjectIconUrl(theme, id)} alt="" />
+          )}
           anchor={submenu.anchor}
           autoFocus={submenu.focus}
           onPick={pick(onSubjectChange)}

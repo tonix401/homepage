@@ -53,13 +53,14 @@ const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
 /**
  * Runs the snake round `segment`, the launcher button, after `delay`
- * milliseconds. Does nothing when the segment is not showing or the visitor
- * has asked for less motion — `holdOutline` is their version.
+ * milliseconds, and returns a function that takes it away before its lap is
+ * done. Does nothing when the segment is not showing or the visitor has asked
+ * for less motion — `holdOutline` is their version.
  */
-export function snakeAround(segment: Element | null, delay = 0): void {
-  if (!segment || window.matchMedia(REDUCED_MOTION).matches) return;
+export function snakeAround(segment: Element | null, delay = 0): () => void {
+  if (!segment || window.matchMedia(REDUCED_MOTION).matches) return () => {};
   const overlay = createOverlay();
-  if (!placeOverlay(overlay, segment)) return;
+  if (!placeOverlay(overlay, segment)) return () => {};
   const { svg, path } = overlay;
   // Opening an app mid-lap retitles the segment, which widens it: refit the
   // outline to it. The dash is in hundredths of the outline, so it keeps its
@@ -92,6 +93,7 @@ export function snakeAround(segment: Element | null, delay = 0): void {
   }
   lap.finished.then(drop, drop);
   setTimeout(drop, delay + SNAKE_DURATION + 200);
+  return drop;
 }
 
 /**

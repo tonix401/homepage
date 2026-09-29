@@ -38,12 +38,14 @@
 /* The menu, and each submenu: a small panel in the accent, sized to its rows. */
 .arch-menu {
   position: absolute;
-  min-width: 190px;
+  min-width: 220px;
   max-height: calc(100% - 16px);
   margin: 0;
-  padding: 4px;
+  /* A little more below the last row than elsewhere: 5px under a highlight
+     that runs into the bright border reads tighter than it measures. */
+  padding: 5px 5px 7px;
   border: 2px solid var(--launcher-accent);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--launcher-surface);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
   list-style: none;
@@ -66,10 +68,10 @@
 .arch-menu-item {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 5px 8px;
-  border-radius: 6px;
-  font-size: 13px;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 14px;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -82,47 +84,30 @@
 /* A few px over the label's size, as icons beside labels are here. */
 .arch-menu-icon {
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 /* The ways into a submenu, set apart from the apps by a hairline and marked
    with the chevron menus use for one. */
 .arch-menu-separator {
-  margin: 4px 6px;
+  margin: 5px 8px;
   border-top: 1px solid color-mix(in srgb, var(--theme-primary) 22%, transparent);
 }
 
 .arch-menu-chevron {
   margin-left: auto;
-  padding-left: 18px;
-  font-size: 16px;
+  padding-left: 20px;
+  font-size: 18px;
   line-height: 1;
 }
 
 /*
- * The Themes and Wallpapers submenus (`PickerMenu`): the preview above the
- * list, the wallpaper as the highlighted choice would make it, zoomed in on
- * its subject so the glow and gradient are part of the choice.
+ * The Themes and Wallpapers submenus (`PickerMenu`): each choice's name, and
+ * at the end of its row the subject that choice would leave on the wallpaper.
  */
 .arch-picker {
-  width: 200px;
-}
-
-.arch-picker-preview {
-  height: 104px;
-  margin-bottom: 4px;
-  overflow: hidden;
-  border-radius: 6px;
-}
-
-.arch-picker-preview img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 56%;
-  transform: scale(1.35);
+  min-width: 190px;
 }
 
 .arch-picker-list {
@@ -133,23 +118,40 @@
 }
 
 .arch-picker-item {
-  padding: 5px 8px;
-  border-radius: 6px;
-  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 14px;
   cursor: pointer;
 }
 
 /* The highlight is jīzǐ's cursor, not the menu's filled pill: this is a list
-   being browsed, and nothing happens until a pick. */
+   being browsed, and nothing sticks until a pick. */
 .arch-picker-item--active {
   background: var(--theme-primary-container);
   color: var(--theme-on-primary-container);
 }
 
 /* The one that is on, marked for when the highlight has moved away. */
-.arch-picker-item--current::after {
+.arch-picker-item--current .arch-picker-name::after {
   content: " •";
   opacity: 0.6;
+}
+
+/* A choice's picture of itself, at the end of its row. */
+.arch-picker-aside {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* The subject as the wallpaper draws it, in the box every subject is fitted
+   into, so the icons line up however wide or tall each subject is. */
+.arch-picker-glyph {
+  display: block;
+  height: 22px;
 }
 
 @media (prefers-reduced-motion: reduce) {

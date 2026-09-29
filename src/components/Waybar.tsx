@@ -24,6 +24,8 @@ interface WaybarProps {
   onAppMenu: (at: Point) => void;
   /** Nothing open on this workspace: the launcher segment pulses to say so. */
   empty: boolean;
+  /** The launcher menu is open, so the segment has nothing left to ask for. */
+  menuOpen: boolean;
 }
 
 /**
@@ -184,6 +186,7 @@ export function Waybar({
   focusedTitle,
   onAppMenu,
   empty,
+  menuOpen,
 }: WaybarProps) {
   const [now, setNow] = useState(() => new Date());
   const [ringing, setRinging] = useState(false);
@@ -235,18 +238,24 @@ export function Waybar({
    * A hidden tab skips its turn rather than queue a line for when it returns.
    * With less motion asked for, each run is skipped and the outline is simply
    * held round the segment for as long as the workspace stays empty.
+   *
+   * All of it stops while the launcher menu is open, a lap already under way
+   * included: the segment is asking to be clicked, and it has been.
    */
+  const nudging = empty && !menuOpen;
   useEffect(() => {
-    if (!empty) return;
+    if (!nudging) return;
+    let stopLap = () => {};
     const id = window.setInterval(() => {
-      if (!document.hidden) snakeAround(launcherRef.current);
+      if (!document.hidden) stopLap = snakeAround(launcherRef.current);
     }, SNAKE_EVERY);
     const release = holdOutline(launcherRef.current);
     return () => {
       clearInterval(id);
+      stopLap();
       release();
     };
-  }, [empty]);
+  }, [nudging]);
 
   /*
    * The pill sits above both side clusters, so a long window title runs under
@@ -338,8 +347,9 @@ export function Waybar({
         <Arrow from={FILL.tertiary} to={FILL.containerHigh} dir="r" />
         <button
           // On an empty workspace this is the way to open something, so it
-          // pulses — the only thing on screen asking to be clicked.
-          className={`wb-seg wb-on-surface wb-window wb-clickable${empty ? " wb-window--pulse" : ""}`}
+          // pulses — the only thing on screen asking to be clicked — until
+          // its menu is open.
+          className={`wb-seg wb-on-surface wb-window wb-clickable${nudging ? " wb-window--pulse" : ""}`}
           onClick={(event) => {
             // Hung from the segment's bottom-left corner, clear of the bar.
             const { left, bottom } = event.currentTarget.getBoundingClientRect();

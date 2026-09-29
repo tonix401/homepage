@@ -197,14 +197,29 @@ export function genieInto(snapshot: WindowSnapshot, target: Element | null): voi
   const to = target.getBoundingClientRect();
   if (to.width === 0 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+  // The ghost covers everything the window passes over on its way — its own
+  // box and the launcher's — and paints all of it, faintly. The bands' damage
+  // is reported through their perspective transforms, and now and then that
+  // comes out short: a band left its pixels behind where it had been, and the
+  // screen went on showing them until something else happened to repaint
+  // there. A ghost that paints the whole of its path is repainted whole when
+  // it fades and when it goes, which takes anything left behind with it. 1%
+  // black is the least that is still drawn rather than skipped as empty.
+  const area = {
+    left: Math.min(rect.left, to.left),
+    top: Math.min(rect.top, to.top),
+    right: Math.max(rect.left + rect.width, to.right),
+    bottom: Math.max(rect.top + rect.height, to.bottom),
+  };
   const ghost = document.createElement("div");
   ghost.inert = true;
   Object.assign(ghost.style, {
     position: "fixed",
-    left: `${rect.left}px`,
-    top: `${rect.top}px`,
-    width: `${rect.width}px`,
-    height: `${rect.height}px`,
+    left: `${area.left}px`,
+    top: `${area.top}px`,
+    width: `${area.right - area.left}px`,
+    height: `${area.bottom - area.top}px`,
+    background: "rgba(0, 0, 0, 0.01)",
     // Under the bar (`z-index: 1`), so the window goes in *behind* the
     // launcher; still above the strips, which have none and come earlier.
     zIndex: "0",
@@ -229,8 +244,8 @@ export function genieInto(snapshot: WindowSnapshot, target: Element | null): voi
     const box = document.createElement("div");
     Object.assign(box.style, {
       position: "absolute",
-      left: "0",
-      top: `${band.top}px`,
+      left: `${rect.left - area.left}px`,
+      top: `${rect.top - area.top + band.top}px`,
       width: `${rect.width}px`,
       // A pixel into the next band, which is drawn over it, so no hairline of
       // wallpaper shows between two bands that have been rasterized apart.

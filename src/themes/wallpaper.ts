@@ -7,14 +7,15 @@
  * glow is a blur filter over a screen-sized image; an image is rasterized once,
  * where an inline SVG filter is one more thing the compositor may repaint while
  * the strip scrolls over it. And each `<img>` is a document of its own, so the
- * five thumbnails the picker shows cannot resolve each other's `url(#…)` ids.
+ * subject icons the Wallpapers submenu shows cannot resolve each other's
+ * `url(#…)` ids.
  *
  * The glow blurs the subject itself, so it follows the logo colour with no
  * colour of its own to change.
  */
 
 import { type ThemeId, themeTokens } from "./theme";
-import { type SubjectId, subjectMarkup } from "./subjects";
+import { SUBJECT_FRAME, type SubjectId, subjectMarkup } from "./subjects";
 
 function svg(subject: SubjectId, logo: string, line: string, inner: string, outer: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="368.09479mm" height="201.22717mm" viewBox="0 0 368.09479 201.22717">
@@ -44,6 +45,37 @@ export function wallpaperUrl(theme: ThemeId, subject: SubjectId): string {
   if (!url) {
     url = `data:image/svg+xml,${encodeURIComponent(wallpaperSvg(theme, subject))}`;
     urls.set(key, url);
+  }
+  return url;
+}
+
+/**
+ * A subject on its own, cropped to the box every subject is fitted into, for
+ * the launcher's Wallpapers submenu. Filled in the theme's primary as well as
+ * lined in it: the logo colour is a deep tone that reads on the wallpaper by
+ * its white outline and glow, and at icon size on the menu both are too thin
+ * to carry it.
+ */
+export function subjectIconSvg(theme: ThemeId, subject: SubjectId): string {
+  const { primary } = themeTokens(theme);
+  const { x, y, width, height } = SUBJECT_FRAME;
+  // A little room round the box, for the outline and a hint of the glow.
+  const pad = 3;
+  const box = [x - width / 2 - pad, y - height / 2 - pad, width + 2 * pad, height + 2 * pad];
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${box.join(" ")}">
+${subjectMarkup(subject, { logo: primary, line: primary })}
+</svg>`;
+}
+
+const iconUrls = new Map<string, string>();
+
+/** A data URL for `subjectIconSvg`, built once per theme and subject. */
+export function subjectIconUrl(theme: ThemeId, subject: SubjectId): string {
+  const key = `${theme}/${subject}`;
+  let url = iconUrls.get(key);
+  if (!url) {
+    url = `data:image/svg+xml,${encodeURIComponent(subjectIconSvg(theme, subject))}`;
+    iconUrls.set(key, url);
   }
   return url;
 }

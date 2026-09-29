@@ -35,7 +35,7 @@ App
 │   ├── ArchStrip          — the scrolling row of windows
 │   │   └── .arch-column   — one window: APPS[app].render(…)
 │   └── Launcher           — the app launcher, a context menu in a <dialog>
-│       └── PickerMenu     — its Themes / Wallpapers submenus: preview over list
+│       └── PickerMenu     — its Themes / Wallpapers submenus, each choice with an icon
 └── (maximized)            — one window, rendered bare, no desktop
 
 EditorApp                  — the VSCode window, one instance per column
@@ -281,7 +281,9 @@ it whenever the segment or its cluster changes size, before that frame is
 painted: opening an app mid-lap retitles the segment and widens it, and the
 dash, measured in hundredths of the outline, keeps its place along the new one.
 Its lap starts mid-way along the top edge, so it fades in and out there and
-passes the tail and tip at full strength. A hidden tab skips its turn. Under
+passes the tail and tip at full strength. A hidden tab skips its turn. The
+pulse, the snake (a lap under way included) and the held outline below all stop
+while the launcher menu is open, and start again when it closes. Under
 `prefers-reduced-motion` there is no snake: `holdOutline` draws the whole
 outline and holds it for as long as the workspace stays empty, refitted the
 same way, and follows the preference being changed mid-visit. These
@@ -436,7 +438,12 @@ makes the map affine along every row, so neighbouring bands agree point for
 point on their shared edge. The frames are held with `step-end` rather than
 blended, because CSS interpolates a `matrix3d` by decomposing it, and that
 tore the seams apart between keyframes. At 120 frames they are finer than any
-refresh rate. The window keeps its focused border because
+refresh rate. Now and then a band's damage, reported through its perspective
+transform, came out short, and the screen kept showing a stripe of the window
+where it had been until something else repainted there (moving the pointer to
+another window and back). So the ghost covers its whole path, the window's box
+and the launcher's, with a 1% black background: a layer that paints is
+repainted whole as it fades and when it is removed, stale stripes included. The window keeps its focused border because
 `--arch-window-border` is declared on `:root`: scoped to `.arch-desktop`, it
 resolved to nothing under `<body>`. Iframes reload when re-attached (and load
 once per band), so an HTML preview redraws inside the ghost. As it lands, the
@@ -767,8 +774,8 @@ site's original look), teal, rose, amber and green. Everything in
     an entry in `SUBJECTS`.
 - `wallpaper.ts` builds the wallpaper SVG for a theme and subject and hands it
   to an `<img>` as a data URL. It isn't inline SVG: the glow is a large blur
-  filter that an image rasterizes once, and the inline previews would resolve
-  each other's `url(#…)` ids.
+  filter that an image rasterizes once, and the submenu's inline subject icons
+  would resolve each other's `url(#…)` ids.
 - `preferences.ts` reads and writes both choices in `localStorage`,
   `homepage.theme.v1` and `homepage.wallpaper.v1`. It falls back to the
   default when storage is missing, blocked or full.
@@ -807,7 +814,8 @@ is closed.
   hangs the menu down and right of its point and moves it back inside by
   exactly what would overlap an edge. `placeSubmenu` opens a submenu to the
   right of the menu, or to the left when the right has no room, with its first
-  choice level with the row that opened it and the preview above. Both measure in a layout effect, so nothing paints off screen.
+  choice level with the row that opened it. Both measure in a layout effect,
+  so nothing paints off screen.
 - **Keys:** there is no search box. ↑/↓ (wrapping), Home and End move,
   Enter or Space runs an app, a letter jumps to the next row starting with it
   (accents folded, so "j" finds jīzǐ), and Esc closes.
@@ -818,10 +826,16 @@ The theme and the wallpaper are both picked in the **launcher**, not by an app.
   sit below a hairline.
 - **Opening one:** hovering the row opens its `PickerMenu` beside it without
   taking the keys; Enter, Space, → or a click opens it and moves the keys in.
-  Hovering an app row closes it again. It shows a preview above the choices.
-- **Browsing:** moving the highlight changes only the preview. That's the
-  wallpaper as the choice would leave it, zoomed in on the subject: a theme is
-  previewed with the current subject, and a subject in the current theme.
+  Hovering an app row closes it again.
+- **Each choice shows itself** at the end of its row, through `PickerMenu`'s
+  `aside`, as a small icon (`subjectIconUrl` in `wallpaper.ts`): a theme is
+  the current subject in that theme's colour, a wallpaper its subject in the
+  current theme's. The icon is the subject's own markup cropped to
+  `SUBJECT_FRAME`, filled and lined in the primary: the logo colour reads on
+  the wallpaper only by its white outline and glow, which are too thin at icon
+  size.
+- **Browsing:** moving the highlight changes nothing on the desktop; there is
+  no preview.
 - **Picking:** Enter or a click applies the choice and closes the launcher.
 - **Going back:** Esc or ← closes the submenu and gives the keys back to the
   menu rather than closing it. That's why the list's Esc handler prevents the
