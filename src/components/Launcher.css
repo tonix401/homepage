@@ -1,141 +1,119 @@
 /*
- * A modal <dialog> centres itself with `margin: auto` from the UA stylesheet —
- * but the global reset in index.css zeroes every margin, so it has to be put
- * back here or the launcher lands in the top-left corner.
+ * The launcher is a context menu. Its <dialog> is a transparent sheet over the
+ * whole screen, so a click off the menu lands on it and closes it, and the
+ * menus are placed on that sheet at the coordinates `placeMenu` and
+ * `placeSubmenu` give them. The UA stylesheet sizes and centres a modal
+ * dialog, and gives it a backdrop; all of that is taken back here.
  *
  * The look is the compositor's own: the theme's primary, which the focused
- * window is outlined in too, a monospace face, and roomy rows with the
- * selection drawn as a filled pill. The theme is on `<html>`, so the top layer
- * a modal dialog paints in reaches it like everything else.
+ * window is outlined in too, a monospace face, and the selection drawn as a
+ * filled pill. The theme is on `<html>`, so the top layer a modal dialog
+ * paints in reaches it like everything else.
  */
 .arch-launcher {
   --launcher-accent: var(--theme-primary);
   --launcher-surface: var(--theme-surface-lowest);
   --launcher-ink: var(--theme-on-primary);
 
-  width: min(460px, calc(100vw - 32px));
-  margin: auto;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
   padding: 0;
   border: none;
   background: transparent;
+  overflow: visible;
   color: var(--launcher-accent);
   font-family: var(--font-mono);
 }
 
-/* A light veil, not a curtain: the desktop behind stays readable, dimmed and
-   softened just enough that the launcher is plainly what has focus. */
+/* A context menu does not dim what it opened over. */
 .arch-launcher::backdrop {
-  background: color-mix(in srgb, var(--theme-wall-outer) 30%, transparent);
-  backdrop-filter: blur(1.5px);
-}
-
-.arch-launcher-panel {
-  padding: 8px;
-  border: 2px solid var(--launcher-accent);
-  border-radius: 14px;
-  background: var(--launcher-surface);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
-  overflow: hidden;
-}
-
-/* No rule under the field and no box around it: the spacing separates the
-   query from the list, the way the real launcher does it. */
-.arch-launcher-input {
-  width: 100%;
-  padding: 11px 13px 14px;
-  border: none;
   background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 14px;
-  caret-color: var(--launcher-accent);
-  outline: none;
 }
 
-.arch-launcher-input::placeholder {
-  color: inherit;
-  opacity: 0.55;
-}
-
-.arch-launcher-list {
+/* The menu, and each submenu: a small panel in the accent, sized to its rows. */
+.arch-menu {
+  position: absolute;
+  min-width: 190px;
+  max-height: calc(100% - 16px);
   margin: 0;
-  padding: 0;
+  padding: 4px;
+  border: 2px solid var(--launcher-accent);
+  border-radius: 10px;
+  background: var(--launcher-surface);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
   list-style: none;
-  max-height: 52vh;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--theme-primary) 25%, transparent) transparent;
+  outline: none;
+  /* It grows from the corner it hangs from, as near the pointer as it got. */
+  transform-origin: top left;
+  animation: arch-menu-in 0.12s ease-out;
 }
 
-.arch-launcher-app {
+@keyframes arch-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+.arch-menu-item {
   display: flex;
   align-items: center;
-  gap: 11px;
-  width: 100%;
-  padding: 6px 9px;
-  border: none;
-  border-radius: 9px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 14px;
-  text-align: left;
+  gap: 9px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.arch-launcher-app--active {
+.arch-menu-item--active {
   background: var(--launcher-accent);
   color: var(--launcher-ink);
 }
 
-/* Every entry on a real launcher carries a square app icon; these are stroke
-   glyphs rather than artwork, so the tile is drawn here to give them one. The
-   active row's tile goes dark and keeps a light glyph — the row it sits on is
-   the accent colour, and a dark-on-accent icon would lose its detail. */
-.arch-launcher-icon {
-  width: 31px;
-  height: 31px;
-  padding: 6px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--theme-primary) 10%, transparent);
-  color: var(--launcher-accent);
+/* A few px over the label's size, as icons beside labels are here. */
+.arch-menu-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
 }
 
-.arch-launcher-app--active .arch-launcher-icon {
-  background: var(--launcher-ink);
+/* The ways into a submenu, set apart from the apps by a hairline and marked
+   with the chevron menus use for one. */
+.arch-menu-separator {
+  margin: 4px 6px;
+  border-top: 1px solid color-mix(in srgb, var(--theme-primary) 22%, transparent);
 }
 
-/* The way into a submenu rather than something to run: set apart from the
-   apps by a hairline, and marked with the chevron menus use for one. */
-.arch-launcher-submenu {
-  margin-top: 5px;
-  padding-top: 5px;
-  border-top: 1px solid color-mix(in srgb, var(--theme-primary) 18%, transparent);
-}
-
-.arch-launcher-chevron {
+.arch-menu-chevron {
   margin-left: auto;
-  padding-right: 4px;
-  font-size: 18px;
+  padding-left: 18px;
+  font-size: 16px;
   line-height: 1;
 }
 
 /*
- * The Themes and Wallpapers submenus (`PickerMenu`): a preview and a list,
- * split by a rule in the accent — the same pane divider jīzǐ's file manager
- * draws. The preview is the wallpaper as the highlighted choice would make it,
- * zoomed in on its subject, so the glow and gradient are part of the choice.
+ * The Themes and Wallpapers submenus (`PickerMenu`): the preview above the
+ * list, the wallpaper as the highlighted choice would make it, zoomed in on
+ * its subject so the glow and gradient are part of the choice.
  */
 .arch-picker {
-  display: flex;
-  gap: 8px;
-  height: 188px;
+  width: 200px;
 }
 
 .arch-picker-preview {
-  flex: 0 0 42%;
+  height: 104px;
+  margin-bottom: 4px;
   overflow: hidden;
-  border-radius: 9px;
+  border-radius: 6px;
 }
 
 .arch-picker-preview img {
@@ -148,25 +126,21 @@
 }
 
 .arch-picker-list {
-  flex: 1;
   margin: 0;
-  padding: 0 0 0 10px;
-  border-left: 2px solid var(--launcher-accent);
+  padding: 0;
   list-style: none;
-  overflow-y: auto;
-  scrollbar-width: none;
   outline: none;
 }
 
 .arch-picker-item {
-  padding: 3px 9px;
+  padding: 5px 8px;
   border-radius: 6px;
-  font-size: 15px;
+  font-size: 13px;
   cursor: pointer;
 }
 
-/* The highlight is jīzǐ's cursor, not the launcher's filled pill: this is a
-   list being browsed, and nothing happens until Enter. */
+/* The highlight is jīzǐ's cursor, not the menu's filled pill: this is a list
+   being browsed, and nothing happens until a pick. */
 .arch-picker-item--active {
   background: var(--theme-primary-container);
   color: var(--theme-on-primary-container);
@@ -178,15 +152,8 @@
   opacity: 0.6;
 }
 
-.arch-launcher-empty {
-  padding: 12px 15px;
-  color: inherit;
-  opacity: 0.55;
-  font-size: 14px;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .arch-launcher::backdrop {
-    backdrop-filter: none;
+  .arch-menu {
+    animation: none;
   }
 }

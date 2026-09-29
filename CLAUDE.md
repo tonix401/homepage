@@ -34,8 +34,8 @@ App
 │   ├── Waybar             — the bar: modules, workspace pills, launcher button
 │   ├── ArchStrip          — the scrolling row of windows
 │   │   └── .arch-column   — one window: APPS[app].render(…)
-│   └── Launcher           — the centred <dialog> app launcher
-│       └── PickerMenu     — its Themes / Wallpapers submenus: preview | list
+│   └── Launcher           — the app launcher, a context menu in a <dialog>
+│       └── PickerMenu     — its Themes / Wallpapers submenus: preview over list
 └── (maximized)            — one window, rendered bare, no desktop
 
 EditorApp                  — the VSCode window, one instance per column
@@ -260,11 +260,15 @@ memory ones are real measurements, taken by `src/utils/systemStats.ts`.
 Three segments do something. The Arch mark opens Codium — maximized, on its
 default page, reusing the focused window when that is already an editor rather
 than stacking up more; the window-title segment reports the focused window
-(`AppDefinition.title`) and opens the launcher. Every app's title names the
+(`AppDefinition.title`) and opens the launcher just below it. Every app's title names the
 file it shows, as in `Homelab.md — Codium`: a window with no file set names
 the default file, because that's what it shows (`findDefaultFile` and
 `pageName` in `src/utils/files.ts`), and jīzǐ names the entry under its cursor; the keyboard segment cycles the
 numerals (`WORKSPACE_LANGUAGES` lives in `src/utils/desktop.ts`).
+Right-clicking the background opens the launcher too, at the pointer,
+anywhere the wallpaper shows: `ArchDesktop` takes any `contextmenu` that did
+not land on a window, the bar or the launcher. A right-click off the open
+launcher closes it, like a click does, rather than showing the browser's menu.
 On an empty workspace the title segment reads "App Launcher" and pulses: its label and
 icon glow towards the primary. The background can't pulse, because the
 powerline arrow tips are separate pieces in its fill colour. Every
@@ -790,22 +794,38 @@ theme's primary and inline code its tertiary (`.vscode-md-area` in
 `Content.css`). Obsidian overrides both with its own purple, `--obs-accent`.
 Code blocks keep the plain text colour everywhere.
 
+The **launcher is a context menu**. A right-click on the background opens it
+at the pointer, and the bar's launcher segment opens it just under itself
+(`LAUNCHER_DROP`); `ArchDesktop` holds where, as a `Point`, or `null` when it
+is closed.
+
+- **The dialog:** a modal `<dialog>` still, for Escape, the focus trap and the
+  inert desktop, but transparent and covering the whole screen with no veil.
+  The menus are placed on it, so a click or right-click off them lands on the
+  dialog itself and closes it. A resize closes it too.
+- **On screen:** `placeMenu` (`src/utils/menuPlacement.ts`, pure, tested)
+  hangs the menu down and right of its point and moves it back inside by
+  exactly what would overlap an edge. `placeSubmenu` opens a submenu to the
+  right of the menu, or to the left when the right has no room, with its first
+  choice level with the row that opened it and the preview above. Both measure in a layout effect, so nothing paints off screen.
+- **Keys:** there is no search box. ↑/↓ (wrapping), Home and End move,
+  Enter or Space runs an app, a letter jumps to the next row starting with it
+  (accents folded, so "j" finds jīzǐ), and Esc closes.
+
 The theme and the wallpaper are both picked in the **launcher**, not by an app.
 
-- **The rows:** the last rows of the app list, **Themes ›** and
-  **Wallpapers ›**, sit below a hairline. `SUBMENUS` in `Launcher.tsx` gives
-  each its own filter keywords: "colours" finds Themes; "tux" or "background"
-  finds Wallpapers.
-- **Opening one:** Enter, → or a click opens `PickerMenu` in the same panel,
-  laid out like a rofi wallpaper menu: a preview on the left, the choices on
-  the right.
+- **The rows:** the last rows of the menu, **Themes ›** and **Wallpapers ›**,
+  sit below a hairline.
+- **Opening one:** hovering the row opens its `PickerMenu` beside it without
+  taking the keys; Enter, Space, → or a click opens it and moves the keys in.
+  Hovering an app row closes it again. It shows a preview above the choices.
 - **Browsing:** moving the highlight changes only the preview. That's the
   wallpaper as the choice would leave it, zoomed in on the subject: a theme is
   previewed with the current subject, and a subject in the current theme.
 - **Picking:** Enter or a click applies the choice and closes the launcher.
-- **Going back:** Esc or ← returns to the apps rather than closing. That's why
-  the list's Esc handler prevents the default, which would otherwise cancel
-  the dialog.
+- **Going back:** Esc or ← closes the submenu and gives the keys back to the
+  menu rather than closing it. That's why the list's Esc handler prevents the
+  default, which would otherwise cancel the dialog.
 - **Where they go:** apps never see either choice. Both go from `App` through
   `ArchDesktop` to the launcher and the wallpaper, and everything else reads
   the theme from CSS.

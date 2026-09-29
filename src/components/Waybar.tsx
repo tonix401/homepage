@@ -3,6 +3,7 @@ import "./Waybar.css";
 import { WORKSPACE_LANGUAGES, type WorkspaceLanguage } from "../utils/desktop";
 import { useSystemStats } from "../utils/systemStats";
 import { holdOutline, snakeAround } from "../utils/snake";
+import { type Point } from "../utils/menuPlacement";
 import { Icon } from "./Icon";
 import { APP_ICONS } from "../apps/icons";
 import { type AppId } from "../apps/ids";
@@ -19,7 +20,8 @@ interface WaybarProps {
   /** What the window-title segment reports; clicking it opens the launcher. */
   focusedApp: AppId | null;
   focusedTitle: string | null;
-  onAppMenu: () => void;
+  /** Opens the launcher menu at a point: here, just under this segment. */
+  onAppMenu: (at: Point) => void;
   /** Nothing open on this workspace: the launcher segment pulses to say so. */
   empty: boolean;
 }
@@ -128,6 +130,9 @@ const icons = {
  * halfway mark, where the animation has scaled them to nothing.
  */
 const WS_SPIN_MS = 420;
+
+/** How far below the launcher segment, in px, its menu opens. */
+const LAUNCHER_DROP = 6;
 
 /** How often, in ms, a line runs round the launcher while the workspace is empty. */
 const SNAKE_EVERY = 5000;
@@ -335,7 +340,11 @@ export function Waybar({
           // On an empty workspace this is the way to open something, so it
           // pulses — the only thing on screen asking to be clicked.
           className={`wb-seg wb-on-surface wb-window wb-clickable${empty ? " wb-window--pulse" : ""}`}
-          onClick={onAppMenu}
+          onClick={(event) => {
+            // Hung from the segment's bottom-left corner, clear of the bar.
+            const { left, bottom } = event.currentTarget.getBoundingClientRect();
+            onAppMenu({ x: left, y: bottom + LAUNCHER_DROP });
+          }}
           // Where a closing window goes: see `genieInto`.
           data-launcher
           ref={launcherRef}

@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from "react";
+import { useCallback, useState, type MouseEvent, type ReactNode } from "react";
 import "./ArchDesktop.css";
 import { Waybar } from "./Waybar";
 import { Launcher } from "./Launcher";
 import { type WorkspaceLanguage } from "../utils/desktop";
+import { type Point } from "../utils/menuPlacement";
 import { type AppId } from "../apps/ids";
 import { type ThemeId } from "../themes/theme";
 import { type SubjectId } from "../themes/subjects";
@@ -51,12 +52,31 @@ export function ArchDesktop({
   empty,
   children,
 }: ArchDesktopProps) {
-  // Whether the launcher is up is desktop chrome and nothing else: it is not
-  // worth a history entry, and a shared link should not reopen it.
-  const [launcherOpen, setLauncherOpen] = useState(false);
+  // Where the launcher menu is open, or `null`. Desktop chrome and nothing
+  // else: it is not worth a history entry, and a reload should not reopen it.
+  const [launcherAt, setLauncherAt] = useState<Point | null>(null);
+
+  /*
+   * Right-clicking the background opens the launcher at the pointer, as a
+   * desktop's own menu would — anywhere the wallpaper shows, on an empty workspace or between
+   * windows. The strip lies over all of it, so the test is what the click was
+   * *not* on: a window, the bar and the launcher keep the browser's menu. The
+   * DOM check comes first because React bubbles events through portals, and
+   * the browser's bookmark menus are portalled to <body>, outside every window.
+   */
+  const openOnBackground = (event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (!(target instanceof Element) || !event.currentTarget.contains(target)) return;
+    if (target.closest(".arch-column, .waybar, dialog")) return;
+    event.preventDefault();
+    setLauncherAt({ x: event.clientX, y: event.clientY });
+  };
+
+  // Stable, since the launcher listens for resizes with it while it is open.
+  const closeLauncher = useCallback(() => setLauncherAt(null), []);
 
   return (
-    <div className="arch-desktop">
+    <div className="arch-desktop" onContextMenu={openOnBackground}>
       <Waybar
         workspace={workspace}
         language={language}
@@ -66,19 +86,19 @@ export function ArchDesktop({
         onHome={onHome}
         focusedApp={focusedApp}
         focusedTitle={focusedTitle}
-        onAppMenu={() => setLauncherOpen(true)}
+        onAppMenu={setLauncherAt}
         empty={empty}
       />
       <Wallpaper url={wallpaperUrl(theme, subject)} />
       {children}
       <Launcher
-        open={launcherOpen}
+        at={launcherAt}
         theme={theme}
         onThemeChange={onThemeChange}
         subject={subject}
         onSubjectChange={onSubjectChange}
         onLaunch={onLaunch}
-        onClose={() => setLauncherOpen(false)}
+        onClose={closeLauncher}
       />
     </div>
   );

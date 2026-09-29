@@ -1,14 +1,23 @@
 /**
  * A launcher submenu for picking one of a few things — the colour theme, or
- * what the wallpaper shows — laid out the way a rofi wallpaper menu is: a
- * preview on the left, the choices on the right.
+ * what the wallpaper shows. It opens beside the row that leads to it, as a
+ * context menu's submenu does, with a preview of the highlighted choice above
+ * the list: the wallpaper as it would be with that choice, zoomed in on its
+ * subject.
  *
- * Moving the highlight only changes the preview, the wallpaper as it would be
- * with that choice, zoomed in on its subject; browsing the list leaves the
- * desktop alone until something is actually picked.
+ * Moving the highlight only changes the preview; browsing the list leaves
+ * the desktop alone until something is actually picked.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { placeSubmenu, type Point } from "../utils/menuPlacement";
+
+/** Where a submenu hangs from: the menu's sides, and the top of its row. */
+export interface SubmenuAnchor {
+  left: number;
+  right: number;
+  rowTop: number;
+}
 
 interface PickerMenuProps<T extends string> {
   /** What the list is called, for screen readers — "Themes", "Wallpapers". */
@@ -18,8 +27,11 @@ interface PickerMenuProps<T extends string> {
   current: T;
   /** The wallpaper image for a choice. */
   preview: (id: T) => string;
+  anchor: SubmenuAnchor;
+  /** Take the keys: it was opened from the keyboard rather than by hovering. */
+  autoFocus: boolean;
   onPick: (id: T) => void;
-  /** Esc or ←: back to the app list, not out of the launcher. */
+  /** Esc or ←: back to the menu, not out of the launcher. */
   onBack: () => void;
 }
 
@@ -28,6 +40,8 @@ export function PickerMenu<T extends string>({
   items,
   current,
   preview,
+  anchor,
+  autoFocus,
   onPick,
   onBack,
 }: PickerMenuProps<T>) {
@@ -35,14 +49,39 @@ export function PickerMenu<T extends string>({
   const [active, setActive] = useState(() =>
     Math.max(0, items.findIndex((item) => item.id === current)),
   );
+  const [place, setPlace] = useState<Point>({ x: anchor.right, y: anchor.rowTop });
+  const panel = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const highlighted = items[active].id;
 
-  // The search box the keys went to is gone, so the list takes them instead.
-  useEffect(() => list.current?.focus(), []);
+  // Beside its row and inside the screen before the first paint. The inset
+  // is how far the first choice sits below the submenu's top edge, past the
+  // preview, so that choice is what lines up with the row that opened it.
+  useLayoutEffect(() => {
+    const el = panel.current;
+    const first = list.current?.firstElementChild;
+    if (!el || !first) return;
+    setPlace(
+      placeSubmenu(
+        anchor,
+        anchor.rowTop,
+        first.getBoundingClientRect().top - el.getBoundingClientRect().top,
+        { width: el.offsetWidth, height: el.offsetHeight },
+        { width: window.innerWidth, height: window.innerHeight },
+      ),
+    );
+  }, [anchor]);
+
+  useEffect(() => {
+    if (autoFocus) list.current?.focus();
+  }, [autoFocus]);
 
   return (
-    <div className="arch-picker">
+    <div
+      ref={panel}
+      className="arch-menu arch-picker"
+      style={{ left: place.x, top: place.y }}
+    >
       <div className="arch-picker-preview">
         <img src={preview(highlighted)} alt="" draggable={false} />
       </div>
@@ -51,14 +90,19 @@ export function PickerMenu<T extends string>({
         className="arch-picker-list"
         role="listbox"
         aria-label={label}
-        tabIndex={0}
+        tabIndex={-1}
         aria-activedescendant={`arch-picker-${highlighted}`}
         onKeyDown={(event) => {
+          const last = items.length - 1;
           if (event.key === "ArrowDown") {
-            setActive(Math.min(active + 1, items.length - 1));
+            setActive(active === last ? 0 : active + 1);
           } else if (event.key === "ArrowUp") {
-            setActive(Math.max(active - 1, 0));
-          } else if (event.key === "Enter") {
+            setActive(active === 0 ? last : active - 1);
+          } else if (event.key === "Home") {
+            setActive(0);
+          } else if (event.key === "End") {
+            setActive(last);
+          } else if (event.key === "Enter" || event.key === " ") {
             onPick(highlighted);
           } else if (event.key === "Escape" || event.key === "ArrowLeft") {
             // Stops the dialog's own Escape, which would close the launcher.
