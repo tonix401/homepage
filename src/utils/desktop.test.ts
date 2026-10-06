@@ -170,12 +170,17 @@ describe("openWindow", () => {
     expect(args(next, 1)).toEqual(["a.md"]);
   });
 
-  it("refuses to grow past the cap, and focuses the last instead", () => {
+  it("closes the leftmost column to open past the cap", () => {
     const full = build({ 1: Array.from({ length: MAX_WINDOWS }, (_, i) => `${i}.md`) });
+    const leftmost = getWorkspace(full.desktop, 1).windows[0];
     const next = openWindow(full.desktop, { app: "editor", arg: "extra.md" });
-    expect(getWorkspace(next, 1).windows).toHaveLength(MAX_WINDOWS);
-    expect(focusedWindow(next)).toMatchObject({ arg: `${MAX_WINDOWS - 1}.md` });
-    expect(args(next)).not.toContain("extra.md");
+    expect(args(next)).toEqual([
+      ...Array.from({ length: MAX_WINDOWS - 1 }, (_, i) => `${i + 1}.md`),
+      "extra.md",
+    ]);
+    expect(focusedWindow(next)).toMatchObject({ arg: "extra.md" });
+    expect(next.windows[leftmost]).toBeUndefined();
+    expect(Object.keys(next.windows)).toHaveLength(MAX_WINDOWS);
   });
 });
 

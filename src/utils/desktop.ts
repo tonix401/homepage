@@ -38,7 +38,7 @@ export const WORKSPACE_COUNT = 5;
 /**
  * How many columns one workspace may hold. A cap rather than a design limit:
  * it stops a stored session — or a stuck launcher click — from mounting an
- * unbounded number of editors.
+ * unbounded number of editors. Opening past it closes the leftmost column.
  */
 export const MAX_WINDOWS = 8;
 
@@ -172,19 +172,24 @@ function putWorkspace(desktop: Desktop, workspace: number, next: WorkspaceRecord
  * Opening an app that is already on the strip gives a second window, the way a
  * launcher gives a second terminal. Nothing here folds duplicates together;
  * the browser's bookmarks navigate the window they are in instead.
+ *
+ * A full strip closes its leftmost columns to make room, rather than refusing:
+ * they are the ones furthest off-screen, and the new window still lands on
+ * the right where it always does.
  */
 export function openWindow(desktop: Desktop, spec: WindowSpec): Desktop {
   const workspace = getWorkspace(desktop, desktop.workspace);
-  if (workspace.windows.length >= MAX_WINDOWS) {
-    return focusWindow(desktop, workspace.windows[MAX_WINDOWS - 1]);
-  }
-  const window = makeWindow(spec, desktop.windows);
+  const evicted = workspace.windows.slice(0, workspace.windows.length - (MAX_WINDOWS - 1));
+  const kept = workspace.windows.slice(evicted.length);
+  const rest = { ...desktop.windows };
+  for (const id of evicted) delete rest[id];
+  const window = makeWindow(spec, rest);
   return {
     ...putWorkspace(desktop, desktop.workspace, {
-      windows: [...workspace.windows, window.id],
+      windows: [...kept, window.id],
       focus: window.id,
     }),
-    windows: { ...desktop.windows, [window.id]: window },
+    windows: { ...rest, [window.id]: window },
     // Opening always leaves the strip tiled, so you can see what you opened
     // and where it landed — and, onto an empty workspace, so the bar the
     // launcher lives on does not vanish along with the desktop.

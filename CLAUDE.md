@@ -506,7 +506,10 @@ whichever happened to have focus.
 `openWindow` always leaves the strip tiled. Opening onto an empty workspace
 must not go fullscreen or the bar the launcher lives on disappears with the
 desktop, and opening beside an existing window should show you what you opened
-and where it landed. Maximizing it again is one click away.
+and where it landed. Maximizing it again is one click away. A strip already
+holding `MAX_WINDOWS` (8) closes its leftmost window to make room, rather than
+refusing the new one; that window just goes, without the genie, since it is
+the one furthest off-screen.
 
 The bar's Arch mark is the one exception, and it is one because it composes
 rather than because the rule bends: `App`'s `handleHome` calls `setFullscreen`
