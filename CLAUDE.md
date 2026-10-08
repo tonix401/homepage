@@ -954,6 +954,29 @@ gives crawlers what they need without it. None of it is written by hand:
   become their alt text, and videos, styles and scripts go. Links between files
   are unlinked, since a file has no URL a crawler could follow.
 
+### Build output
+
+`vite.config.ts` splits the bundle so that no chunk passes Vite's 500 kB
+warning and the libraries stay cached across deploys:
+
+- **`react`** and **`vendor`** (`build.rolldownOptions.output.codeSplitting`):
+  React, then every other package the first screen needs (the markdown
+  pipeline, mostly). The site's own code is the `index` chunk.
+- **Lazy packages stay out of `vendor`:** `LAZY_PACKAGES` lists the packages
+  only ever imported dynamically, Shiki (and its regex engine) and eruda. A
+  group captures a module however it is imported, so a lazy package missing
+  from that list would be pulled into `vendor` and load with the page. Add any
+  new dynamically imported package there.
+- **Shiki is dynamic:** `highlighter.ts` imports `shiki/core` and its engine
+  with `import()`, so they are chunks of their own. `highlighterReady` still
+  starts loading with the page, and `FileView` awaited it already.
+- **eruda's `eval`:** its console evaluates what is typed into it, so the
+  build's direct-`eval` warning for `node_modules/eruda` is filtered in
+  `onLog`. Any other `eval` still warns.
+- **Config imports carry `.ts`:** `vite.config.ts` and everything it imports
+  name their imports with the extension, which Vite's upcoming native config
+  loader requires.
+
 ### Static assets
 
 VSCode icons are in `public/images/` and referenced as `/images/<name>`. The project uses dark-variant SVGs (`*-dark.svg`) for folder and document icons, and `forward-tb.png` (rotated via CSS) as the expand/collapse caret.

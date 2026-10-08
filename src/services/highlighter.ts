@@ -1,16 +1,25 @@
-import { createHighlighterCore } from "shiki/core";
-import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 import type { BundledLanguage, SpecialLanguage } from "shiki";
 import type { FileType } from "./types";
 import langs from "virtual:open-folder-langs";
 
 export type { ThemedToken } from "shiki";
 
-export const highlighterReady = createHighlighterCore({
-  themes: [import("@shikijs/themes/dark-plus")],
-  langs,
-  engine: createJavaScriptRegexEngine(),
-});
+/**
+ * Shiki and its regex engine are imported dynamically, so they are a chunk of
+ * their own rather than a third of the main bundle. Nothing waits for them any
+ * longer than it did: `FileView` already awaited this promise, and the import
+ * still starts as soon as the page loads.
+ */
+export const highlighterReady = Promise.all([
+  import("shiki/core"),
+  import("shiki/engine/javascript"),
+]).then(([{ createHighlighterCore }, { createJavaScriptRegexEngine }]) =>
+  createHighlighterCore({
+    themes: [import("@shikijs/themes/dark-plus")],
+    langs,
+    engine: createJavaScriptRegexEngine(),
+  }),
+);
 
 export function langFromType(type: FileType): BundledLanguage | SpecialLanguage {
   switch (type) {
