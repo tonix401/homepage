@@ -14,7 +14,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
-import type { FileNode, FolderNode, TreeNode } from "./types";
+import type { FileNode, FolderNode, TreeNode } from "./types.ts";
 
 const dropped = () => null;
 

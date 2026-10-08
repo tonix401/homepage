@@ -1,4 +1,4 @@
-import type { FileType } from "../services/types";
+import type { FileType } from "../services/types.ts";
 
 // Maps a file extension or fenced-code-block language hint to a FileType.
 // Handles both short extensions ("ts", "yml") and full language names

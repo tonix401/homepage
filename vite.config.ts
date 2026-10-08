@@ -2,10 +2,10 @@ import { copyFileSync, existsSync } from "fs";
 import { resolve } from "path";
 import { defineConfig, type Plugin, type ResolvedConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { openFolderPlugin } from "./src/services/FilesConverterService";
-import { gitLogPlugin } from "./src/services/gitLog";
-import { seoPlugin } from "./src/services/seo";
-import { configuration, seo } from "./vscode_website.config";
+import { openFolderPlugin } from "./src/services/FilesConverterService.ts";
+import { gitLogPlugin } from "./src/services/gitLog.ts";
+import { seoPlugin } from "./src/services/seo.ts";
+import { configuration, seo } from "./vscode_website.config.ts";
 
 /**
  * Every route lives at `/?…`, so nothing here is load-bearing for links. It

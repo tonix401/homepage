@@ -1,12 +1,12 @@
-import { type OpenFolderPluginOptions } from "./src/services/FilesConverterService";
-import { type SeoOptions } from "./src/services/seo";
+import { type OpenFolderPluginOptions } from "./src/services/FilesConverterService.ts";
+import { type SeoOptions } from "./src/services/seo.ts";
 
 export const configuration: OpenFolderPluginOptions = {
   folderPath: "./open_folder",
   rootFolderName: "TOM WEISE",
   searchBarText: "$website_title - $open_file",
   websiteTitle: "Tom Weise",
-  faviconPath: "./general/blue_dot.svg",
+  faviconPath: "/general/blue_dot.svg",
   foldersFirst: false,
   collapsedFolders: ["work experience"],
   defaultFile: "README.md", // Opens first, though "99#" sorts it last in the tree

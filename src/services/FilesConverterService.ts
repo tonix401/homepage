@@ -7,17 +7,17 @@ import {
   type FileType,
   type MenuItem,
   type TreeNode,
-} from "./types";
+} from "./types.ts";
 import {
   KNOWN_PLACEHOLDERS,
   detectUnknownPlaceholders,
   resolveConfigSearchBarText,
   transformHtml,
-} from "../utils/pluginHelpers";
-import { langHintToFileType } from "../utils/fileTypes";
-import { prerenderTree } from "./prerender";
+} from "../utils/pluginHelpers.ts";
+import { langHintToFileType } from "../utils/fileTypes.ts";
+import { prerenderTree } from "./prerender.ts";
 
-export type { FileNode, FolderNode, MenuItem, TreeNode } from "./types";
+export type { FileNode, FolderNode, MenuItem, TreeNode } from "./types.ts";
 
 export interface CustomActivityConfig {
   name: string;
