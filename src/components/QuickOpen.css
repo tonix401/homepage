@@ -112,12 +112,13 @@
   color: var(--fg-muted);
 }
 
-/* The dropdown would overflow a narrow viewport; let it use the full width. */
+/* The dropdown would overflow a phone's screen. There the search box covers
+   the whole header while it has focus (Header.css), and the box it hangs from
+   is that header, so it takes the window's width less a margin. */
 @media (max-width: 640px) {
   .vscode-quickopen-panel {
-    position: fixed;
     left: 8px;
     right: 8px;
-    top: 39px;
+    max-width: none;
   }
 }

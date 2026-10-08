@@ -26,11 +26,14 @@ import { Content } from "../../components/Content";
 import { Footer } from "../../components/Footer";
 import { EMPTY_FIND, type FindQuery, flattenFiles } from "../../utils/search";
 import { findDefaultFile, findFileByPath, resolvePath } from "../../utils/files";
+import { isPhone } from "../../utils/phone";
 import { type AppRenderProps } from "../types";
 
 export function EditorApp({ arg, focused, maximized, handle }: AppRenderProps) {
   const [activePanel, setActivePanel] = useState<Panel>("explorer");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // On a phone the sidebar is a drawer over the file (Sidebar.css), and a
+  // window that opens with one already out shows the explorer, not the page.
+  const [sidebarOpen, setSidebarOpen] = useState(() => !isPhone());
   /** Bumped by Ctrl/Cmd+P; QuickOpen focuses its input when it changes. */
   const [focusSignal, setFocusSignal] = useState(0);
   /** Kept here, not in the panel, so it survives switching to another one. */
@@ -84,7 +87,15 @@ export function EditorApp({ arg, focused, maximized, handle }: AppRenderProps) {
 
   const toggleSidebar = useCallback(() => setSidebarOpen((open) => !open), []);
 
-  const handleSelect = useCallback((file: FileNode) => handle.setArg(file.path), [handle]);
+  // Picking a file on a phone is done with the drawer: what was picked is
+  // behind it.
+  const handleSelect = useCallback(
+    (file: FileNode) => {
+      if (isPhone()) setSidebarOpen(false);
+      handle.setArg(file.path);
+    },
+    [handle],
+  );
 
   const handleNavigate = useCallback(
     (href: string) => {
@@ -122,6 +133,9 @@ export function EditorApp({ arg, focused, maximized, handle }: AppRenderProps) {
           activePanel={sidebarOpen ? activePanel : null}
           onPanelChange={handlePanelChange}
         />
+        {sidebarOpen && (
+          <div className="vscode-drawer-scrim" aria-hidden="true" onClick={() => setSidebarOpen(false)} />
+        )}
         <Sidebar open={sidebarOpen}>
           {activePanel === "explorer" && (
             <Explorer nodes={folderFiles} selectedFile={selectedFile} onSelect={handleSelect} />

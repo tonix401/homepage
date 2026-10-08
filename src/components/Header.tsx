@@ -1,4 +1,5 @@
 import "./Header.css";
+import { useEffect, useRef, useState } from "react";
 import { menuItems, searchBarText } from "virtual:open-folder-config";
 import { resolveSearchBarText } from "../utils/searchBarText";
 import { type FileNode } from "../services/types";
@@ -19,6 +20,81 @@ interface HeaderProps {
   onToggleSidebar: () => void;
 }
 
+/** The configured menu, as a bar or as the phone dropdown's rows. */
+function MenuItems({ onNavigate, onPick }: { onNavigate: (path: string | null) => void; onPick?: () => void }) {
+  return menuItems.map(({ label, file, url }, i) => {
+    // A file opens in this window rather than loading a page, so it is
+    // a button; only a destination off the site is a real link.
+    if (url !== undefined) {
+      return (
+        <a key={i} className="vscode-menu-item" href={url} target="_blank" rel="noreferrer" onClick={onPick}>
+          {label}
+        </a>
+      );
+    }
+    if (file !== undefined) {
+      return (
+        <button
+          key={i}
+          className="vscode-menu-item"
+          onClick={() => {
+            onPick?.();
+            onNavigate(file);
+          }}
+        >
+          {label}
+        </button>
+      );
+    }
+    return <span key={i} className="vscode-menu-item">{label}</span>;
+  });
+}
+
+/**
+ * The menu bar folded behind a button, for a phone: the labels alone are
+ * wider than its screen. Both are always rendered and the stylesheet shows
+ * one (Header.css), so the bar's markup is the same everywhere. A tap
+ * anywhere else, or Escape, puts it away, and so does following an item.
+ */
+function PhoneMenu({ onNavigate }: { onNavigate: (path: string | null) => void }) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const away = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", away, true);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", away, true);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [open]);
+
+  return (
+    <div className="vscode-phone-menu" ref={root}>
+      <button
+        className="vscode-phone-menu-btn"
+        aria-label="Menu"
+        aria-expanded={open}
+        onClick={() => setOpen((was) => !was)}
+      >
+        <i className="codicon codicon-menu" />
+      </button>
+      {open && (
+        <nav className="vscode-phone-menu-list">
+          <MenuItems onNavigate={onNavigate} onPick={() => setOpen(false)} />
+        </nav>
+      )}
+    </div>
+  );
+}
+
 export function Header({
   fileName,
   filePath,
@@ -37,26 +113,9 @@ export function Header({
       <div className="vscode-header-left">
         <svg className="vscode-appicon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5" fill="#007ACC" /></svg>
         <nav className="vscode-menu-bar">
-          {menuItems.map(({ label, file, url }, i) => {
-            // A file opens in this window rather than loading a page, so it is
-            // a button; only a destination off the site is a real link.
-            if (url !== undefined) {
-              return (
-                <a key={i} className="vscode-menu-item" href={url} target="_blank" rel="noreferrer">
-                  {label}
-                </a>
-              );
-            }
-            if (file !== undefined) {
-              return (
-                <button key={i} className="vscode-menu-item" onClick={() => onNavigate(file)}>
-                  {label}
-                </button>
-              );
-            }
-            return <span key={i} className="vscode-menu-item">{label}</span>;
-          })}
+          <MenuItems onNavigate={onNavigate} />
         </nav>
+        <PhoneMenu onNavigate={onNavigate} />
       </div>
 
       <div className="vscode-header-center">

@@ -11,3 +11,54 @@
 .vscode-sidebar[hidden] {
   display: none;
 }
+
+/* Covers the editor behind an open drawer; only a phone has one (below). */
+.vscode-drawer-scrim {
+  display: none;
+}
+
+/*
+ * A phone (`src/utils/phone.ts`, the same 640px) cannot spare 220px beside the
+ * editor, so the sidebar is a drawer: it slides over the file from the
+ * activity bar's edge rather than squeezing it, and a tap on the dimmed file
+ * behind puts it away. It starts closed there, and picking a file closes it
+ * (EditorApp.tsx). Still `hidden` when closed rather than unmounted, so the
+ * explorer keeps its open folders.
+ */
+@media (max-width: 640px) {
+  .vscode-body {
+    position: relative;
+  }
+
+  .vscode-sidebar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 48px;
+    z-index: 3;
+    width: min(280px, calc(100% - 48px - 40px));
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.35);
+    animation: vscode-drawer-in 0.18s ease-out;
+  }
+
+  .vscode-drawer-scrim {
+    display: block;
+    position: absolute;
+    inset: 0 0 0 48px;
+    z-index: 2;
+    background: rgba(0, 0, 0, 0.35);
+  }
+}
+
+@keyframes vscode-drawer-in {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vscode-sidebar {
+    animation: none;
+  }
+}

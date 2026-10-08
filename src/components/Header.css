@@ -173,3 +173,128 @@ button.vscode-menu-item:hover {
 .vscode-winbtn--close:hover {
   color: #fff;
 }
+
+/* The menu bar's phone form; hidden until the 640px rule below swaps it in. */
+.vscode-phone-menu {
+  display: none;
+}
+
+.vscode-phone-menu-btn {
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.vscode-phone-menu-btn[aria-expanded="true"] {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.vscode-phone-menu-list {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 6px;
+  z-index: 100;
+  min-width: 180px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.vscode-phone-menu-list .vscode-menu-item {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 4px;
+  text-align: left;
+}
+
+/*
+ * A phone (`src/utils/phone.ts`, the same 640px). The five menu labels alone
+ * are wider than its screen, so they fold behind a button; the quick-open box
+ * shrinks to its magnifier, and while it has focus covers the whole header so
+ * there is room to type; the layout toggle goes, since the activity bar does
+ * the same and the sidebar is a drawer here (Sidebar.css). The window buttons
+ * stay — maximize and close are the only way to either.
+ *
+ * The input is laid over the magnifier rather than hidden, so tapping the
+ * icon is tapping the input. Its 16px is what stops iOS zooming the page in
+ * on focus, which it does to any smaller field.
+ */
+@media (max-width: 640px) {
+  .vscode-header {
+    position: relative;
+  }
+
+  .vscode-menu-bar {
+    display: none;
+  }
+
+  .vscode-phone-menu {
+    display: block;
+  }
+
+  .vscode-header-center {
+    flex: 0 0 auto;
+    margin-left: auto;
+    padding: 0 2px;
+  }
+
+  .vscode-header-center:focus-within {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    padding: 0 8px;
+    align-items: center;
+    background: var(--bg-header);
+  }
+
+  .vscode-header .vscode-quickopen {
+    position: static;
+  }
+
+  .vscode-header .vscode-title-search {
+    position: relative;
+    width: 32px;
+    height: 26px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .vscode-header .vscode-title-search-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    font-size: 16px;
+  }
+
+  .vscode-header-center:focus-within .vscode-title-search {
+    width: 100%;
+    max-width: none;
+    padding: 0 10px;
+    justify-content: flex-start;
+  }
+
+  .vscode-header-center:focus-within .vscode-title-search-input {
+    position: static;
+    opacity: 1;
+  }
+
+  .vscode-layout-btn {
+    display: none;
+  }
+
+  .vscode-winbtn {
+    width: 40px;
+  }
+}

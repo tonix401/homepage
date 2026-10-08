@@ -183,6 +183,30 @@
 
 .vscode-md-content > :first-child { margin-top: 0; }
 
+/* A phone (`src/utils/phone.ts`) has no 96px of margin to give a page, and
+   the line numbers need no more room than three digits take. */
+@media (max-width: 640px) {
+  .vscode-md-content {
+    padding: 20px 16px 32px;
+  }
+
+  .vscode-line-numbers {
+    width: 36px;
+    padding-right: 6px;
+  }
+
+  .vscode-code-area {
+    padding-left: 10px;
+  }
+
+  /* A gif or screenshot sized for a desktop page would set the whole note
+     scrolling sideways; on a phone it scales down to the column instead. */
+  .vscode-md-content img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
 .vscode-md-area h1,
 .vscode-md-area h2,
 .vscode-md-area h3,
