@@ -322,6 +322,12 @@ below 1150px does `.wb-center` hide outright — the window title is capped at
 260px, which puts the left cluster at 438px at its widest, so the pill's half
 plus the gutter stops fitting around there.
 
+At 640px — the phone layout's switch, see below — the bar keeps only what
+does something: the Arch mark loses the host name (`.wb-host`), the bell and
+the numerals go and take the right cluster's chevrons with them, leaving the
+clock led in by its own arrow tip (`.wb-clock-tip`), and the launcher segment
+ellipsizes the window title (`.wb-title`) into whatever is left.
+
 `.wb-center` sits above both side clusters (`z-index: 1`), so a long window
 title runs *under* the pill rather than into it. Once either cluster comes
 within `CROWD_GAP` of the pill, a `ResizeObserver` in `Waybar.tsx` sets
@@ -484,7 +490,9 @@ for one that is already done.
 
 **The view never sets focus.** Nothing listens to `scroll`, so reading along
 the strip by hand leaves focus where it was. That is the point of a scrolling
-layout and the first thing a later change is tempted to "fix".
+layout and the first thing a later change is tempted to "fix". The one
+exception is a phone (see Phone layout below), where a swipe that comes to
+rest focuses the window it rests on.
 
 **Any window can be maximized at any time**, however many share its workspace;
 `fullscreen` is simply whether the focused one fills the viewport. A maximized
@@ -536,6 +544,48 @@ maximized window bare and the tiled one inside `ArchDesktop`, so the root
 element type changes and React tears the subtree down, losing that window's
 active panel, expanded folders and browser trail. Rendering one tree with a
 modifier class would fix it for every app at once.
+
+### Phone layout
+
+Below 640px the desktop is fitted to a phone rather than replaced: the same
+bar, strip and apps. `src/utils/phone.ts` holds the one switch — `PHONE`,
+`isPhone()` and `watchPhone()` — and every stylesheet uses the same width in
+`@media (max-width: 640px)`, so the two halves cannot disagree. JS reads it
+only for what CSS cannot do; everything else is a media query beside the rule
+it changes. btop and Kdenlive, which size themselves by container already,
+take a `@container (max-width: 480px)` step instead. Landscape phones are
+wider than the switch and keep the desktop layout.
+
+- **One window per screen.** `columnFraction(count, phone)` is always 1, and
+  `.arch-strip` snaps (`scroll-snap-type: x mandatory`, `scroll-snap-stop:
+  always`), so a swipe moves exactly one window. `ArchStrip` reads the switch
+  itself with `useSyncExternalStore`.
+- **Focus follows the swipe.** The exception to "the view never sets focus":
+  with one window on screen, focus left on one swiped away would have the bar
+  name it, the genie pour from it and Ctrl+B fold its sidebar. On `scrollend`
+  (a 120ms settle on `scroll` where it is missing) the column `columnAt` names
+  takes focus, flagged as followed so the focus effect does not scroll again.
+- **Page dots.** With two or more windows the strip leaves 22px underneath for
+  `.arch-strip-dots`, one button per window; a strip on its way out of a
+  workspace switch does not draw them.
+- **Drawers, not side panes.** The editor's sidebar and Obsidian's file tree
+  slide over the content from their activity bar or ribbon, with a scrim that
+  closes them. Both start closed on a phone and close when a file is picked.
+  The editor's stays `hidden` rather than unmounted, as everywhere.
+- **The editor's header** folds `menuItems` behind a ☰ (`PhoneMenu` in
+  `Header.tsx`; both forms are rendered and CSS shows one), shrinks quick open
+  to its magnifier — the input is laid over it, at 16px so iOS does not zoom
+  — which covers the whole header while focused, and drops the layout toggle.
+- **Each app** narrows the rest by CSS alone: jīzǐ keeps all three panes but
+  narrows the parent (it is the only way up without an `h` key), btop goes to
+  one box per row and drops the threads and user columns, fastfetch stacks
+  even when maximized, Kdenlive's track headers shrink to 96px (with
+  `min-width: 0`, or the corner's text holds them wide), the browser's
+  bookmarks scroll sideways, and markdown images scale to the column.
+- **Heights are `100dvh`**, after a `100vh` fallback, on every app root, so a
+  maximized window's status bar is not under the browser's toolbars.
+- **Touch targets.** Launcher rows are at least 40px under `pointer: coarse`,
+  and `index.css` turns off the tap highlight.
 
 ### Apps
 
@@ -1029,6 +1079,13 @@ Note: `documentation/CONFIGURATION.md` does not exist in this fork; skip it.
 - `src/components/Waybar.tsx` — keep `data-launcher` on the segment the cat looks at
 - `src/themes/subjects.ts` — `catPlacement`, when the drawing in `DRAWINGS` moves
 - `CLAUDE.md` — "The cat moves" in the Themes section above
+
+### The phone switch (640px)
+- `src/utils/phone.ts` — `PHONE`
+- Every `@media (max-width: 640px)` — `grep -rn "max-width: 640px" src`; the
+  container steps at 480px in `Btop.css` and `Kdenlive.css` follow the window instead
+- A new app — its own phone rules, and a drawer if it has a side pane
+- `CLAUDE.md` — the Phone layout section above
 
 ### The app registry (`editor`, `browser`, …)
 - `src/apps/ids.ts` — `APP_IDS`, `DEFAULT_APP`

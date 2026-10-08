@@ -22,6 +22,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background: var(--obs-bg);
   color: var(--obs-text);
@@ -384,6 +385,61 @@
 
 @media (prefers-reduced-motion: reduce) {
   .obs-graph {
+    animation: none;
+  }
+}
+
+/* Covers the graph or note behind an open drawer; only a phone has one. */
+.obs-scrim {
+  display: none;
+}
+
+/*
+ * A phone (`src/utils/phone.ts`): the file tree is a drawer that slides over
+ * the graph from the ribbon's edge rather than squeezing it to a strip. It
+ * starts closed there, opening a note closes it, and so does a tap on what it
+ * covers (NotesApp.tsx). The tab gives up its fixed width but keeps its
+ * place over the content, past the ribbon.
+ */
+@media (max-width: 640px) {
+  .obs-tab {
+    width: auto;
+    flex: 0 1 220px;
+  }
+
+  .obs-body {
+    position: relative;
+  }
+
+  .obs-sidebar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50px;
+    z-index: 3;
+    width: min(260px, calc(100% - 50px - 40px));
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.35);
+    animation: obs-drawer-in 0.18s ease-out;
+  }
+
+  .obs-scrim {
+    display: block;
+    position: absolute;
+    inset: 0 0 0 50px;
+    z-index: 2;
+    background: rgba(0, 0, 0, 0.35);
+  }
+}
+
+@keyframes obs-drawer-in {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obs-sidebar {
     animation: none;
   }
 }

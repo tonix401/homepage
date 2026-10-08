@@ -21,6 +21,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background: var(--brw-chrome);
   color: var(--brw-fg);
@@ -408,4 +409,25 @@
   margin-top: 24px;
   font-family: var(--font-mono);
   font-size: 14px;
+}
+
+/*
+ * A phone (`src/utils/phone.ts`): the tab gives up its fixed width so the
+ * window buttons stay on screen, and the bookmarks bar scrolls sideways under
+ * a finger instead of cutting off whatever does not fit. Its dropdowns are
+ * `position: fixed`, so they still open over the page.
+ */
+@media (max-width: 640px) {
+  .brw-tab {
+    flex: 0 1 220px;
+  }
+
+  .brw-bookmarks {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .brw-bookmarks::-webkit-scrollbar {
+    display: none;
+  }
 }

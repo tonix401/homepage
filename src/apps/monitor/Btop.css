@@ -14,6 +14,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background: var(--theme-surface-lowest);
   color: var(--btop-fg);
@@ -93,7 +94,43 @@
       "mem net";
   }
 
-  .btop-panel {
+  /* Through `.btop-cpu`, or the panel's own `display` further down wins: a
+     container query adds nothing to a selector's specificity. */
+  .btop-cpu .btop-panel {
+    display: none;
+  }
+}
+
+/*
+ * A phone (`src/utils/phone.ts`; a container step, as above, so it follows the
+ * window rather than the screen). One box per row, in a smaller face, and the
+ * process list keeps the name, memory and cpu — the threads and user columns
+ * would leave the name no room at all. The container's own font cannot be
+ * queried, so the grid takes the size.
+ */
+@container (max-width: 480px) {
+  .btop-grid {
+    font-size: 13px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 20fr) minmax(0, 40fr) minmax(0, 22fr) minmax(0, 18fr);
+    grid-template-areas:
+      "cpu"
+      "proc"
+      "mem"
+      "net";
+    gap: 10px;
+    padding: 8px 8px 10px;
+  }
+
+  .btop-grid .btop-proc-head,
+  .btop-grid .btop-proc-row {
+    grid-template-columns: minmax(0, 1fr) 6ch 6ch;
+  }
+
+  .btop-proc-head > :nth-child(2),
+  .btop-proc-head > :nth-child(3),
+  .btop-proc-row > :nth-child(2),
+  .btop-proc-row > :nth-child(3) {
     display: none;
   }
 }

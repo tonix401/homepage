@@ -18,6 +18,7 @@ import { defaultFile, rootFolderName } from "virtual:open-folder-config";
 import { type FileNode, type TreeNode } from "../../services/types";
 import { findFileByPath, findDefaultFile, resolvePath } from "../../utils/files";
 import { buildGraph, noteName } from "../../utils/graph";
+import { isPhone } from "../../utils/phone";
 import { FileView } from "../../components/FileView";
 import { Icon } from "../../components/Icon";
 import { WindowButtons } from "../../components/WindowButtons";
@@ -56,7 +57,9 @@ export function NotesApp({ arg, maximized, handle }: AppRenderProps) {
   // Opens on the graph: it is the one view the other apps cannot show, so it
   // is what the window leads with. Picking a node or a file reads the note.
   const [view, setView] = useState<"note" | "graph">("graph");
-  const [sidebar, setSidebar] = useState(true);
+  // A drawer over the graph on a phone (Notes.css), so it starts put away
+  // there: the graph is what the window leads with.
+  const [sidebar, setSidebar] = useState(() => !isPhone());
   const [openFolders, setOpenFolders] = useState(() => defaultOpenFolders(folderFiles));
 
   // A note opened from anywhere — the graph, a link, a restored session —
@@ -75,6 +78,8 @@ export function NotesApp({ arg, maximized, handle }: AppRenderProps) {
   const open = (file: FileNode) => {
     handle.setArg(file.path);
     setView("note");
+    // The note is behind the drawer on a phone, so picking one puts it away.
+    if (isPhone()) setSidebar(false);
   };
 
   const followLink = (href: string) => {
@@ -125,6 +130,7 @@ export function NotesApp({ arg, maximized, handle }: AppRenderProps) {
           </button>
         </nav>
 
+        {sidebar && <div className="obs-scrim" aria-hidden="true" onClick={() => setSidebar(false)} />}
         {sidebar && (
           <aside className="obs-sidebar">
             <div className="obs-tree" role="tree" aria-label="Files">

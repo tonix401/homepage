@@ -19,6 +19,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background: var(--term-bg);
   color: var(--term-fg);
@@ -132,4 +133,24 @@
   font: inherit;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+/*
+ * A phone (`src/utils/phone.ts`): yazi in a narrow terminal. The paddings
+ * halve, and the parent pane narrows to a few letters rather than going — it
+ * is the only way up for a finger, which has no `h` key to press.
+ */
+@media (max-width: 640px) {
+  .term-panes {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 3fr);
+    padding: 6px 8px 10px;
+  }
+
+  .term-pane {
+    padding: 0 4px;
+  }
+
+  .term-row {
+    padding: 0 6px;
+  }
 }

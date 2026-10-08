@@ -30,6 +30,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background: var(--kd-window);
   color: var(--kd-text);
@@ -764,6 +765,31 @@
   }
 
   .kd-track-icon {
+    display: none;
+  }
+}
+
+/* A phone (`src/utils/phone.ts`): the track headers keep their badge and as
+   much name as fits, and give the clips the width. The zoom slider stays —
+   fitted to a phone, the clips are slivers until it is used. */
+@container (max-width: 480px) {
+  /* `min-width: 0` too, or the "Sequence" corner's text holds the column at
+     its own width whatever the basis says. */
+  .kd-tl-headers {
+    flex-basis: 96px;
+    min-width: 0;
+  }
+
+  .kd-tl-corner {
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .kd-track-head {
+    padding: 0 6px;
+  }
+
+  .kd-track-chevron {
     display: none;
   }
 }
