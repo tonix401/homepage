@@ -778,7 +778,41 @@ site's original look), teal, rose, amber and green. Everything in
 - `wallpaper.ts` builds the wallpaper SVG for a theme and subject and hands it
   to an `<img>` as a data URL. It isn't inline SVG: the glow is a large blur
   filter that an image rasterizes once, and the submenu's inline subject icons
-  would resolve each other's `url(#…)` ids.
+  would resolve each other's `url(#…)` ids. `backgroundSvg` / `backgroundUrl`
+  are the same wallpaper with no subject, for the animated cat.
+- **The cat moves.** On the cat wallpaper, `Wallpaper` shows `backgroundUrl`
+  and draws the cat live over it (`src/components/WallpaperCat.tsx`), idling as
+  the cats on Tom's kitty windows do: blinks, ear twitches, head tilts,
+  breathing. With reduced motion it is the still drawing, like every other
+  subject. `ArchDesktop` follows the preference live (`useSyncExternalStore`
+  on the media query), so turning it on stops the cat without a reload; and
+  since a reduced-motion swap has no reveal to end and drop the old layer, an
+  old layer never keeps its cat running underneath.
+  - **Engine and rig:** `src/cat/catEngine.js` and `src/cat/rig.json` are
+    verbatim copies of `~/.config/cat/engine.js` and `rig.json`, made by
+    `npm run sync:cat` (`scripts/sync-cat.ts`) and committed, because CI has
+    no `~/.config`. Never edit them by hand; edit the rig there, run its
+    `build.py`, then sync. The script only appends an `export` line, since the
+    engine is a plain script (no `?.` or `??`, so Qt can run it too).
+    `catEngine.d.ts` types the part of it the site uses.
+  - **The pose:** `src/cat/wallpaperCat.ts` adds one expression, `wallpaper`,
+    to the rig: round eyes and a smile, the pose of the original drawing
+    (`exports.cat` in `poses.json`), not the kitty cats' `neutral`. The rig's
+    slim body was redrawn on its right side after the template was drawn, so
+    the live cat differs from the still one there by a hair.
+  - **Placement:** `catPlacement()` in `subjects.ts` is the drawing's own
+    placement, and `catLayout` maps it through `object-fit: cover`
+    (`coverFit`), so the live cat lands exactly on the still one; a test
+    checks the two against each other.
+  - **Glow:** the SVG filter's blurred copy, mixed half and half with the lines
+    and laid over the blur again, is the blur at 1.5 times its strength away
+    from the lines. The canvas paints the blurred cat, half of it again, then
+    the crisp cat. Safari has no `ctx.filter`, so a shadow of the same width
+    stands in there.
+  - **Cost:** the canvas covers only the cat and its glow, not the screen. One
+    engine runs for every layer (`watchCat`), so the old and new layers of a
+    reveal show the same frame, and it stops when no layer is watching: a
+    maximized window unmounts the desktop, and a hidden tab gets no frames.
 - `preferences.ts` reads and writes both choices in `localStorage`,
   `homepage.theme.v1` and `homepage.wallpaper.v1`. It falls back to the
   default when storage is missing, blocked or full.
@@ -848,8 +882,9 @@ The theme and the wallpaper are both picked in the **launcher**, not by an app.
   the theme from CSS.
 
 The circle reveal runs on any wallpaper change, whether theme or subject:
-`Wallpaper` is keyed by the image URL, which `wallpaperUrl` memoizes per
-pair.
+`Wallpaper` is keyed by the image URL, which `wallpaperUrl` and
+`backgroundUrl` memoize. The reveal clips the whole layer, the image and the
+cat's canvas together, and the old layer keeps its cat in the old colour.
 
 **A theme change animates** over `THEME_TRANSITION` (0.8s).
 - **Colours:** `registerThemeProperties` registers every `--theme-*` token
@@ -948,6 +983,14 @@ Note: `documentation/CONFIGURATION.md` does not exist in this fork; skip it.
 - `src/themes/subjects.ts` / `subjects.test.ts` — the wallpaper subjects and their ids
 - Every stylesheet that reads a token, when one is renamed or removed
 - `CLAUDE.md` — the Themes section above
+
+### The cat (`src/cat`)
+- `scripts/sync-cat.ts` — the files it copies, and the `export` it appends
+- `src/cat/catEngine.js`, `src/cat/rig.json` — re-run `npm run sync:cat`, never edit
+- `src/cat/catEngine.d.ts` — when the site uses more of the engine, or its frame shape changes
+- `src/cat/wallpaperCat.ts` — the `wallpaper` pose, when the rig renames a part or variant
+- `src/themes/subjects.ts` — `catPlacement`, when the drawing in `DRAWINGS` moves
+- `CLAUDE.md` — "The cat moves" in the Themes section above
 
 ### The app registry (`editor`, `browser`, …)
 - `src/apps/ids.ts` — `APP_IDS`, `DEFAULT_APP`

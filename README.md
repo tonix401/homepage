@@ -37,11 +37,12 @@ npm run build      # type-check + production build
 npm run preview    # serve the build locally
 ```
 
-Two generated files are committed, because CI has neither tool:
+Some generated files are committed, because CI has none of these tools or files:
 
 ```bash
 npm run generate:themes   # src/themes/palettes.ts, needs matugen
 npm run generate:og       # public/og-image.png, needs chromium
+npm run sync:cat          # src/cat/catEngine.js + rig.json, from ~/.config/cat
 ```
 
 Pushing to `main` runs the tests, builds, and deploys to GitHub Pages; the custom domain comes from `public/CNAME`.

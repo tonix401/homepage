@@ -157,6 +157,23 @@ function glowFilter(id: string, blur: number): string {
 </filter>`;
 }
 
+/**
+ * Where the cat's own coordinates land in the wallpaper, exactly as
+ * `subjectMarkup` places its drawing: a point (px, py) of the drawing is at
+ * (x + scale · (px + translate[0]), y + scale · (py + translate[1])). `glow` is
+ * the glow's blur in wallpaper units. The animated cat (src/cat) draws there.
+ */
+export function catPlacement(): {
+  scale: number;
+  x: number;
+  y: number;
+  translate: readonly [number, number];
+  glow: number;
+} {
+  const { width, height, translate } = DRAWINGS.cat;
+  return { ...fit(width, height), translate, glow: GLOW };
+}
+
 /** The colours a subject is drawn in: the logos' fill, and the drawings' line. */
 export interface SubjectColours {
   logo: string;

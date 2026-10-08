@@ -17,8 +17,12 @@
 import { type ThemeId, themeTokens } from "./theme";
 import { SUBJECT_FRAME, type SubjectId, subjectMarkup } from "./subjects";
 
-function svg(subject: SubjectId, logo: string, line: string, inner: string, outer: string): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="368.09479mm" height="201.22717mm" viewBox="0 0 368.09479 201.22717">
+/** The wallpaper's own frame, in the units its artwork is drawn in (Inkscape's millimetres). */
+export const WALLPAPER_SIZE = { width: 368.09479, height: 201.22717 } as const;
+
+function svg(subjectArt: string, inner: string, outer: string): string {
+  const { width, height } = WALLPAPER_SIZE;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}mm" height="${height}mm" viewBox="0 0 ${width} ${height}">
 <defs>
 <radialGradient id="bg" cx="184.04739" cy="100.61359" fx="184.04739" fy="100.61359" r="183.44739" gradientTransform="matrix(1,0,0,0.54518949,0,45.760117)" gradientUnits="userSpaceOnUse">
 <stop offset="0" stop-color="${inner}"/>
@@ -26,14 +30,23 @@ function svg(subject: SubjectId, logo: string, line: string, inner: string, oute
 </radialGradient>
 </defs>
 <rect width="366.89478" height="200.02718" x="0.6" y="0.6" fill="url(#bg)"/>
-${subjectMarkup(subject, { logo, line })}
+${subjectArt}
 </svg>`;
 }
 
 /** The wallpaper's markup for a theme and subject. Exported for the tests. */
 export function wallpaperSvg(theme: ThemeId, subject: SubjectId): string {
   const { wallLogo, primary, wallInner, wallOuter } = themeTokens(theme);
-  return svg(subject, wallLogo, primary, wallInner, wallOuter);
+  return svg(subjectMarkup(subject, { logo: wallLogo, line: primary }), wallInner, wallOuter);
+}
+
+/**
+ * The wallpaper with nothing on it: the gradient alone, for the animated cat
+ * (src/cat) to draw over. Exported for the tests.
+ */
+export function backgroundSvg(theme: ThemeId): string {
+  const { wallInner, wallOuter } = themeTokens(theme);
+  return svg("", wallInner, wallOuter);
 }
 
 const urls = new Map<string, string>();
@@ -45,6 +58,18 @@ export function wallpaperUrl(theme: ThemeId, subject: SubjectId): string {
   if (!url) {
     url = `data:image/svg+xml,${encodeURIComponent(wallpaperSvg(theme, subject))}`;
     urls.set(key, url);
+  }
+  return url;
+}
+
+const backgroundUrls = new Map<string, string>();
+
+/** A data URL for `backgroundSvg`, built once per theme. */
+export function backgroundUrl(theme: ThemeId): string {
+  let url = backgroundUrls.get(theme);
+  if (!url) {
+    url = `data:image/svg+xml,${encodeURIComponent(backgroundSvg(theme))}`;
+    backgroundUrls.set(theme, url);
   }
   return url;
 }

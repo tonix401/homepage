@@ -1,9 +1,28 @@
 import { describe, it, expect } from "vitest";
 import { THEME_IDS, themeTokens } from "./theme";
 import { SUBJECT_IDS } from "./subjects";
-import { subjectIconSvg, subjectIconUrl, wallpaperSvg, wallpaperUrl } from "./wallpaper";
+import { backgroundSvg, backgroundUrl, subjectIconSvg, subjectIconUrl, wallpaperSvg, wallpaperUrl } from "./wallpaper";
 
 const DRAWINGS: readonly string[] = ["cat"];
+
+describe("backgroundSvg", () => {
+  it("is the wallpaper's gradient with no subject on it", () => {
+    for (const theme of THEME_IDS) {
+      const svg = backgroundSvg(theme);
+      const { wallInner, wallOuter } = themeTokens(theme);
+      expect(svg).toContain(`stop-color="${wallInner}"`);
+      expect(svg).toContain(`stop-color="${wallOuter}"`);
+      expect(svg).not.toMatch(/<(filter|path|ellipse|g) /);
+      // The same frame and gradient as the wallpaper with a subject.
+      expect(wallpaperSvg(theme, "cat").startsWith(svg.split("</defs>")[0])).toBe(true);
+    }
+  });
+
+  it("is built once per theme", () => {
+    expect(backgroundUrl("teal")).toBe(backgroundUrl("teal"));
+    expect(backgroundUrl("teal")).not.toBe(backgroundUrl("rose"));
+  });
+});
 
 describe("wallpaperSvg", () => {
   it("paints every subject in every theme's colours, with nothing left over", () => {

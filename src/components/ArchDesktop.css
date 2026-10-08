@@ -41,7 +41,13 @@
   user-select: none;
 }
 
-/* Stacked, so a new wallpaper can fade in over the old one. */
+/* Stacked, so a new wallpaper can be revealed over the old one. A layer is the
+   image and, for the cat, the canvas it moves on (WallpaperCat.tsx). */
+.arch-wallpaper-layer {
+  position: absolute;
+  inset: 0;
+}
+
 .arch-wallpaper-img {
   position: absolute;
   inset: 0;
@@ -60,11 +66,11 @@
  * the last corner pixel is covered before the animation ends and the image
  * underneath is dropped.
  */
-.arch-wallpaper-img--in {
+.arch-wallpaper-layer--in {
   clip-path: circle(0% at 50% 50%);
 }
 
-.arch-wallpaper-img--in.arch-wallpaper-img--loaded {
+.arch-wallpaper-layer--in.arch-wallpaper-layer--loaded {
   animation: arch-wallpaper-in 0.8s ease-in-out forwards;
 }
 
@@ -72,6 +78,12 @@
   to {
     clip-path: circle(72% at 50% 50%);
   }
+}
+
+/* Covers just the cat and its glow; WallpaperCat places and sizes it. */
+.arch-wallpaper-cat {
+  position: absolute;
+  pointer-events: none;
 }
 
 /*
@@ -178,7 +190,7 @@
 
   /* A straight swap. The old image stays underneath, covered, until the next
      change replaces it — there is no animation to end and drop it. */
-  .arch-wallpaper-img--in {
+  .arch-wallpaper-layer--in {
     clip-path: none;
     animation: none;
   }

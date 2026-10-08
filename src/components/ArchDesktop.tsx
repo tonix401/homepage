@@ -1,13 +1,14 @@
-import { useCallback, useState, type MouseEvent, type ReactNode } from "react";
+import { useCallback, useState, useSyncExternalStore, type MouseEvent, type ReactNode } from "react";
 import "./ArchDesktop.css";
 import { Waybar } from "./Waybar";
 import { Launcher } from "./Launcher";
 import { type WorkspaceLanguage } from "../utils/desktop";
 import { type Point } from "../utils/menuPlacement";
 import { type AppId } from "../apps/ids";
-import { type ThemeId } from "../themes/theme";
+import { WallpaperCat } from "./WallpaperCat";
+import { type ThemeId, themeTokens } from "../themes/theme";
 import { type SubjectId } from "../themes/subjects";
-import { wallpaperUrl } from "../themes/wallpaper";
+import { backgroundUrl, wallpaperUrl } from "../themes/wallpaper";
 
 interface ArchDesktopProps {
   workspace: number;
@@ -55,6 +56,8 @@ export function ArchDesktop({
   // Where the launcher menu is open, or `null`. Desktop chrome and nothing
   // else: it is not worth a history entry, and a reload should not reopen it.
   const [launcherAt, setLauncherAt] = useState<Point | null>(null);
+  // Followed live, so turning on reduced motion stops the cat at once.
+  const still = useSyncExternalStore(watchReducedMotion, prefersReducedMotion);
 
   /*
    * Right-clicking the background opens the launcher at the pointer, as a
@@ -90,7 +93,7 @@ export function ArchDesktop({
         empty={empty}
         menuOpen={launcherAt !== null}
       />
-      <Wallpaper url={wallpaperUrl(theme, subject)} />
+      <Wallpaper layer={wallpaperLayer(theme, subject, still)} still={still} />
       {children}
       <Launcher
         at={launcherAt}
@@ -106,52 +109,90 @@ export function ArchDesktop({
 }
 
 /**
+ * One wallpaper as it is shown: the image, and the colour of the animated cat
+ * drawn over it, if any.
+ */
+interface WallpaperLayer {
+  url: string;
+  cat: string | null;
+}
+
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia(REDUCED_MOTION).matches;
+}
+
+function watchReducedMotion(onChange: () => void): () => void {
+  const query = window.matchMedia(REDUCED_MOTION);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+/**
+ * The cat moves (src/cat): its wallpaper is the gradient alone, with the cat
+ * drawn over it live in the theme's primary. With reduced motion it is the
+ * still drawing, as every other subject is.
+ */
+function wallpaperLayer(theme: ThemeId, subject: SubjectId, still: boolean): WallpaperLayer {
+  if (subject === "cat" && !still) return { url: backgroundUrl(theme), cat: themeTokens(theme).primary };
+  return { url: wallpaperUrl(theme, subject), cat: null };
+}
+
+/**
  * The wallpaper, revealed by a growing circle whenever it changes — a new
  * theme or a new subject. The colours around it fade because they are
  * registered custom properties (see `theme.ts`), but a wallpaper is an image
  * and can only be swapped — so the old one stays underneath while the new one
  * is uncovered from the middle outward, and is dropped once the circle has
- * reached the corners.
+ * reached the corners. The animated cat belongs to its layer, so it is
+ * uncovered with it, and the old layer keeps its own cat in the old colour.
  *
- * Keyed by the image's URL, which `wallpaperUrl` memoizes per theme and
- * subject, so the same wallpaper is always the same string.
+ * Keyed by the image's URL, which `wallpaperUrl` and `backgroundUrl` memoize
+ * per theme and subject, so the same wallpaper is always the same string.
  */
-function Wallpaper({ url }: { url: string }) {
-  const [layers, setLayers] = useState<{ top: string; under: string | null }>({
-    top: url,
+function Wallpaper({ layer, still }: { layer: WallpaperLayer; still: boolean }) {
+  const [layers, setLayers] = useState<{ top: WallpaperLayer; under: WallpaperLayer | null }>({
+    top: layer,
     under: null,
   });
   // Adjusted during the render that notices the change, rather than in an
   // effect, so there is never a frame with the new image and nothing under it.
-  if (layers.top !== url) setLayers({ top: url, under: layers.top });
+  if (layers.top.url !== layer.url) setLayers({ top: layer, under: layers.top });
   // The reveal waits for the new image: an SVG with a blur this size takes a
   // moment to rasterize, and a circle that started first would be empty.
   const [loaded, setLoaded] = useState<string | null>(null);
+  const { top, under } = layers;
 
   return (
     <div className="arch-wallpaper">
-      {layers.under && (
+      {under && (
+        <div key={under.url} className="arch-wallpaper-layer">
+          <img src={under.url} alt="" className="arch-wallpaper-img" draggable={false} />
+          {/* With reduced motion there is no reveal to end and drop this layer:
+              it stays, covered, until the next change, and its cat must not
+              keep running unseen. */}
+          {under.cat && !still && <WallpaperCat color={under.cat} />}
+        </div>
+      )}
+      <div
+        key={top.url}
+        className={
+          "arch-wallpaper-layer" +
+          (under ? " arch-wallpaper-layer--in" : "") +
+          (loaded === top.url ? " arch-wallpaper-layer--loaded" : "")
+        }
+        onAnimationEnd={() => setLayers((current) => ({ ...current, under: null }))}
+      >
         <img
-          key={layers.under}
-          src={layers.under}
+          src={top.url}
           alt=""
           className="arch-wallpaper-img"
           draggable={false}
+          onLoad={() => setLoaded(top.url)}
         />
-      )}
-      <img
-        key={layers.top}
-        src={layers.top}
-        alt=""
-        className={
-          "arch-wallpaper-img" +
-          (layers.under ? " arch-wallpaper-img--in" : "") +
-          (loaded === layers.top ? " arch-wallpaper-img--loaded" : "")
-        }
-        draggable={false}
-        onLoad={() => setLoaded(layers.top)}
-        onAnimationEnd={() => setLayers((current) => ({ ...current, under: null }))}
-      />
+        {top.cat && <WallpaperCat color={top.cat} />}
+      </div>
     </div>
   );
 }
