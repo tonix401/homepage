@@ -17,6 +17,8 @@ export interface RigShape {
 }
 
 export interface RigPart {
+  /** The point the part turns and scales about, in rig coordinates. */
+  pivot: [number, number];
   variants: Record<string, RigShape[]>;
 }
 
@@ -48,6 +50,38 @@ export interface Rig {
 export interface CatState {
   /** Blinks, ear twitches, head tilts and breathing; on by default. */
   idle: boolean;
+  /** While a pose is followed: keep the expression's own mouth unless the pose's lips move. */
+  restMouth: boolean;
+  /** While a pose is followed: let the pose blink (true), or keep the idle blinks (false). */
+  trackBlink: boolean;
+}
+
+/**
+ * A face for the cat to follow — made for Kitty Cam's face tracking, and used
+ * here to look somewhere. Give every field: the engine reads them all, and a
+ * missing one turns into NaN in the cat's matrices.
+ */
+export interface CatPose {
+  /** Head turn, -1..1: positive turns the face to the right of the screen. */
+  yaw: number;
+  /** Head nod, -1..1: positive looks down. */
+  pitch: number;
+  /** Head roll in degrees, clockwise. */
+  roll: number;
+  /** How far the head leans, in rig units. */
+  x: number;
+  y: number;
+  /** Where the eyes look, -1..1 each way. */
+  gazeX: number;
+  gazeY: number;
+  /** -1 frowning .. 1 raised; the ears are the cat's eyebrows (raised perks them). */
+  brow: number;
+  blinkL: number;
+  blinkR: number;
+  smile: number;
+  open: number;
+  wide: number;
+  round: number;
 }
 
 export interface CatFrame {
@@ -66,4 +100,6 @@ export declare const CatEngine: {
   create(rig: Rig, expression: string): CatState;
   step(state: CatState, dt: number): CatFrame;
   setExpression(state: CatState, expression: string): void;
+  /** Follow `pose` (eased in over ~0.25 s), or let go of it with `null`. */
+  track(state: CatState, pose: CatPose | null): void;
 };

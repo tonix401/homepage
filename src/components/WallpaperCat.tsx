@@ -1,10 +1,11 @@
 import { useLayoutEffect, useRef } from "react";
 import { type CatFrame } from "../cat/catEngine";
-import { catLayout, drawCat, watchCat, type Matrix } from "../cat/wallpaperCat";
+import { catEyes, catLayout, drawCat, watchCat, type LookTarget, type Matrix } from "../cat/wallpaperCat";
 
 /**
  * The animated cat over a wallpaper layer, drawn where the static wallpaper
- * draws it and glowing the same way.
+ * draws it and glowing the same way. Now and then it looks up at the bar's
+ * launcher button (`lookPose` in src/cat/wallpaperCat.ts).
  *
  * The wallpaper's glow is an SVG filter: a blurred copy of the cat under the
  * crisp one, the blur mixed half and half with the crisp lines and laid over
@@ -88,10 +89,21 @@ export function WallpaperCat({ color }: { color: string }) {
       if (latest) draw(latest);
     });
     observer.observe(layer);
+    // The bar's window-title segment, which opens the launcher (Waybar.tsx).
+    const target: LookTarget = () => {
+      const launcher = document.querySelector("[data-launcher]")?.getBoundingClientRect();
+      if (!layout || !launcher || launcher.width === 0) return null;
+      const eyes = catEyes(layout.matrix);
+      const origin = layer.getBoundingClientRect();
+      return {
+        from: { x: origin.left + eyes.x, y: origin.top + eyes.y },
+        to: { x: launcher.left + launcher.width / 2, y: launcher.top + launcher.height / 2 },
+      };
+    };
     const stop = watchCat((frame) => {
       latest = frame;
       draw(frame);
-    });
+    }, target);
     return () => {
       stop();
       observer.disconnect();

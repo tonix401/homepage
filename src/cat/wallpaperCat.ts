@@ -2,13 +2,14 @@
  * The wallpaper cat, alive: Tom's terminal-pet cat, run by the same engine and
  * rig as the cats on his kitty windows (copied in by scripts/sync-cat.ts), in
  * the pose of the drawing the static wallpaper shows. It idles: blinks, flicks
- * an ear, tilts its head and breathes.
+ * an ear, tilts its head and breathes. Every so often it looks up at the bar's
+ * launcher button, the way to open something.
  *
- * Everything here but `watchCat` and `drawCat` is pure, so the geometry is
- * tested without a browser.
+ * Everything here but `watchCat` and `drawCat` is pure, so the geometry and
+ * the look are tested without a browser.
  */
 
-import { CatEngine, type CatFrame, type CatState, type Rig } from "./catEngine";
+import { CatEngine, type CatFrame, type CatPose, type CatState, type Rig } from "./catEngine";
 import rigJson from "./rig.json";
 import { catPlacement } from "../themes/subjects";
 import { WALLPAPER_SIZE } from "../themes/wallpaper";
@@ -83,6 +84,82 @@ export function catLayout(width: number, height: number, rig: Rig = RIG) {
   return { matrix, box, blur };
 }
 
+// ── Looking at the launcher ────────────────────────────────────────────────
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+/** Midway between the cat's eyes at rest, through `matrix` (see `catLayout`). */
+export function catEyes(matrix: Matrix, rig: Rig = RIG): Point {
+  const [lx, ly] = rig.parts["eye-l"].pivot;
+  const [rx, ry] = rig.parts["eye-r"].pivot;
+  const [a, b, c, d, e, f] = matrix;
+  const x = (lx + rx) / 2;
+  const y = (ly + ry) / 2;
+  return { x: a * x + c * y + e, y: b * x + d * y + f };
+}
+
+/**
+ * In seconds: how long the cat holds a look, the wait between looks, and how
+ * long it takes to turn to the launcher and back again.
+ */
+export const LOOK_HOLD: readonly [number, number] = [1.4, 2.2];
+export const LOOK_EVERY: readonly [number, number] = [10, 25];
+export const LOOK_EASE = 0.7;
+
+/**
+ * How far into the look the cat is, 0..1, `t` seconds after it began: easing
+ * in over `ease`, holding for `hold`, easing back out over `ease`. The
+ * engine's own fade into a tracked face takes a quarter of a second, which is
+ * right for a webcam and too quick for a cat glancing up at something, so the
+ * look is eased here and the engine only ever follows it.
+ */
+export function lookAmount(t: number, hold: number, ease: number = LOOK_EASE): number {
+  const smooth = (x: number) => x * x * (3 - 2 * x);
+  if (t <= 0 || t >= 2 * ease + hold) return 0;
+  if (t < ease) return smooth(t / ease);
+  if (t <= ease + hold) return 1;
+  return smooth((2 * ease + hold - t) / ease);
+}
+
+/** `pose` taken `amount` of the way from rest. */
+export function scalePose(pose: CatPose, amount: number): CatPose {
+  return Object.fromEntries(Object.entries(pose).map(([k, v]) => [k, v * amount])) as unknown as CatPose;
+}
+
+/**
+ * The face that looks from `from` (the cat's eyes) towards `to` (the
+ * launcher), both in screen pixels. It goes through the engine's face
+ * tracking — made for Kitty Cam, where a webcam steers the cat — so the head
+ * turns and leans, the eyes follow, and the ears (the cat's eyebrows) perk up
+ * a little, as interested cats' do. Only the direction counts, not the
+ * distance: a launcher far away is no harder to look at.
+ */
+export function lookPose(from: Point, to: Point): CatPose {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.hypot(dx, dy);
+  const [ux, uy] = length > 0 ? [dx / length, dy / length] : [0, 0];
+  return {
+    yaw: 0.7 * ux,
+    pitch: 0.7 * uy,
+    roll: 0,
+    x: 2 * ux,
+    y: 2 * uy,
+    gazeX: ux,
+    gazeY: uy,
+    brow: 0.5,
+    blinkL: 0,
+    blinkR: 0,
+    smile: 0,
+    open: 0,
+    wide: 0,
+    round: 0,
+  };
+}
+
 // ── The one cat ────────────────────────────────────────────────────────────
 //
 // Every wallpaper layer that shows the cat draws the same frame: while a new
@@ -90,32 +167,74 @@ export function catLayout(width: number, height: number, rig: Rig = RIG) {
 // two cats blinking at different moments would show the seam.
 
 type Listener = (frame: CatFrame) => void;
+/** Where the cat's eyes are and where the launcher is, on screen; null when either is not. */
+export type LookTarget = () => { from: Point; to: Point } | null;
 
-const listeners = new Set<Listener>();
+const listeners = new Map<Listener, LookTarget | undefined>();
 let state: CatState | null = null;
 let frame: CatFrame | null = null;
 let raf = 0;
 let last = 0;
+/** The cat's own clock, in seconds; it stands still while nothing watches. */
+let clock = 0;
+let nextLook = 0;
+/** The look under way: the full pose, when it began, and how long it holds. */
+let looking: { pose: CatPose; start: number; hold: number } | null = null;
+
+const between = ([lo, hi]: readonly [number, number]) => lo + Math.random() * (hi - lo);
+
+/** The look target of the layer that mounted last: the one on top. */
+function lookTarget(): ReturnType<LookTarget> {
+  let target: LookTarget | undefined;
+  for (const t of listeners.values()) if (t) target = t;
+  return target?.() ?? null;
+}
+
+function look(dt: number) {
+  clock += dt;
+  if (!looking && clock >= nextLook) {
+    const target = lookTarget();
+    if (target) looking = { pose: lookPose(target.from, target.to), start: clock, hold: between(LOOK_HOLD) };
+    else nextLook = clock + between(LOOK_EVERY);
+  }
+  if (!looking) return;
+  const t = clock - looking.start;
+  if (t >= 2 * LOOK_EASE + looking.hold) {
+    // Back at rest already, so letting go of the face changes nothing on screen.
+    CatEngine.track(state!, null);
+    looking = null;
+    nextLook = clock + between(LOOK_EVERY);
+  } else {
+    CatEngine.track(state!, scalePose(looking.pose, lookAmount(t, looking.hold)));
+  }
+}
 
 function tick(now: number) {
   // Capped, so a tab coming back from the background resumes rather than jumps.
-  frame = CatEngine.step(state!, Math.min((now - last) / 1000, 0.1));
+  const dt = Math.min((now - last) / 1000, 0.1);
   last = now;
-  for (const listener of listeners) listener(frame);
+  look(dt);
+  frame = CatEngine.step(state!, dt);
+  for (const listener of listeners.keys()) listener(frame);
   raf = requestAnimationFrame(tick);
 }
 
 /**
  * Calls `listener` with every frame of the cat, starting with the current
  * one, until the returned function is called. The cat only runs while
- * something is watching it.
+ * something is watching it. `target` says where the launcher is to look at.
  */
-export function watchCat(listener: Listener): () => void {
+export function watchCat(listener: Listener, target?: LookTarget): () => void {
   if (!state) {
     state = CatEngine.create(RIG, "wallpaper");
+    // Looking somewhere is not a face of its own: keep the drawing's smile and
+    // its own blinks, and only turn the head and eyes.
+    state.restMouth = true;
+    state.trackBlink = false;
     frame = CatEngine.step(state, 0);
+    nextLook = between(LOOK_EVERY) / 2;
   }
-  listeners.add(listener);
+  listeners.set(listener, target);
   listener(frame!);
   if (listeners.size === 1) {
     last = performance.now();

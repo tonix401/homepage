@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { RIG, catLayout, coverFit } from "./wallpaperCat";
+import { LOOK_EASE, LOOK_EVERY, LOOK_HOLD, RIG, catEyes, catLayout, coverFit, lookAmount, lookPose, scalePose } from "./wallpaperCat";
 import { WALLPAPER_SIZE, wallpaperSvg } from "../themes/wallpaper";
 
 describe("coverFit", () => {
@@ -64,5 +64,94 @@ describe("RIG", () => {
 
   it("keeps the rig's own expressions", () => {
     expect(RIG.expressions.neutral).toBeDefined();
+  });
+});
+
+describe("lookPose", () => {
+  const cat = { x: 960, y: 540 };
+
+  it("turns the head and eyes up and left towards a launcher at the top left", () => {
+    const pose = lookPose(cat, { x: 400, y: 20 });
+    expect(pose.yaw).toBeLessThan(0);
+    expect(pose.pitch).toBeLessThan(0);
+    expect(pose.gazeX).toBeLessThan(0);
+    expect(pose.gazeY).toBeLessThan(0);
+    expect(pose.x).toBeLessThan(0);
+    expect(pose.y).toBeLessThan(0);
+  });
+
+  it("perks the ears and leaves the mouth and eyelids to the drawing", () => {
+    const pose = lookPose(cat, { x: 400, y: 20 });
+    expect(pose.brow).toBeGreaterThan(0);
+    for (const key of ["open", "wide", "round", "smile", "blinkL", "blinkR"] as const) expect(pose[key]).toBe(0);
+  });
+
+  it("depends on the direction alone, and stays inside the engine's ranges", () => {
+    const near = lookPose(cat, { x: 950, y: 530 });
+    const far = lookPose(cat, { x: -40, y: -460 });
+    for (const key of Object.keys(near) as (keyof typeof near)[]) expect(near[key]).toBeCloseTo(far[key]);
+    for (const v of [near.yaw, near.pitch, near.gazeX, near.gazeY]) expect(Math.abs(v)).toBeLessThanOrEqual(1);
+  });
+
+  it("gives every field the engine reads, and no NaN when looking at itself", () => {
+    const pose = lookPose(cat, cat);
+    expect(Object.keys(pose).sort()).toEqual(
+      ["blinkL", "blinkR", "brow", "gazeX", "gazeY", "open", "pitch", "roll", "round", "smile", "wide", "x", "y", "yaw"],
+    );
+    for (const v of Object.values(pose)) expect(Number.isFinite(v)).toBe(true);
+  });
+
+  it("looks for a moment, every so often", () => {
+    expect(LOOK_HOLD[0]).toBeGreaterThan(0.5);
+    expect(LOOK_HOLD[1]).toBeLessThan(LOOK_EVERY[0]);
+  });
+});
+
+describe("catEyes", () => {
+  it("sits in the cat's head, between its eyes", () => {
+    const { matrix } = catLayout(1920, 1080);
+    const eyes = catEyes(matrix);
+    const [cx, cy, cw, ch] = RIG.canvas;
+    const k = matrix[0];
+    expect(eyes.x).toBeGreaterThan(matrix[4] + k * cx);
+    expect(eyes.x).toBeLessThan(matrix[4] + k * (cx + cw));
+    // In the top half of the drawing: the head, not the feet.
+    expect(eyes.y).toBeLessThan(matrix[5] + k * (cy + ch / 2));
+  });
+});
+
+describe("lookAmount", () => {
+  const hold = 2;
+
+  it("eases in, holds, and eases back out to rest", () => {
+    expect(lookAmount(0, hold)).toBe(0);
+    expect(lookAmount(LOOK_EASE / 2, hold)).toBeCloseTo(0.5);
+    expect(lookAmount(LOOK_EASE, hold)).toBe(1);
+    expect(lookAmount(LOOK_EASE + hold, hold)).toBe(1);
+    expect(lookAmount(LOOK_EASE * 1.5 + hold, hold)).toBeCloseTo(0.5);
+    expect(lookAmount(2 * LOOK_EASE + hold, hold)).toBe(0);
+  });
+
+  it("never jumps: neighbouring moments are close", () => {
+    let prev = lookAmount(0, hold);
+    for (let t = 0.01; t < 2 * LOOK_EASE + hold + 0.5; t += 0.01) {
+      const v = lookAmount(t, hold);
+      expect(Math.abs(v - prev)).toBeLessThan(0.03);
+      prev = v;
+    }
+  });
+
+  it("turns more slowly than the engine's quarter-second fade", () => {
+    expect(LOOK_EASE).toBeGreaterThan(0.25);
+  });
+});
+
+describe("scalePose", () => {
+  it("scales every field, and is the rest pose at 0", () => {
+    const pose = lookPose({ x: 960, y: 540 }, { x: 400, y: 20 });
+    const half = scalePose(pose, 0.5);
+    for (const key of Object.keys(pose) as (keyof typeof pose)[]) expect(half[key]).toBeCloseTo(pose[key] / 2);
+    // -0 for the negative fields, which the engine treats as 0.
+    for (const v of Object.values(scalePose(pose, 0))) expect(v === 0).toBe(true);
   });
 });

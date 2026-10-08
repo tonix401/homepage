@@ -809,6 +809,20 @@ site's original look), teal, rose, amber and green. Everything in
     from the lines. The canvas paints the blurred cat, half of it again, then
     the crisp cat. Safari has no `ctx.filter`, so a shadow of the same width
     stands in there.
+  - **Looking at the launcher:** every 10–25 s (`LOOK_EVERY`, the first look
+    sooner) the cat looks up at the bar's window-title segment, the
+    `[data-launcher]` button that opens the launcher, for 1.4–2.2 s
+    (`LOOK_HOLD`): head turned and leaning, eyes following, ears perked. It
+    turns there and back over `LOOK_EASE` (0.7 s, smoothstep, `lookAmount`):
+    the engine fades a tracked face in within a quarter of a second, too quick
+    for a glance, so the site feeds it the pose scaled up and down each frame
+    (`scalePose`) and lets go only once it is back at rest. It
+    goes through the engine's face tracking (`CatEngine.track`, made for Kitty
+    Cam), so the engine copy stays verbatim. `lookPose` turns the direction
+    from the cat's eyes (`catEyes`) into a pose and ignores the distance. The
+    state keeps `restMouth` and turns off `trackBlink`, so the smile and the
+    idle blinks carry on through a look. Every pose field must be given: the
+    engine reads them all and a missing one becomes NaN.
   - **Cost:** the canvas covers only the cat and its glow, not the screen. One
     engine runs for every layer (`watchCat`), so the old and new layers of a
     reveal show the same frame, and it stops when no layer is watching: a
@@ -988,7 +1002,8 @@ Note: `documentation/CONFIGURATION.md` does not exist in this fork; skip it.
 - `scripts/sync-cat.ts` — the files it copies, and the `export` it appends
 - `src/cat/catEngine.js`, `src/cat/rig.json` — re-run `npm run sync:cat`, never edit
 - `src/cat/catEngine.d.ts` — when the site uses more of the engine, or its frame shape changes
-- `src/cat/wallpaperCat.ts` — the `wallpaper` pose, when the rig renames a part or variant
+- `src/cat/wallpaperCat.ts` — the `wallpaper` pose, when the rig renames a part or variant; `lookPose`, when the engine's tracked-pose fields change
+- `src/components/Waybar.tsx` — keep `data-launcher` on the segment the cat looks at
 - `src/themes/subjects.ts` — `catPlacement`, when the drawing in `DRAWINGS` moves
 - `CLAUDE.md` — "The cat moves" in the Themes section above
 
