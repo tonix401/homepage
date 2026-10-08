@@ -28,7 +28,11 @@
   font-family: var(--font-ui);
   display: flex;
   flex-direction: column;
+  /* A maximized window fills the screen it can actually see: on a phone 100vh
+     is the height with the browser's toolbars scrolled away, and would put the
+     status bar under them. Every app's root does the same; vh is the fallback. */
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 

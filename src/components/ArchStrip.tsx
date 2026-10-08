@@ -17,16 +17,25 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type ReactNode,
 } from "react";
 import {
+  columnAt,
   columnFraction,
   columnSpan,
   scrollShiftFor,
   type WindowId,
   type WindowRecord,
 } from "../utils/desktop";
+import { isPhone, watchPhone } from "../utils/phone";
+
+/**
+ * How long a phone's strip must sit still before the window it rests on takes
+ * focus, where the browser has no `scrollend` (Safari before 26).
+ */
+const SETTLE_DELAY = 120;
 
 /**
  * How long the survivors of a close wait before growing into the gap, so the
@@ -79,6 +88,7 @@ export function ArchStrip({
   /** Where each column was last laid out, for the FLIP on a close. */
   const lastLefts = useRef(new Map<WindowId, number>());
   const focusIndex = windows.findIndex((window) => window.id === focusedId);
+  const phone = useSyncExternalStore(watchPhone, isPhone);
 
   /*
    * Closing a column must leave the survivors where they are and let them grow
@@ -101,7 +111,8 @@ export function ArchStrip({
    * to the left.
    *
    * The measured rects are exact rather than mid-transition, which is not
-   * obvious. `columnFraction` is 0.5 for any count above one, so the basis only
+   * obvious. `columnFraction` is 0.5 for any count above one (and 1 for every
+   * count on a phone, where the basis never changes at all), so the basis only
    * ever changes on the 2 -> 1 close — and that close leaves a single survivor,
    * child #0, whose left edge is the strip's padding whatever its width is
    * doing. Closing one of three changes no basis at all, so those rects are
@@ -187,7 +198,7 @@ export function ArchStrip({
     const style = getComputedStyle(scroller);
     const content =
       scroller.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-    const span = columnSpan(focusIndex, windows.length, content, parseFloat(style.columnGap));
+    const span = columnSpan(focusIndex, windows.length, content, parseFloat(style.columnGap), phone);
     const shift = scrollShiftFor(span, {
       left: scroller.scrollLeft,
       right: scroller.scrollLeft + content,
@@ -200,7 +211,48 @@ export function ArchStrip({
     if (shift !== 0) {
       scroller.scrollTo({ left: scroller.scrollLeft + shift, behavior: still ? "instant" : "smooth" });
     }
-  }, [focusedId, focusIndex, windows.length]);
+  }, [focusedId, focusIndex, windows.length, phone]);
+
+  /*
+   * On a phone the view *does* set focus — the one exception to the rule
+   * above. Each window fills the screen there and the strip snaps from one to
+   * the next, so whatever is on screen is the only window you can see, and
+   * focus left behind on one swiped away would have the bar name it, the genie
+   * pour from it and Ctrl+B fold its sidebar. So once a swipe comes to rest,
+   * the window it rests on takes focus.
+   *
+   * It counts as having followed the pointer: the strip is already where it
+   * should be, and the effect above must not scroll it again. A focus change
+   * that scrolls the strip itself ends on the window it focused, so it comes
+   * back here as a no-op.
+   */
+  useEffect(() => {
+    const scroller = root.current;
+    if (!phone || !scroller || slide) return;
+    const settle = () => {
+      const style = getComputedStyle(scroller);
+      const content =
+        scroller.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      const at = windows[columnAt(scroller.scrollLeft, windows.length, content, parseFloat(style.columnGap))];
+      if (!at || at.id === focusedId) return;
+      followedMouse.current = true;
+      onFocus(at.id);
+    };
+    if ("onscrollend" in window) {
+      scroller.addEventListener("scrollend", settle);
+      return () => scroller.removeEventListener("scrollend", settle);
+    }
+    let timer = 0;
+    const onScroll = () => {
+      clearTimeout(timer);
+      timer = window.setTimeout(settle, SETTLE_DELAY);
+    };
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      scroller.removeEventListener("scroll", onScroll);
+    };
+  }, [phone, slide, windows, focusedId, onFocus]);
 
   /*
    * The slide is over when its animation is — and `animationend` is not a
@@ -232,52 +284,72 @@ export function ArchStrip({
   }, [slide, onSlideEnd]);
 
   const style = {
-    "--strip-fraction": columnFraction(windows.length),
+    "--strip-fraction": columnFraction(windows.length, phone),
     "--slide-dir": slide?.dir,
   } as CSSProperties;
 
+  // A phone shows one window of several, and a swipe gives no sign there are
+  // more: a dot per window under the strip says how many and which this is.
+  // Not for a strip on its way out, whose dots would sit on the new one's.
+  const paged = phone && windows.length > 1;
+
   return (
-    <div
-      className={`arch-strip${slide ? ` arch-strip--${slide.phase}` : ""}`}
-      style={style}
-      // A strip on its way out is still on screen for a third of a second, and
-      // nothing about it should answer: `inert` takes it out of the tab order
-      // and stops the pointer reaching a window that has already gone.
-      inert={slide?.phase === "out" || undefined}
-      ref={root}
-    >
-      {windows.map((window, i) => (
-        <div
-          key={window.id}
-          data-window-id={window.id}
-          ref={(el) => {
-            columns.current[i] = el;
-          }}
-          className={
-            "arch-column" +
-            (window.id === focusedId ? " arch-column--focused" : "") +
-            (initial.has(window.id) ? "" : " arch-column--new")
-          }
-          // Focus follows the mouse. `mousemove` rather than `mouseenter`,
-          // because a column that slides under a still cursor — which is what
-          // the strip does every time a window opens — has not been pointed
-          // at, and must not steal focus from the window just opened. The
-          // guard makes it a single comparison per move once settled.
-          onMouseMove={() => {
-            if (window.id === focusedId) return;
-            followedMouse.current = true;
-            onFocus(window.id);
-          }}
-          // A press covers touch, where there is no hover to follow; with a
-          // mouse the move above has already focused it, so this is a no-op.
-          // Capture phase, and nothing prevented or stopped, so the control
-          // underneath still gets its click. `focusin` covers tabbing in.
-          onPointerDownCapture={() => onFocus(window.id)}
-          onFocusCapture={() => onFocus(window.id)}
-        >
-          {renderWindow(window)}
+    <>
+      <div
+        className={`arch-strip${paged ? " arch-strip--paged" : ""}${slide ? ` arch-strip--${slide.phase}` : ""}`}
+        style={style}
+        // A strip on its way out is still on screen for a third of a second, and
+        // nothing about it should answer: `inert` takes it out of the tab order
+        // and stops the pointer reaching a window that has already gone.
+        inert={slide?.phase === "out" || undefined}
+        ref={root}
+      >
+        {windows.map((window, i) => (
+          <div
+            key={window.id}
+            data-window-id={window.id}
+            ref={(el) => {
+              columns.current[i] = el;
+            }}
+            className={
+              "arch-column" +
+              (window.id === focusedId ? " arch-column--focused" : "") +
+              (initial.has(window.id) ? "" : " arch-column--new")
+            }
+            // Focus follows the mouse. `mousemove` rather than `mouseenter`,
+            // because a column that slides under a still cursor — which is what
+            // the strip does every time a window opens — has not been pointed
+            // at, and must not steal focus from the window just opened. The
+            // guard makes it a single comparison per move once settled.
+            onMouseMove={() => {
+              if (window.id === focusedId) return;
+              followedMouse.current = true;
+              onFocus(window.id);
+            }}
+            // A press covers touch, where there is no hover to follow; with a
+            // mouse the move above has already focused it, so this is a no-op.
+            // Capture phase, and nothing prevented or stopped, so the control
+            // underneath still gets its click. `focusin` covers tabbing in.
+            onPointerDownCapture={() => onFocus(window.id)}
+            onFocusCapture={() => onFocus(window.id)}
+          >
+            {renderWindow(window)}
+          </div>
+        ))}
+      </div>
+      {paged && slide?.phase !== "out" && (
+        <div className="arch-strip-dots" role="group" aria-label="Windows on this workspace">
+          {windows.map((window, i) => (
+            <button
+              key={window.id}
+              className={`arch-strip-dot${window.id === focusedId ? " arch-strip-dot--focused" : ""}`}
+              aria-label={`Window ${i + 1} of ${windows.length}`}
+              aria-current={window.id === focusedId || undefined}
+              onClick={() => onFocus(window.id)}
+            />
+          ))}
         </div>
-      ))}
-    </div>
+      )}
+    </>
   );
 }

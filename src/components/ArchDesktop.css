@@ -182,10 +182,83 @@
   display: none;
 }
 
+/*
+ * A phone (`src/utils/phone.ts`, the same 640px) shows one window at a time:
+ * `columnFraction` gives every column the whole content box, and the strip
+ * snaps from one to the next, never resting between two or skipping one on a
+ * hard fling. The gaps narrow so a window keeps as much of the screen as it
+ * can. With more than one window the strip leaves room underneath for the
+ * dots that say how many there are and which is on screen.
+ */
+.arch-strip-dots {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .arch-desktop {
+    --strip-gap: 6px;
+  }
+
+  .arch-strip {
+    scroll-snap-type: x mandatory;
+  }
+
+  .arch-strip--paged {
+    padding-bottom: 22px;
+  }
+
+  .arch-column {
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    border-radius: 10px;
+  }
+
+  .arch-strip-dots {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 22px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* The dot is drawn small, but the button round it is a fingertip wide. */
+  .arch-strip-dot {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+
+  .arch-strip-dot::before {
+    content: "";
+    display: block;
+    width: 6px;
+    height: 6px;
+    margin: auto;
+    border-radius: 3px;
+    background: var(--arch-window-border-idle);
+    transition: width 0.2s ease, background-color 0.2s ease;
+  }
+
+  .arch-strip-dot--focused::before {
+    width: 16px;
+    background: var(--arch-window-border);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .arch-column {
     transition: none;
     animation: none;
+  }
+
+  .arch-strip-dot::before {
+    transition: none;
   }
 
   /* A straight swap. The old image stays underneath, covered, until the next

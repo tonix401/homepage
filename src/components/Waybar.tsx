@@ -165,9 +165,15 @@ function ArchIcon() {
  * A powerline separator. `from` is the fill on its left, `to` the fill on its
  * right; the triangle is drawn in whichever side it points at.
  */
-function Arrow({ from, to, dir }: { from: Fill; to: Fill; dir: "r" | "l" }) {
+function Arrow({ from, to, dir, className }: { from: Fill; to: Fill; dir: "r" | "l"; className?: string }) {
   const style = { "--wb-from": from, "--wb-to": to } as CSSProperties;
-  return <span className={`wb-arrow wb-arrow-${dir}`} style={style} aria-hidden="true" />;
+  return (
+    <span
+      className={`wb-arrow wb-arrow-${dir}${className ? ` ${className}` : ""}`}
+      style={style}
+      aria-hidden="true"
+    />
+  );
 }
 
 function Cap({ fill, side }: { fill: Fill; side: "l" | "r" }) {
@@ -311,7 +317,7 @@ export function Waybar({
           aria-label="Open Codium"
         >
           <ArchIcon />
-          {HOST_LABEL}
+          <span className="wb-host">{HOST_LABEL}</span>
         </button>
 
         <Arrow from={FILL.primary} to={FILL.secondary} dir="r" />
@@ -363,7 +369,7 @@ export function Waybar({
           aria-label={focusedTitle ? `Applications — ${focusedTitle}` : "Applications"}
         >
           <Icon className="wb-icon" path={focusedApp ? APP_ICONS[focusedApp] : icons.window} />
-          {focusedTitle ?? NO_WINDOW_LABEL}
+          <span className="wb-title">{focusedTitle ?? NO_WINDOW_LABEL}</span>
         </button>
         <Arrow from={FILL.containerHigh} to={FILL.none} dir="r" />
       </div>
@@ -412,7 +418,7 @@ export function Waybar({
         })}
       </div>
 
-      <div className="wb-side" ref={rightRef}>
+      <div className="wb-side wb-side-right" ref={rightRef}>
         <Arrow from={FILL.none} to={FILL.container} dir="l" />
         <button
           className="wb-seg wb-on-surface wb-clickable"
@@ -456,9 +462,9 @@ export function Waybar({
           </span>
         </div>
 
-        <Arrow from={FILL.secondary} to={FILL.primary} dir="l" />
+        <Arrow from={FILL.secondary} to={FILL.primary} dir="l" className="wb-clock-tip" />
         {/* The date alone would drop the time that is actually on screen. */}
-        <div className="wb-seg wb-on-primary" role="img" aria-label={`${time} — ${date}`}>
+        <div className="wb-seg wb-on-primary wb-clock" role="img" aria-label={`${time} — ${date}`}>
           <span className="wb-mod">
             <Icon className="wb-icon" path={icons.clock} />
             {time}

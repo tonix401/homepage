@@ -3,6 +3,7 @@ import {
   MAX_WINDOWS,
   WORKSPACE_COUNT,
   closeWindow,
+  columnAt,
   columnFraction,
   columnSpan,
   defaultDesktop,
@@ -100,6 +101,12 @@ describe("columnFraction", () => {
     expect(columnFraction(2)).toBe(0.5);
     expect(columnFraction(5)).toBe(0.5);
   });
+
+  it("gives every window the whole screen on a phone", () => {
+    expect(columnFraction(1, true)).toBe(1);
+    expect(columnFraction(2, true)).toBe(1);
+    expect(columnFraction(5, true)).toBe(1);
+  });
 });
 
 describe("columnSpan", () => {
@@ -115,6 +122,30 @@ describe("columnSpan", () => {
 
   it("puts a third window a whole column past the edge", () => {
     expect(columnSpan(2, 3, 1000, 10)).toEqual({ left: 1010, right: 1505 });
+  });
+
+  it("lines a phone's columns up a whole screen apart", () => {
+    expect(columnSpan(0, 3, 360, 6, true)).toEqual({ left: 0, right: 360 });
+    expect(columnSpan(2, 3, 360, 6, true)).toEqual({ left: 732, right: 1092 });
+  });
+});
+
+describe("columnAt", () => {
+  it("names the column a phone's strip rests on", () => {
+    expect(columnAt(0, 3, 360, 6)).toBe(0);
+    expect(columnAt(366, 3, 360, 6)).toBe(1);
+    expect(columnAt(732, 3, 360, 6)).toBe(2);
+  });
+
+  it("picks the nearest while a snap is still settling", () => {
+    expect(columnAt(170, 3, 360, 6)).toBe(0);
+    expect(columnAt(200, 3, 360, 6)).toBe(1);
+  });
+
+  it("stays inside the strip, and has nothing to name when it is empty", () => {
+    expect(columnAt(-40, 3, 360, 6)).toBe(0);
+    expect(columnAt(5000, 3, 360, 6)).toBe(2);
+    expect(columnAt(0, 0, 360, 6)).toBe(-1);
   });
 });
 

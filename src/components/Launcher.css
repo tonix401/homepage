@@ -159,3 +159,12 @@
     animation: none;
   }
 }
+
+/* A fingertip is far blunter than a pointer: on a touch screen every row is
+   tall enough to hit without catching its neighbour. */
+@media (pointer: coarse) {
+  .arch-menu-item,
+  .arch-picker-item {
+    min-height: 40px;
+  }
+}

@@ -449,6 +449,47 @@ button.wb-clickable:focus-visible {
 }
 
 /*
+ * A phone (`src/utils/phone.ts`, the same 640px) has room for what the bar
+ * does and nothing else. The Arch mark keeps its icon and drops the host name;
+ * the bell and the numerals go, and with them the right cluster's run of
+ * chevrons, so the clock is all that is left there, led in by its own arrow tip
+ * on the wallpaper. The launcher segment gets every pixel left over and
+ * ellipsizes the window title to fit — it is the way to every app, so it is
+ * the last thing to give up its space.
+ */
+@media (max-width: 640px) {
+  .wb-host {
+    display: none;
+  }
+
+  .waybar > .wb-side:first-child {
+    flex: 0 1 auto;
+  }
+
+  .wb-window {
+    max-width: none;
+  }
+
+  .wb-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .wb-side-right {
+    flex-shrink: 0;
+  }
+
+  .wb-side-right > :not(.wb-clock, .wb-clock-tip, .wb-cap) {
+    display: none;
+  }
+
+  .wb-clock-tip::before {
+    background: transparent;
+  }
+}
+
+/*
  * The notification bell swings for the length of its chime (`RING_MS` in
  * Waybar.tsx). The pivot is the top of the icon, where a real bell hangs, and
  * the swing is damped, so it settles instead of stopping mid-air.

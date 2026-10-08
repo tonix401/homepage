@@ -328,9 +328,13 @@ export function repairDesktop(desktop: Desktop): Desktop {
   };
 }
 
-/** One window fills the viewport; two or more take half of it each. */
-export function columnFraction(count: number): number {
-  return count <= 1 ? 1 : 0.5;
+/**
+ * One window fills the viewport; two or more take half of it each. On a phone
+ * (`src/utils/phone.ts`) half a screen is too narrow for any app, so every
+ * window fills it and the strip is swiped through one window at a time.
+ */
+export function columnFraction(count: number, phone = false): number {
+  return count <= 1 || phone ? 1 : 0.5;
 }
 
 /**
@@ -350,10 +354,23 @@ export function columnSpan(
   count: number,
   content: number,
   gap: number,
+  phone = false,
 ): { left: number; right: number } {
-  const width = columnFraction(count) * (content + gap) - gap;
+  const width = columnFraction(count, phone) * (content + gap) - gap;
   const left = index * (width + gap);
   return { left, right: left + width };
+}
+
+/**
+ * Which column a phone's strip has come to rest on. Every column there fills
+ * the content box, and the strip snaps one into it, so column `i` is the one
+ * on screen when it has scrolled `i` columns and gaps along; rounding picks
+ * the nearest while a snap is still settling.
+ */
+export function columnAt(scrollLeft: number, count: number, content: number, gap: number): number {
+  if (count <= 0) return -1;
+  const index = Math.round(scrollLeft / (content + gap));
+  return Math.max(0, Math.min(count - 1, index));
 }
 
 /**
