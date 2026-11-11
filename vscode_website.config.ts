@@ -7,7 +7,6 @@ export const configuration: OpenFolderPluginOptions = {
   searchBarText: "$website_title - $open_file",
   websiteTitle: "Tom Weise",
   faviconPath: "/general/blue_dot.svg",
-  foldersFirst: false,
   collapsedFolders: ["work experience"],
   defaultFile: "README.md", // Opens first, though "99#" sorts it last in the tree
   menuItems: [

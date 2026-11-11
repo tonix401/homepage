@@ -6,7 +6,7 @@ import {
   type TreeNode,
 } from "../services/types";
 import { SetiIcon } from "./SetiIcon";
-import { rootFolderName, foldersFirst } from "virtual:open-folder-config";
+import { rootFolderName } from "virtual:open-folder-config";
 import chevronRightIcon from "@vscode/codicons/src/icons/chevron-right.svg";
 
 interface ExplorerProps {
@@ -78,23 +78,18 @@ export function Explorer({ nodes, selectedFile, onSelect }: ExplorerProps) {
           <span className="vscode-file-name">{rootFolderName}</span>
         </li>
         {rootOpen &&
-          [...nodes]
-            .sort((a, b) => {
-              if (!foldersFirst || a.kind === b.kind) return 0;
-              return a.kind === "folder" ? -1 : 1;
-            })
-            .map((node) => (
-              <TreeItem
-                key={node.name}
-                node={node}
-                path={node.name}
-                depth={1}
-                selectedFile={selectedFile}
-                onSelect={onSelect}
-                openFolders={openFolders}
-                onToggle={toggle}
-              />
-            ))}
+          nodes.map((node) => (
+            <TreeItem
+              key={node.name}
+              node={node}
+              path={node.name}
+              depth={1}
+              selectedFile={selectedFile}
+              onSelect={onSelect}
+              openFolders={openFolders}
+              onToggle={toggle}
+            />
+          ))}
       </ul>
     </div>
   );

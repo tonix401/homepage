@@ -37,7 +37,6 @@ export interface OpenFolderPluginOptions {
   faviconPath?: string;
   activities?: CustomActivityConfig[];
   menuItems?: MenuItem[];
-  foldersFirst?: boolean;
   collapsedFolders?: string[];
   /**
    * The file every window opens on when it is given none, as the explorer
@@ -345,7 +344,6 @@ export function openFolderPlugin(
     faviconPath,
     activities = [],
     menuItems = [],
-    foldersFirst = true,
     collapsedFolders = [],
     defaultFile,
   } = options;
@@ -633,7 +631,6 @@ export function openFolderPlugin(
           `export const rootFolderName = ${JSON.stringify(rootFolderName)};`,
           `export const activities = ${JSON.stringify(activities.map((a) => resolveActivityText(a, process.cwd())))};`,
           `export const menuItems = ${JSON.stringify(menuItems)};`,
-          `export const foldersFirst = ${JSON.stringify(foldersFirst)};`,
           `export const defaultFile = ${JSON.stringify(defaultFile ?? null)};`,
         ].join("\n");
       }
