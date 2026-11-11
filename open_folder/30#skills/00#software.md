@@ -1,17 +1,26 @@
 ## Operating Systems
+
+![NixOS](badges/nixos.svg)
+
+- Reproducible, Atomic and Cool as Snow or something?
+- I migrated all of my Arch setup to NixOS and am quite happy so far
+- The learning curve is a bit steeper than Arch, and I still dont understand everything, but its cool so far
+
+---
+
 ![Arch](badges/arch-linux.svg)
 
 - `Fun` to tinker with
 - Sometimes breaks 🤷‍♂️
-- You are looking at a replica of my <a href="projects/Arch Desktop.md" class="learnmore">desktop environment</a> right now, 
+- You are looking at a replica of my <a href="../projects/Arch Desktop.md"> desktop environment</a> right now, 
 - `Stylish as f%&$`, right?
 
 ---
 
 ![Ubuntu](badges/ubuntu.svg)
 
-- My <a href="projects/Homelab.md" class="learnmore">homelab</a> is running on Ubuntu server.
-- No complaints, Arch is more fun
+- My <a href="../projects/Homelab.md">homelab</a> is running on Ubuntu server.
+- No complaints, but Arch and Nix are more fun
 
 ---
 
@@ -49,7 +58,7 @@
 ![Tailscale](badges/tailscale.svg)
 ![Github](badges/github.svg)
 
-- Anyone says networking is important, right?
+- Everyone says networking is important, right?
 
 ## System
 

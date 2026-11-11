@@ -7,12 +7,11 @@ export const configuration: OpenFolderPluginOptions = {
   searchBarText: "$website_title - $open_file",
   websiteTitle: "Tom Weise",
   faviconPath: "/general/blue_dot.svg",
-  collapsedFolders: ["work experience"],
-  defaultFile: "README.md", // Opens first, though "99#" sorts it last in the tree
+  collapsedFolders: [],
+  defaultFile: "README.md", // Opens first
   defaultTheme: "teal", // what a first visit sees; the editor completes the theme ids
   menuItems: [
     { label: "Github", url: "https://github.com/tonix401" },
-    { label: "Experience", file: "work experience/eschbach.md" },
     { label: "Projects", file: "projects/Arch Desktop.md" },
     { label: "Imprint", file: "legal/imprint.html" },
     { label: "Privacy Policy", file: "legal/privacy.html" },
@@ -59,7 +58,7 @@ export const seo: SeoOptions = {
     jobTitle: "Web Developer",
     worksFor: { "@type": "Organization", name: "eschbach GmbH", url: "https://www.eschbach.com/" },
     affiliation: { "@type": "CollegeOrUniversity", name: "DHBW Lörrach", url: "https://dhbw-loerrach.de/" },
-    knowsAbout: ["TypeScript", "React", "Vite", "C#", "Entity Framework", "Docker", "Arch Linux"],
+    knowsAbout: ["TypeScript", "React", "Vite", "C#", "Entity Framework", "Docker", "NixOS", "Arch Linux"],
     knowsLanguage: ["de", "en", "ja", "zh"],
     sameAs: ["https://github.com/tonix401"],
   },

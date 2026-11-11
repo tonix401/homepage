@@ -44,12 +44,24 @@ In my free time I am also experimenting with different Linux distros. (ricing is
 
 ---
 
-<a href="projects/Arch Desktop.md" class="learnmore">Cool Projects</a>
-<a href="work experience/eschbach.md" class="learnmore">Exiting Experiences</a>
-<a href="legal/imprint.html" class="learnmore">Required Legal Stuff</a>
+<a href="projects/Arch Desktop.md" class="learnmore">Projects</a>
+<a href="skills/languages.md" class="learnmore">Languages</a>
+<a href="skills/software.md" class="learnmore">Software</a>
+<a href="legal/imprint.html" class="learnmore">Legal Stuff</a>
 
 ---
 
-### THIS WEBSITE
+## HOW TO: This Website 
 
-The website you are currently on is also one of my projects, based on the vscode_website and extended to work like my hyprland desktop environment. Try clicking around and exploring a bit. Start by getting this vs code simulation out of fullscreen by clicking the `button at the top right`.
+The website you are currently on is also one of my projects, based on the vscode_website and extended to work like my hyprland desktop environment I build on Arch and ported to NixOS. Try clicking around and exploring a bit. Start by getting this vs code simulation out of fullscreen by clicking the `button at the top right`.
+
+### Some of the features
+
+- Window Management: 
+  - open new windows with the app launcher in the top bar or by right-clicking the empty desktop
+  - try several at once, there is plenty to choose from
+  - try switching workspaces by clicking on them in the top bar
+- Themes and Wallpapers
+  - try different themes
+  - be amazed by the cool transition
+  - 
