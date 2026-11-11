@@ -13,7 +13,9 @@
     "test:watch": "vitest",
     "generate:themes": "node scripts/generate-themes.ts",
     "generate:og": "node scripts/generate-og-image.ts",
-    "sync:cat": "node scripts/sync-cat.ts"
+    "sync:cat": "node scripts/sync-cat.ts",
+    "tree": "node scripts/show-tree.ts",
+    "links": "node scripts/show-links.ts"
   },
   "dependencies": {
     "@vscode/codicons": "0.0.45",
