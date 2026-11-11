@@ -64,4 +64,8 @@ The website you are currently on is also one of my projects, based on the vscode
 - Themes and Wallpapers
   - try different themes
   - be amazed by the cool transition
-  - 
+- Apps
+  - Check out the apps from the launcher
+  - basically anything that is not greyed out is interactive
+
+and many more cool little easter eggs
