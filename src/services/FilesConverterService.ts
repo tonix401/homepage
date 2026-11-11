@@ -286,7 +286,18 @@ function findInvalidFolderStatePrefixOrder(
   return results;
 }
 
-function readTree(
+/** Where the plugin reads from when `folderPath` is not set. */
+export const DEFAULT_FOLDER_PATH = "./src/open_folder";
+
+/** The tree the app receives for these options, for the scripts that inspect it. */
+export function readConfiguredTree(options: OpenFolderPluginOptions): TreeNode[] {
+  return readTree(
+    resolve(options.folderPath ?? DEFAULT_FOLDER_PATH),
+    new Set((options.collapsedFolders ?? []).map(normalizeFolderPath)),
+  );
+}
+
+export function readTree(
   dirPath: string,
   collapsedFolders: ReadonlySet<string>,
   prefix: string = "",
@@ -355,7 +366,7 @@ export function openFolderPlugin(
   options: OpenFolderPluginOptions = {},
 ): Plugin {
   const {
-    folderPath = "./src/open_folder",
+    folderPath = DEFAULT_FOLDER_PATH,
     searchBarText = "Search files by name (⌘P)",
     rootFolderName = "WEBSITE",
     websiteTitle,

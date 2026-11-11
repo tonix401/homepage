@@ -13,6 +13,10 @@ npm run dev        # start Vite dev server
 npm run build      # tsc type-check + Vite production build
 npm run lint       # ESLint
 npm run preview    # serve the production build locally
+npm run tree       # print the open folder as the app receives it; -- --json for the exact JSON
+npm run links      # links per page: internal and not found by default; -- -a all, -e external, -c color, -h help
+                   # flags go after `--` (npm takes `--color`, `-a`, `-h` for itself), or run ./scripts/show-links.ts -c directly
+                   # on a simple terminal (TERM=dumb, no UTF-8, a pipe) the scripts print plain ASCII, no links or colour: scripts/terminal.ts
 npm test           # Vitest (single run); npm run test:watch to watch
 ```
 
