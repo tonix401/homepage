@@ -788,8 +788,8 @@ invalid pattern is shown under the box, not thrown. There is no replace.
 ### Themes
 
 The desktop has five colour themes. Each is a Material-You palette that
-matugen generates from one source colour: blue `#0027a3` (the default, and the
-site's original look), teal, rose, amber and green. Everything in
+matugen generates from one source colour: blue `#0027a3` (the site's original
+look), teal (the default), rose, amber and green. Everything in
 `src/themes/` belongs to them:
 
 - `palettes.ts` is **generated**. Run `npm run generate:themes`
@@ -877,6 +877,11 @@ site's original look), teal, rose, amber and green. Everything in
     engine runs for every layer (`watchCat`), so the old and new layers of a
     reveal show the same frame, and it stops when no layer is watching: a
     maximized window unmounts the desktop, and a hidden tab gets no frames.
+- **Default theme:** `DEFAULT_THEME` (teal) is what a first visit sees. The
+  `defaultTheme` option, exported from `virtual:open-folder-config`, overrides
+  it; `resolveDefaultTheme` ignores a value that isn't a theme id, and `App`
+  passes the result to `loadTheme` as its fallback, so `theme.ts` stays free of
+  the virtual module. A theme the visitor picked is in `localStorage` and wins.
 - `preferences.ts` reads and writes both choices in `localStorage`,
   `homepage.theme.v1` and `homepage.wallpaper.v1`. It falls back to the
   default when storage is missing, blocked or full.
@@ -1066,7 +1071,7 @@ Note: `documentation/CONFIGURATION.md` does not exist in this fork; skip it.
 ### The themes (`blue`, `teal`, …, the `--theme-*` tokens)
 - `scripts/generate-themes.ts` — `SOURCES`, and the token list in `tokensFor()`
 - `src/themes/palettes.ts` — regenerate with `npm run generate:themes`, never edit
-- `src/themes/theme.test.ts` — the theme ids, and blue's pinned values
+- `src/themes/theme.test.ts` — the theme ids, and blue's pinned values and the default
 - `src/themes/subjects.ts` / `subjects.test.ts` — the wallpaper subjects and their ids
 - Every stylesheet that reads a token, when one is renamed or removed
 - `CLAUDE.md` — the Themes section above

@@ -1,4 +1,5 @@
 import { type Plugin } from "vite";
+import { type PALETTES } from "../themes/palettes.ts";
 import { readdirSync, readFileSync, existsSync, statSync } from "fs";
 import { resolve, extname } from "path";
 import {
@@ -44,6 +45,11 @@ export interface OpenFolderPluginOptions {
    * sort order puts it in the tree is unaffected. Unset, the first file.
    */
   defaultFile?: string;
+  /**
+   * The colour theme a first visit sees. A theme the visitor picked themselves
+   * wins. Unset, the site's own default.
+   */
+  defaultTheme?: (typeof PALETTES)[number]["id"];
 }
 
 const fileTypeToShikiLang: Partial<Record<FileType, string>> = {
@@ -346,6 +352,7 @@ export function openFolderPlugin(
     menuItems = [],
     collapsedFolders = [],
     defaultFile,
+    defaultTheme,
   } = options;
 
   const collapsedFolderPaths = new Set(
@@ -632,6 +639,7 @@ export function openFolderPlugin(
           `export const activities = ${JSON.stringify(activities.map((a) => resolveActivityText(a, process.cwd())))};`,
           `export const menuItems = ${JSON.stringify(menuItems)};`,
           `export const defaultFile = ${JSON.stringify(defaultFile ?? null)};`,
+          `export const defaultTheme = ${JSON.stringify(defaultTheme ?? null)};`,
         ].join("\n");
       }
     },

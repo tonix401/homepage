@@ -19,11 +19,16 @@ export type ThemeId = (typeof PALETTES)[number]["id"];
 export type ThemeTokens = (typeof PALETTES)[number]["tokens"];
 
 export const THEME_IDS: readonly ThemeId[] = PALETTES.map((p) => p.id);
-export const DEFAULT_THEME: ThemeId = "blue";
+export const DEFAULT_THEME: ThemeId = "teal";
 export const THEME_KEY = "homepage.theme.v1";
 
 export function isThemeId(value: unknown): value is ThemeId {
   return typeof value === "string" && (THEME_IDS as readonly string[]).includes(value);
+}
+
+/** The `defaultTheme` option if it names a real theme, else `DEFAULT_THEME`. */
+export function resolveDefaultTheme(configured: unknown): ThemeId {
+  return isThemeId(configured) ? configured : DEFAULT_THEME;
 }
 
 export function themeName(theme: ThemeId): string {
@@ -87,9 +92,9 @@ export function applyTheme(theme: ThemeId, root: HTMLElement = document.document
   }
 }
 
-/** The theme this browser last chose, or the default. */
-export function loadTheme(store?: Storage | null): ThemeId {
-  return readPreference(THEME_KEY, isThemeId, DEFAULT_THEME, store);
+/** The theme this browser last chose, or `fallback`. */
+export function loadTheme(store?: Storage | null, fallback: ThemeId = DEFAULT_THEME): ThemeId {
+  return readPreference(THEME_KEY, isThemeId, fallback, store);
 }
 
 export function saveTheme(theme: ThemeId, store?: Storage | null): void {

@@ -3,6 +3,7 @@ import {
   DEFAULT_THEME,
   THEME_IDS,
   THEME_KEY,
+  resolveDefaultTheme,
   applyTheme,
   isThemeId,
   loadTheme,
@@ -27,9 +28,9 @@ function fakeStorage(initial: Record<string, string> = {}): Storage {
 }
 
 describe("palettes", () => {
-  it("has five themes, blue first and the default", () => {
+  it("has five themes, blue first and teal the default", () => {
     expect(THEME_IDS).toEqual(["blue", "teal", "rose", "amber", "green"]);
-    expect(DEFAULT_THEME).toBe("blue");
+    expect(DEFAULT_THEME).toBe("teal");
   });
 
   it("gives every theme the same tokens, all of them hex colours", () => {
@@ -81,6 +82,17 @@ describe("loadTheme / saveTheme", () => {
     expect(loadTheme(fakeStorage())).toBe(DEFAULT_THEME);
     expect(loadTheme(fakeStorage({ [THEME_KEY]: "purple" }))).toBe(DEFAULT_THEME);
     expect(loadTheme(fakeStorage({ [THEME_KEY]: '{"id":"teal"}' }))).toBe(DEFAULT_THEME);
+  });
+
+  it("falls back to the configured default instead, and a stored choice still wins", () => {
+    expect(loadTheme(fakeStorage(), "rose")).toBe("rose");
+    expect(loadTheme(fakeStorage({ [THEME_KEY]: "amber" }), "rose")).toBe("amber");
+  });
+
+  it("takes the defaultTheme option only when it names a real theme", () => {
+    expect(resolveDefaultTheme("green")).toBe("green");
+    expect(resolveDefaultTheme("purple")).toBe(DEFAULT_THEME);
+    expect(resolveDefaultTheme(null)).toBe(DEFAULT_THEME);
   });
 
   it("survives storage that is missing or throws", () => {
