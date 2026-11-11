@@ -28,9 +28,11 @@ import {
   applyTheme,
   loadTheme,
   registerThemeProperties,
+  resolveDefaultTheme,
   saveTheme,
 } from "./themes/theme";
 import { loadSubject, saveSubject } from "./themes/subjects";
+import { defaultTheme } from "virtual:open-folder-config";
 
 // Before the first render, so the first theme is applied to registered colours.
 registerThemeProperties();
@@ -57,7 +59,7 @@ function initialDesktop(): Desktop {
 
 function App() {
   const [desktop, setDesktop] = useState(initialDesktop);
-  const [theme, setTheme] = useState(loadTheme);
+  const [theme, setTheme] = useState(() => loadTheme(undefined, resolveDefaultTheme(defaultTheme)));
   const [subject, setSubject] = useState(loadSubject);
 
   // A layout effect, so the first paint is already in the stored theme rather

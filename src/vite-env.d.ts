@@ -30,4 +30,6 @@ declare module "virtual:open-folder-config" {
   export const menuItems: MenuItem[];
   /** The path windows open on when given none, or null for the first file. */
   export const defaultFile: string | null;
+  /** The theme a first visit sees, or null for the site default; validated by `resolveDefaultTheme`. */
+  export const defaultTheme: string | null;
 }
