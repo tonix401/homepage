@@ -28,7 +28,6 @@ declare module "virtual:open-folder-config" {
   export const rootFolderName: string;
   export const activities: CustomActivity[];
   export const menuItems: MenuItem[];
-  export const foldersFirst: boolean;
   /** The path windows open on when given none, or null for the first file. */
   export const defaultFile: string | null;
 }
