@@ -33,11 +33,6 @@ A custom Vite plugin reads everything in `open_folder/` at build time and bundle
 
 <a href="https://github.com/tonix401/vscode_website" target="_blank" rel="noopener noreferrer" class="learnmore">Check it out on GitHub</a>
 
----
-
-### THIS WEBSITE
-
-The website you are currently on is also one of my projects, based on the vscode_website and extended to work like my hyprland desktop environment. Try clicking around and exploring a bit. Start by getting this vs code simulation out of fullscreen by clicking the `button at the top right`.
 
 <style>
   .learnmore {
