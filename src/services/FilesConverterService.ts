@@ -1,7 +1,8 @@
 import { type Plugin } from "vite";
 import { type PALETTES } from "../themes/palettes.ts";
+import { findBrokenLinks } from "./linkCheck.ts";
 import { readdirSync, readFileSync, existsSync, statSync } from "fs";
-import { resolve, extname } from "path";
+import { resolve, extname, relative } from "path";
 import {
   type BuiltinPanel,
   type CustomActivity,
@@ -170,7 +171,15 @@ export function collectFilePaths(
   dirPath: string,
   prefix: string = "",
 ): string[] {
-  const results: string[] = [];
+  return collectFileEntries(dirPath, prefix).map((entry) => entry.path);
+}
+
+/** Like `collectFilePaths`, with where each file is on disk. */
+export function collectFileEntries(
+  dirPath: string,
+  prefix: string = "",
+): { path: string; absPath: string }[] {
+  const results: { path: string; absPath: string }[] = [];
   let entries;
   try {
     entries = readdirSync(dirPath, { withFileTypes: true });
@@ -181,10 +190,13 @@ export function collectFilePaths(
     if (entry.isDirectory()) {
       const { displayName } = parseFolderName(entry.name);
       const path = prefix ? `${prefix}/${displayName}` : displayName;
-      results.push(...collectFilePaths(resolve(dirPath, entry.name), path));
+      results.push(...collectFileEntries(resolve(dirPath, entry.name), path));
     } else {
       const displayName = stripSortPrefix(entry.name);
-      results.push(prefix ? `${prefix}/${displayName}` : displayName);
+      results.push({
+        path: prefix ? `${prefix}/${displayName}` : displayName,
+        absPath: resolve(dirPath, entry.name),
+      });
     }
   }
   return results;
@@ -493,7 +505,8 @@ export function openFolderPlugin(
         }
       }
 
-      const treeFiles = new Set(collectFilePaths(absFolder));
+      const fileEntries = collectFileEntries(absFolder);
+      const treeFiles = new Set(fileEntries.map((entry) => entry.path));
 
       for (const item of menuItems) {
         const itemLabel = item.label.trim() || "(unnamed menu item)";
@@ -527,7 +540,7 @@ export function openFolderPlugin(
           item.file !== null &&
           !treeFiles.has(item.file)
         ) {
-          this.warn(
+          this.error(
             `Menu item "${itemLabel}" points at "${item.file}", which is not in the open folder.\n` +
               `  The editor would fall back to the default file and the browser would show its not-found page.\n` +
               `  Fix: Use the path as the explorer shows it (no sort prefixes), e.g. "legal/imprint.html".`,
@@ -536,7 +549,7 @@ export function openFolderPlugin(
       }
 
       if (defaultFile !== undefined && !treeFiles.has(defaultFile)) {
-        this.warn(
+        this.error(
           `defaultFile "${defaultFile}" is not in the open folder.\n` +
             `  Windows with no file set will open on the first file instead.\n` +
             `  Fix: Use the path as the explorer shows it (no sort prefixes), e.g. "README.md".`,
@@ -549,7 +562,7 @@ export function openFolderPlugin(
           (p) => !existing.has(p),
         );
         if (unknown.length > 0) {
-          this.warn(
+          this.error(
             `collapsedFolders lists folder(s) that do not exist:\n` +
               unknown.map((p) => `  ${p}`).join("\n") +
               "\n" +
@@ -557,6 +570,31 @@ export function openFolderPlugin(
               `  Fix: Use the path as the explorer shows it, without sort or state prefixes, e.g. "work experience" or "projects/demos".`,
           );
         }
+      }
+
+      const brokenLinks = findBrokenLinks(
+        fileEntries.map(({ path, absPath }) => ({
+          path,
+          content: path.endsWith(".md") || path.endsWith(".html") ? readFileSync(absPath, "utf-8") : "",
+        })),
+        treeFiles,
+      );
+      if (brokenLinks.length > 0) {
+        const diskPath = new Map(fileEntries.map((e) => [e.path, relative(process.cwd(), e.absPath)]));
+        const error = new Error(`${brokenLinks.length} broken link${brokenLinks.length === 1 ? "" : "s"} in the open folder`);
+        // The details as the stack, which is what the dev server prints: they stay
+        // readable, and each `at file:line` is a clickable location in a terminal.
+        error.stack =
+          `${error.name}: ${error.message}\n\n` +
+          brokenLinks
+            .map((l) => `The link on line ${l.line} of ${diskPath.get(l.from)} points to a file that does not exist: ${l.href}`)
+            .join("\n") +
+          "\n\n" +
+          `Fix:\n` +
+          ` - Make sure the link is correct\n` +
+          ` - Paths are relative to the file the link is in ("../" goes up a folder)\n` +
+          ` - Leave out the sort prefixes ("projects/Homelab.md", not "10#projects/Homelab.md").\n\n`
+        this.error(error);
       }
 
       const extensionless = findExtensionlessFiles(absFolder);

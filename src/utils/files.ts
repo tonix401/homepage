@@ -6,7 +6,7 @@
  * all share them.
  */
 
-import { type FileNode, type TreeNode } from "../services/types";
+import { type FileNode, type TreeNode } from "../services/types.ts";
 
 export function findFirstFile(nodes: TreeNode[]): FileNode | null {
   for (const node of nodes) {

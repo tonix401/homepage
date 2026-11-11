@@ -164,6 +164,18 @@ opens first. Unset, or naming a file that isn't there (the build warns), it
 is the first file in the tree. `findDefaultFile` in `src/utils/files.ts` takes
 the path as an argument, so it and `pageName` stay pure.
 
+**Broken links fail the build.** The plugin checks every path the config names
+(`defaultFile`, a menu item's `file`, `collapsedFolders`) and every link inside
+the pages, and a miss is an error, not a warning. `findBrokenLinks`
+(`src/services/linkCheck.ts`, pure) resolves each `href` in `.md` and `.html`
+files and each markdown `[text](path)` link exactly as the viewer does on click
+(`resolvePath` against the file it is in, then an exact match), so a link it
+reports is one that would show the not-found page. A link is relative to its own
+file: from `skills/software.md` the projects are `../projects/…`. Another site,
+`mailto:`, `#` anchors, absolute paths, images and anything in code are not
+checked. Plugin code imports with `.ts` extensions (Vite's native config
+loader), including the shared `utils/files.ts` it pulls in.
+
 ### Desktop state
 
 **Nothing is in the URL.** The address bar stays `/` however many windows are
