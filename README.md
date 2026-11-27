@@ -13,10 +13,10 @@ It started as a fork of [vscode_website](https://tonix401.github.io/vscode_websi
 - **Apps**, all reading the same open folder:
   - **Codium** — explorer, tabs, Shiki highlighting, markdown/HTML preview, quick open, a source-control panel that lists this repo's own commits, and Run and Debug, which docks [Eruda](https://github.com/liriliri/eruda), an in-page DevTools, on the right
   - **Chromium** — the files as pages, with the folder as a bookmarks bar
-  - **jīzǐ** — a yazi-style terminal file manager in a kitty window
   - **Obsidian** — the folder as a vault, with a graph view
-  - **btop** — the desktop's windows as a process tree under systemd and Hyprland
-  - **fastfetch** — the visitor's own browser, in my fastfetch layout
+  - **kitty** — a shell over the folder (`help` lists its commands) that opens on fastfetch, the visitor's own browser in my fastfetch layout, and runs:
+    - **jīzǐ** — a yazi-style terminal file manager
+    - **btop** — the desktop's windows as a process tree under systemd and Hyprland
 - **Launcher** — opens apps and picks one of five matugen-generated themes and four wallpapers
 - **Nothing in the URL** — the whole layout lives in `sessionStorage`, so a reload restores it and a new tab starts fresh; the theme is kept in `localStorage`
 

@@ -30,6 +30,13 @@ Files placed in `src/open_folder/` are read **at build/dev-server time** by a cu
 
 The virtual module type is declared in `src/vite-env.d.ts`. The canonical types live in `src/services/types.ts`.
 
+**No app imports the virtual module.** They read the tree from `src/utils/fileStore.ts` — `useTree()` in a component, `getTree()` in `normalizeArg`, `title` or a shell command — which is the built tree plus what a visitor added in this tab: files from kitty's `curl` or dropped on kitty or jīzǐ, folders from `mkdir`, and what `cp` and `mv` made of them (`mergeTree` in `fileManager.ts` puts added folders, then added files, after each folder's own entries). So an addition shows up in every app at once.
+- **What may be added** is decided by its bytes (`src/utils/fileFilter.ts`): an image by its magic number (PNG, JPEG, GIF, WebP, AVIF, or SVG markup), or UTF-8 text without a NUL, typed by its extension. HTML is refused, so a stranger's page never renders as one of the site's; added markdown renders without raw HTML (`FileNode.added`). Ten MB a file, fifty a tab.
+- **Where:** into a folder that exists, over nothing or over another added file (`writeError` in `fileManager.ts`). The site's own files and folders are root's, and its folders sticky (`drwxrwxrwt`, as `/tmp` is), so `ls` shows them that way: anything may be added into them, `cp` may copy them (as added text files), but `mv` and `rm` work only on added ones. The errors are Linux's: `Operation not permitted` for removing or renaming root's entry (the sticky bit), `Permission denied` for writing over root's file or removing `~`. Real Linux would let Tom remove root's files sitting directly in `~` (his own folder); here they are refused like the rest.
+- **How long:** as long as the desktop. The bytes go to IndexedDB under a tab id kept in `sessionStorage`, so a reload keeps them and a new tab starts without them; tabs unseen for a week are pruned. `main.tsx` waits for `loadAddedFiles` (a second at most) before the first render, so `normalizeArg` sees them.
+- **Images** are `FileType` `"image"`, with `content` empty and the picture at `src`: a blob URL, or, for a hotlinked image, the remote URL. `FileView` shows one in every app; they are drawn with `referrerPolicy="no-referrer"`.
+- **A dropped file nobody takes** would make the browser open it in place of the site; `guardFileDrops` (`src/utils/drop.ts`) refuses those. It skips a drag a window already took (`defaultPrevented`): it runs after React's handlers, and its `dropEffect = "none"` over theirs stops the `drop` event firing at all. Test drops with CDP's `Input.dispatchDragEvent`; a synthetic `drop` event skips that check.
+
 ### Component layout
 
 ```
@@ -59,20 +66,20 @@ BrowserApp                 — the browser window, one instance per column
 ├── BookmarkBar            — the open folder as folders, plus `menuItems`
 └── FileView               — the same body renderer the editor uses
 
-TerminalApp                — jīzǐ, a yazi-style file manager in a kitty window
-├── top line               — user@host, the cursor's path, window buttons
-└── panes                  — parent dir | current dir | preview (raw text)
+KittyApp                   — kitty: a shell over the open folder; `help` lists its commands
+├── top line               — no title: the window buttons, and `>_` while a program runs
+├── scrollback + prompt    — each command with its output, then a real <input>
+│   └── Fastfetch          — fastfetch: the visitor's own browser, Tom's layout, as text
+└── a full-screen program  — in place of the scrollback, until `q`:
+    ├── JiziScreen         — jīzǐ, a yazi-style file manager: parent | current | preview
+    └── BtopScreen         — btop: the desktop's window model as a process tree
+
+ImvApp                     — imv: one image on black, the others in its folder a key away
 
 NotesApp                   — Obsidian: the open folder as a vault
 ├── ribbon                 — files and graph view toggles
 ├── file tree              — notes without `.md`, folders with indent guides
 └── reading view / GraphView — the note, or every note and folder linked
-
-BtopApp                    — btop: the desktop's window model as a process tree
-├── cpu / mem / net        — what the page measures about itself, graphed
-└── proc                   — systemd → Hyprland → workspaces → windows
-
-FastfetchApp               — fastfetch: the visitor's own browser, Tom's layout
 
 KdenliveApp                — Kdenlive: the open folder as a video project you read
 ├── ProjectBin             — folders and clips, each with its reading time
@@ -279,7 +286,7 @@ than stacking up more; the window-title segment reports the focused window
 (`AppDefinition.title`) and opens the launcher just below it. Every app's title names the
 file it shows, as in `Homelab.md — Codium`: a window with no file set names
 the default file, because that's what it shows (`findDefaultFile` and
-`pageName` in `src/utils/files.ts`), and jīzǐ names the entry under its cursor; the keyboard segment cycles the
+`pageName` in `src/utils/files.ts`), and kitty names the program in its foreground — jīzǐ the entry under its cursor; the keyboard segment cycles the
 numerals (`WORKSPACE_LANGUAGES` lives in `src/utils/desktop.ts`).
 Right-clicking the background opens the launcher too, at the pointer,
 anywhere the wallpaper shows: `ArchDesktop` takes any `contextmenu` that did
@@ -516,8 +523,8 @@ window renders bare, covering the bar, so **every app must put a restore button
 in its own title bar** — that is the only way back to the strip, and an app
 without one strands the workspace. Every current app has one (`Header`'s
 maximize button, `.brw-winbtn` in the browser's tab strip, and
-`src/components/WindowButtons.tsx` in the title bars of jīzǐ, Obsidian, btop and
-fastfetch, and in Kdenlive's menu bar), and
+`src/components/WindowButtons.tsx` in the title bars of kitty and Obsidian,
+and in Kdenlive's menu bar), and
 the next app needs one too. Any app can reuse `WindowButtons` rather than
 drawing its own. They're in the theme's colours unless the app sets
 `--win-btn-fg`, `--win-btn-hover-fg` and `--win-btn-hover-bg`, as Obsidian
@@ -594,10 +601,12 @@ wider than the switch and keep the desktop layout.
   — which covers the whole header while focused, and drops the layout toggle.
 - **Each app** narrows the rest by CSS alone: jīzǐ keeps all three panes but
   narrows the parent (it is the only way up without an `h` key), btop goes to
-  one box per row and drops the threads and user columns, fastfetch stacks
-  even when maximized, Kdenlive's track headers shrink to 96px (with
+  one box per row and drops the threads and user columns, fastfetch puts the
+  info under the logo (a container query on the scrollback), Kdenlive's track headers shrink to 96px (with
   `min-width: 0`, or the corner's text holds them wide), the browser's
   bookmarks scroll sideways, and markdown images scale to the column.
+- **kitty** shows a `>_` button beside the window buttons while btop or jīzǐ
+  runs: it is `q` for a finger, since no keyboard comes up without the prompt.
 - **Heights are `100dvh`**, after a `100vh` fallback, on every app root, so a
   maximized window's status bar is not under the browser's toolbars.
 - **Touch targets.** Launcher rows are at least 40px under `pointer: coarse`,
@@ -609,8 +618,7 @@ An app is an `AppDefinition` in `src/apps/registry.tsx`: an id, a name, how it
 titles itself, how it cleans up a payload that came back out of storage, and
 how it renders into a column. A window is `{ app, arg }` and nothing more;
 `arg` is app-defined. The editor, browser and Obsidian read it as a file
-path; the terminal reads it as the path under its cursor, which may be a
-folder.
+path; kitty reads it as the command line of the program in its foreground.
 
 Everything an app may do to its own window arrives as a `WindowHandle`
 (`setArg`, `close`, `toggleFullscreen`, `focus`, `open`), so no app ever
@@ -647,19 +655,135 @@ menu is rendered *outside* `.brw-layout`, so the `--brw-*` palette is declared
 on `:root` — scoped to the layout it would resolve to nothing and the menus
 would come out transparent.
 
-The terminal is a ranger-style file manager, and its logic is pure and tested
-in `src/utils/fileManager.ts`. The directory it lists is not stored anywhere:
-it is the parent of the cursor's path, so `j`/`k` (and `h`/`l`, `g`/`G`, the
-arrows) are all `setArg`. The row it last sat on in each directory is kept
-in a ref, so `h` then `l` comes back to the same row. `l`/`Enter` on a file
-opens it with `handle.open`: HTML in the browser, everything else in the
-editor, the way a file manager picks the program for a file's type. Keys follow the editor's rule: a window-level listener that only
-the focused window installs, and it ignores keystrokes aimed at text fields.
+kitty (`src/apps/kitty/`, app id `kitty`) is a terminal running a shell over
+the open folder, which plays the home directory (`~`, or `/home/tom`).
+- **Commands** are the `PROGRAMS` list in `src/apps/kitty/programs/index.tsx`,
+  each a `Program` (`programs/types.ts`). `help` and Tab completion read that
+  list, so a command is added there and nowhere else. Each names its
+  `section` (`SECTIONS` in `shell.ts`: Files, Viewing, System, Shell), and
+  `help` lists the sections in that order, sorted by name. A program either
+  **prints** — `run` returns `Line`s, or an element that keeps drawing in the
+  scrollback — or **takes the window over** with a `Screen` until it calls
+  `exit`, like a real terminal's alternate screen. The built-ins' output, the
+  tokenizer, path resolution and completion are pure and tested in
+  `src/utils/shell.ts`. A printing program that is still working — `curl` —
+  hands the shell a promise with `ShellContext.wait`: the prompt is unmounted
+  until it settles, and Ctrl+C aborts `ShellContext.signal`, prints `^C` and
+  leaves the status failed. Start such work in `run`, never in an effect, so
+  a re-render cannot start it twice.
+- **The payload is the foreground program's command line** (`parseArg` /
+  `formatArg`): `null` is the prompt, `btop` is btop, `jizi projects/Homelab.md`
+  is jīzǐ with its cursor there. So a reload comes back to the program, and
+  the launcher's jīzǐ and btop rows are kitty opened on theirs (`LAUNCHABLE`
+  holds `{ app, arg }` rows, not apps). The working folder, scrollback and
+  history are the window's own state and a reload starts them over.
+  `normalizeArg` drops a program that only prints and runs a screen's
+  `normalizeArgs`.
+- **The prompt is Tom's starship config** (`~/.config/starship.toml`) in the
+  theme's fills: user on primary, folder on secondary (`promptPath`, the last
+  three parts after `…/`), `zsh` on the highest surface, the time, then the
+  dot and play mark, or a red cross and play mark after a command that failed
+  (`ShellContext.fail`). Those three, and `ls`'s icons, are the real Nerd Font
+  glyphs, from `public/fonts/kitty-prompt.woff2`, a subset of Tom's
+  JetBrainsMono Nerd Font limited by `unicode-range`. The command to
+  regenerate it and the list of glyphs are beside its `@font-face` in
+  `Kitty.css`; a new icon in `shell.ts` needs both, and a bump of the
+  font URL's `?v=`, or a page holding the old subset draws it as nothing. An image is eza's
+  magenta picture (an SVG its own mark), a `.txt` its text icon. The OS glyph and the
+  git, nix-shell and toolchain modules are cut. The arrows are CSS, as the Waybar's are — kitty
+  draws its powerline separators itself rather than from the font, too.
+- **A new shell runs fastfetch** and leaves a prompt under it. A window opened
+  on btop or jīzǐ greets you when you quit, not underneath.
+- **The prompt is a real `<input>`**, focused (`preventScroll`) while the
+  window has focus and blurred when another takes it. It is unmounted while a
+  screen runs: screens listen on the window, as the other apps do, and ignore
+  keys aimed at a text field. `q` or Esc quits one, and so does the `>_` button
+  in the top line, which a phone needs.
+- **The command word is coloured** as Tom's zsh-syntax-highlighting does:
+  blue when it names a command, red while it doesn't (`highlight` in
+  `shell.ts`), in the scrollback too. A text field can't colour part of its
+  text, so the field's own is transparent over a coloured copy
+  (`.kitty-mirror`), which its `onScroll` keeps scrolled with it.
+- **A grey suggestion follows the cursor**, as Tom's zsh-autosuggestions
+  makes it (`suggest` in `shell.ts`, strategy `history completion`): the
+  newest history line that continues the input, else the first completion.
+  Tab, → or End at the end of the line take it whole; with none, Tab
+  completes as before. It is drawn at the end of the coloured copy.
+- **Keys at the prompt:** Enter, ↑/↓ through the history, Tab, Ctrl+C (only
+  when nothing is selected, so copying still works), Ctrl+L, Ctrl+D on an
+  empty line.
+- **`ls` is Tom's alias**, `eza --long --header --icons
+  --group-directories-first`, in eza's colours and with its icons. Sizes are
+  the content's bytes. Dates are each file's last commit (`commitDates` in
+  `FilesConverterService.ts`, read at build time into `FileNode.modified`),
+  or its mtime before its first commit. A folder's date is its newest file's.
+  There is no git column, because the open folder is not presented as a
+  repository.
+- **`git` is the site's own repository**, the history Source Control lists
+  (`virtual:git-log`), not the open folder's. `git log` prints every commit
+  as git does (no email: the module has none, and the site shouldn't ship
+  one); `git status` is always clean; `git help`, `--help` and `-h` list the
+  three. Anything else is git's "not a git command", with the suggestions git
+  would make (`gitDistance` is its weighted `levenshtein.c`), from those
+  three only.
+- **`curl`** (`programs/download.ts`, arguments and the meter in
+  `src/utils/curl.ts`) is cut down to adding a file, and takes no options:
+  `curl <url>` saves to the working folder under the URL's own name
+  (`curl_response` when it has none, as curl 8's `-O`); `curl <url> <name>`
+  or `<folder>/<name>` under that name; `curl <url> <folder>/` (or a folder
+  that exists, slash or not) into it under the URL's name. Where it lands is
+  checked before anything is fetched (`curlTarget`), and again on writing.
+  Its progress meter and error lines are Tom's curl 8.23's, measured. GitHub
+  Pages has no proxy, so only servers that allow CORS can be downloaded from;
+  when one refuses and the URL loads as an `<img>`, curl keeps a link to it
+  instead (`addLink`, size `-` in `ls`) and says so. Text from such a server
+  fails.
+- **`mkdir`, `cp`, `mv` and `rm`** work on the visitor's additions through
+  `makeFolder`, `copyEntry`, `moveEntry` and `removeEntry` in `fileStore.ts`,
+  with coreutils' messages. A folder needs no `-r` for any of them. `cp` and
+  `mv` read their operands as coreutils does (`transfers` in `shell.ts`,
+  tested): the last is the destination, a folder there (or a trailing `/`)
+  takes the source under its own name, several sources need a folder; each
+  source is checked before anything happens. `mkdir` makes any missing
+  folders above and takes no options (`-p` is an invalid option); `rm -f` quiets a missing operand; `rm .` is
+  refused.
+- **`file`** names a file's kind by its extension alone (`fileKind` in
+  `shell.ts`), in libmagic's words where file 5.48 has one (`PNG image data`,
+  `JSON text data`, `HTML document, …`), `ASCII text` for other text, `data`
+  for an extension it does not know, plus `directory` and `empty`. Names are
+  lined up as `file` lines them up; `-b` drops them; a missing one is a row,
+  not a failure, as in the real one.
+- **`icat`** (kitty's `kitten icat`, shortened) draws an image into the
+  scrollback; **`imv`** and `open`
+  on an image open imv. `open`, jīzǐ's `l` and the rest send each file to the
+  app for its type with `appFor` in `shell.ts`: HTML to the browser, an image
+  to imv, the rest to the editor.
+- **Dropping files on the prompt** runs `curl <blob url> <name>` for each, in
+  turn, as if typed (the blob URL is the browser's name for a dropped file,
+  so it is in the history and works again until a reload); what is being
+  typed stays. Ctrl+C stops the rest. On jīzǐ, they go to the folder it
+  lists, with the cursor on the first and a red line for what was refused,
+  through the same filter (`addFile`). jīzǐ previews an image as the
+  picture, as yazi does in kitty.
+- **The Waybar shows the foreground program's icon** (`windowIcon` in
+  `icons.ts`, which reads the payload's first word so the bar still imports
+  nothing but that leaf), and the title is the program's `title`.
 
-A tiled terminal is translucent, so the wallpaper shows through. `.arch-column`
-paints the editor's grey behind every window, so `Terminal.css` clears it with
-`.arch-column:has(> .term--windowed)`. A maximized window has no wallpaper
+A tiled kitty is translucent, so the wallpaper shows through. `.arch-column`
+paints the editor's grey behind every window, so `Kitty.css` clears it with
+`.arch-column:has(> .kitty--windowed)`. A maximized window has no wallpaper
 behind it and keeps a solid background.
+
+jīzǐ (`programs/jizi.tsx`, run as `jizi`, `yazi` or `ranger`) is a
+ranger-style file manager, and its logic is pure and tested in
+`src/utils/fileManager.ts`. Its one argument is the path under its cursor. The
+directory it lists is not stored anywhere: it is the parent of the cursor's
+path, so `j`/`k` (and `h`/`l`, `g`/`G`, the arrows) are all `setArgs`. The row
+it last sat on in each directory is kept in a ref, so `h` then `l` comes back
+to the same row. `l`/`Enter` on a file opens it with `open`: HTML in the
+browser, everything else in the editor, the way a file manager picks the
+program for a file's type — and the shell's `open` uses the same rule.
+`jizi <folder>` starts inside that folder, relative to the working folder.
 
 Obsidian (`src/apps/notes/`, app id `notes`) treats the open folder as a vault.
 - **Kept per window:** its payload is the open note. Which view is showing,
@@ -682,23 +806,24 @@ Obsidian (`src/apps/notes/`, app id `notes`) treats the open folder as a vault.
   graph looks the same on every visit. `GraphView` draws it in a viewBox of
   those units, so it scales to any window without being laid out again.
 
-btop (`src/apps/monitor/`, app id `monitor`) runs in the theme's colours,
-like jīzǐ, and keeps no payload of its own.
+btop (`programs/btop.tsx`, run as `btop`, `top` or `htop`) runs in the
+theme's colours, like jīzǐ, and takes no arguments.
 - **proc:** `buildProcessTree` in `src/utils/processTree.ts` (pure, tested)
   turns the `Desktop` into `systemd (init)` → `Hyprland` → every workspace
   that holds a window (plus the one on screen) → its windows in strip order.
   `flattenTree` draws btop's `├─`/`└─`/`[-]` guides and hides folded nodes.
 - **Pids:** a window's pid comes from the hex digits of its id (`pidFor`), so
   it's stable for as long as the window is open.
-- **Terminal programs:** jīzǐ, btop and fastfetch run in kitty, so their window
-  is a `kitty` process with the program as its child, one pid along
-  (`WindowProcess.host`). The program keeps the window's id as its key, and
-  the focus mark.
+- **kitty:** every kitty window is a `kitty` process with its foreground
+  program as its child, one pid along (`WindowProcess.host`) — `btop`, `jizi`
+  with the cursor's path, or `zsh` at the prompt. fastfetch prints and exits,
+  so it never shows. The child keeps the window's id as its key, and the focus
+  mark.
 - **Command lines:** each window's is built from its record, e.g.
   `codium README.md`.
 - **Keys:** `j`/`k` and the arrows select, `←`/`→` fold, climbing to the
-  parent on a folded node, and Space toggles. Only the focused window listens,
-  as in jīzǐ.
+  parent on a folded node, Space toggles, and `q` quits. Only the focused
+  window listens, as in jīzǐ.
 - **cpu, mem and net show only what a page can measure about itself,** and say
   so:
   - cpu is the tab's main-thread load, the same `useSystemStats` the bar uses.
@@ -716,11 +841,16 @@ like jīzǐ, and keeps no payload of its own.
 - **Sampling:** once a second, skipping hidden tabs, which also freezes the
   graphs while the tab is in the background.
 
-fastfetch (`src/apps/fetch/`, app id `fetch`) copies the layout of your own
+fastfetch (`programs/fastfetch.tsx`, run as `fastfetch`, `neofetch` or `ff`, and
+first in every new kitty) prints into the scrollback, in the layout of your own
 fastfetch config (`~/.config/matugen/templates/colors-fastfetch.jsonc`):
-- **Layout:** your outlined Arch logo from the matugen `arch.svg`, then two
-  groups of keys between `╭──╮` / `╰──╯` rules, keys in the terminal's ANSI
-  colours, values in the theme's primary, and the colour circles.
+- **Layout:** everything is text. The logo is fastfetch's own ASCII Arch, the
+  one it prints in a terminal with no image support, in the theme's primary.
+  Beside it, two groups of keys between `╭──╮` / `╰──╯` rules, keys in the
+  terminal's ANSI colours, values in the theme's primary, and the colour
+  circles. Your config's Nerd Font icons are left out, as fastfetch leaves
+  them out with no Nerd Font. A narrow window cuts the rules and ellipsizes
+  the values, as a terminal would; under 64ch the info goes below the logo.
 - **What it reports:** the *visitor's* browser, from what any page is told
   without a permission prompt:
   - User-Agent Client Hints and the user-agent string
@@ -736,8 +866,8 @@ fastfetch config (`~/.config/matugen/templates/colors-fastfetch.jsonc`):
 - **Parsing:** in `src/utils/browserInfo.ts`, pure and tested: user agent to
   OS and engine, ANGLE and OpenGL renderer strings to a GPU name,
   refresh-rate snapping, and uptime wording.
-- **Timing:** like the real command it's a snapshot taken when the window
-  opens. Uptime counts from this tab's session start, not the page load:
+- **Timing:** like the real command it's a snapshot taken when it runs.
+  Uptime counts from this tab's session start, not the page load:
   `src/utils/sessionStart.ts` writes `homepage.started` to `sessionStorage` on
   the first load (from `main.tsx`) and never overwrites it, so a reload keeps
   counting and a new tab starts its own. btop's `up` reads the same value. The awaited fields (client hints, battery, refresh rate) fill in as
@@ -775,9 +905,24 @@ video project, in Breeze Dark. Its payload is the file under the playhead.
 - **Decoration:** the menus, the layout tabs, the toolbar and the dock tabs.
   The bin's search, the transport and the timeline's zoom all work.
 
+imv (`src/apps/imv/`, app id `imv`) shows the image its payload names, on
+black and scaled to fit, as imv's defaults are (`scaling_mode full`,
+`background 000000`), and steps through the other images in its folder with
+`setArg` (`imagesBeside` in `src/utils/imv.ts`). Its keys are imv's default
+binds from its `/etc/imv_config`: ←/→ and `[`/`]`, `gg`/`G`, `hjkl` pan,
+`i`/`+`/↑ and `o`/`-`/↓ zoom, `a` actual size, `r` reset, `c` centre,
+`s`/`S` scaling and upscaling, Ctrl+R rotate, `d` the overlay, `f`
+fullscreen, `x` close the image, `q` quit. The wheel zooms at the pointer and
+dragging pans. The overlay is imv's default text,
+`[1/3] [800x600] [100%] name [scale to fit]`; the title is the same after
+`imv - ` without the size and zoom, which are window state `title` cannot
+see. It has no launcher row: started with no image, imv only shows black.
+
 **Adding an app:** an id in `src/apps/ids.ts`, an icon and name in
 `src/apps/icons.ts`, a definition folder under `src/apps/`, and an entry in
-`APPS`/`LAUNCHABLE`. Nothing in the desktop model, the strip or the bar changes. The
+`APPS`/`LAUNCHABLE`. A terminal program is not an app: it is a `Program` in
+kitty's `PROGRAMS`, and a launcher row of its own only if it takes the window
+over (`LAUNCHABLE`, with its icon in `PROGRAM_ICONS`). Nothing in the desktop model, the strip or the bar changes. The
 one thing the window manager cannot supply is a restore button — give the app
 its own, or a maximized window of it has no way back to the strip.
 
@@ -917,7 +1062,7 @@ The generator makes a few deliberate choices, each commented in the script:
 
 **Codium, Chromium, Obsidian and Kdenlive are not themed.** They keep the
 VSCode, Chrome, Obsidian and Breeze Dark palettes in `App.css`, `Browser.css`,
-`Notes.css` and `Kdenlive.css`, like real apps that ignore your GTK theme. The desktop chrome and jīzǐ follow the
+`Notes.css` and `Kdenlive.css`, like real apps that ignore your GTK theme. The desktop chrome and kitty follow the
 theme. The one exception is markdown in Codium and Chromium: links take the
 theme's primary and inline code its tertiary (`.vscode-md-area` in
 `Content.css`). Obsidian overrides both with its own purple, `--obs-accent`.
@@ -1111,14 +1256,19 @@ Note: `documentation/CONFIGURATION.md` does not exist in this fork; skip it.
 ### The app registry (`editor`, `browser`, …)
 - `src/apps/ids.ts` — `APP_IDS`, `DEFAULT_APP`
 - `src/apps/icons.ts` — `APP_ICONS`, `APP_NAMES`
-- `src/apps/registry.tsx` — `APPS` and the launcher's `LAUNCHABLE` order
+- `src/apps/registry.tsx` — `APPS` and the launcher's `LAUNCHABLE` rows
+- `src/apps/icons.ts` — `PROGRAM_ICONS`, for a kitty program with a launcher row
+- `src/apps/kitty/programs/index.tsx` — `PROGRAMS`, kitty's commands
+- `src/apps/kitty/programs/btop.tsx` — `PROCESSES`, each app as btop lists it
 - `src/apps/types.ts` — the `AppDefinition` / `WindowHandle` contract
 - `src/utils/session.ts` — bump `SESSION_KEY` when an app id is renamed or dropped
 - `src/utils/desktop.test.ts`, `src/utils/session.test.ts` — cases naming an app id
 - `CLAUDE.md` — the Apps section above
 
 ### Supported file types (`.py`, `.rs`, `.vue`, etc.)
-- `src/services/types.ts` — `FileType` union type
+- `src/services/types.ts` — `FileType` union type (`image` only for added files)
+- `src/utils/fileFilter.ts` — what a visitor may add, and as which type
+- `src/services/fileIcon.ts` and `src/utils/shell.ts` — the explorer's and `ls`'s icons
 - `src/services/FilesConverterService.ts` — `getFileType()` switch statement
 - `src/services/FilesConverterService.ts` — `fileTypeToShikiLang` map
 
