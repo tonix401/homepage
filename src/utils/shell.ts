@@ -159,6 +159,20 @@ export function promptTime(now: Date): string {
   return `${pad(now.getHours())}:${pad(now.getMinutes())}`;
 }
 
+// ── The scrollback ────────────────────────────────────────────────────────
+
+/**
+ * The newest of `blocks` that fit in `limit` lines, oldest dropped first and
+ * each dropped whole. The newest is kept even when it alone is longer, so the
+ * command just run never vanishes. Returns the same array when all fit.
+ */
+export function trimScrollback<T extends { rows: number }>(blocks: T[], limit: number): T[] {
+  let total = blocks.reduce((sum, b) => sum + b.rows, 0);
+  let drop = 0;
+  while (total > limit && drop < blocks.length - 1) total -= blocks[drop++].rows;
+  return drop === 0 ? blocks : blocks.slice(drop);
+}
+
 // ── The window's payload ──────────────────────────────────────────────────
 
 /**

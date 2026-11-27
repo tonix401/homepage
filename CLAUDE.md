@@ -688,6 +688,11 @@ the open folder, which plays the home directory (`~`, or `/home/tom`).
   until it settles, and Ctrl+C aborts `ShellContext.signal`, prints `^C` and
   leaves the status failed. Start such work in `run`, never in an effect, so
   a re-render cannot start it twice.
+  The scrollback keeps the last 2000 lines (`SCROLLBACK` in `KittyApp.tsx`,
+  kitty's default): each command counts its prompt (2) and the lines it
+  returned, an element output counts 16 (`ELEMENT_ROWS`), and
+  `trimScrollback` drops the oldest commands whole, never the newest.
+  Wrapped long lines are not counted.
 - **The payload is the foreground program's command line** (`parseArg` /
   `formatArg`): `null` is the prompt, `btop` is btop, `jizi projects/Homelab.md`
   is jīzǐ with its cursor there. So a reload comes back to the program, and

@@ -22,6 +22,7 @@ import {
   resolvePath,
   tokenize,
   transfers,
+  trimScrollback,
 } from "./shell";
 
 function file(path: string, content = ""): FileNode {
@@ -48,6 +49,25 @@ const tree: TreeNode[] = [
 
 /** A line's text, colours dropped. */
 const text = (lines: Line[]) => lines.map((l) => l.map((s) => s.text).join(""));
+
+describe("trimScrollback", () => {
+  const blocks = (...rows: number[]) => rows.map((r, id) => ({ id, rows: r }));
+
+  it("keeps everything that fits, as the same array", () => {
+    const all = blocks(3, 4, 5);
+    expect(trimScrollback(all, 12)).toBe(all);
+  });
+
+  it("drops the oldest whole blocks until the rest fit", () => {
+    expect(trimScrollback(blocks(5, 5, 5), 12).map((b) => b.id)).toEqual([1, 2]);
+    expect(trimScrollback(blocks(10, 2, 2), 5).map((b) => b.id)).toEqual([1, 2]);
+  });
+
+  it("never drops the newest, however long", () => {
+    expect(trimScrollback(blocks(2, 50), 10).map((b) => b.id)).toEqual([1]);
+    expect(trimScrollback([], 10)).toEqual([]);
+  });
+});
 
 describe("highlight", () => {
   const commands = ["ls", "cd"];

@@ -9,7 +9,7 @@
  * (`parseArg` in `utils/shell.ts`), so a reload comes back to it, and the
  * launcher's btop and jīzǐ are this window opened on theirs. The working
  * folder, the scrollback and the history are the window's own state, and a
- * reload starts them over.
+ * reload starts them over. Only the last `SCROLLBACK` lines are kept.
  *
  * The prompt is a real `<input>`, so typing, pasting and a phone's keyboard
  * all work. It is unmounted while a full-screen program runs, because those
@@ -48,6 +48,7 @@ import {
   quote,
   suggest,
   tokenize,
+  trimScrollback,
 } from "../../utils/shell";
 import { Lines, Segments } from "./Lines";
 import { COMMAND_NAMES, PROGRAMS, findProgram } from "./programs";
@@ -75,6 +76,8 @@ interface Block {
   /** Ran, and was stopped with Ctrl+C while the shell waited for it. */
   aborted?: boolean;
   output: ReactNode;
+  /** Lines it takes in the scrollback, for `trimScrollback`. */
+  rows: number;
 }
 
 /** A command the shell is waiting for: its block, and what Ctrl+C stops. */
@@ -84,11 +87,22 @@ interface Busy {
   status: { failed: boolean };
 }
 
+/**
+ * How many lines stay in the scrollback, kitty's own default: the oldest
+ * commands go first, so a long session (or a `curl` loop) cannot grow the page
+ * without end. A command is dropped whole, and the newest never is.
+ */
+const SCROLLBACK = 2000;
+/** The lines a command takes besides its output: the powerline and the input. */
+const PROMPT_ROWS = 2;
+/** What an output that is an element (fastfetch, `curl`'s meter, an image) counts as, as it has no lines to count. */
+const ELEMENT_ROWS = 16;
+
 const freshPrompt = (ok = true): PromptState => ({ ok, time: promptTime(new Date()) });
 
 /** What a new shell shows first, as Tom's own shell does on opening. */
 function greeting(id: number): Block {
-  return { id, cwd: "", prompt: freshPrompt(), input: "fastfetch", output: <Fastfetch /> };
+  return { id, cwd: "", prompt: freshPrompt(), input: "fastfetch", output: <Fastfetch />, rows: PROMPT_ROWS + ELEMENT_ROWS };
 }
 
 /** A powerline arrow, from one segment's fill into the next one's. */
@@ -161,9 +175,10 @@ export function KittyApp({ arg, focused, maximized, handle, desktop }: AppRender
   /** Where ↑ has walked to in the history, and the line it was walked away from. */
   const walk = useRef<{ at: number; draft: string } | null>(null);
 
-  const append = useCallback((block: Omit<Block, "id">) => {
+  const append = useCallback((block: Omit<Block, "id" | "rows">, outputRows = 0) => {
     const id = nextId.current++;
-    setBlocks((b) => [...(b ?? []), { ...block, id }]);
+    const rows = PROMPT_ROWS + outputRows;
+    setBlocks((b) => trimScrollback([...(b ?? []), { ...block, id, rows }], SCROLLBACK));
     return id;
   }, []);
 
@@ -203,7 +218,7 @@ export function KittyApp({ arg, focused, maximized, handle, desktop }: AppRender
     }
     const found = findProgram(command);
     if (!found) {
-      append({ ...block, output: <Lines lines={[line(`zsh: command not found: ${command}`)]} /> });
+      append({ ...block, output: <Lines lines={[line(`zsh: command not found: ${command}`)]} /> }, 1);
       return next(false);
     }
     if (found.Screen) {
@@ -233,7 +248,8 @@ export function KittyApp({ arg, focused, maximized, handle, desktop }: AppRender
       setBlocks([]);
       return next(!status.failed);
     }
-    const id = append({ ...block, output: isValidElement(result) ? result : result ? <Lines lines={result} /> : null });
+    const outputRows = isValidElement(result) ? ELEMENT_ROWS : (result?.length ?? 0);
+    const id = append({ ...block, output: isValidElement(result) ? result : result ? <Lines lines={result} /> : null }, outputRows);
     const { job } = waited;
     if (!job) return next(!status.failed);
     // The next prompt is drawn when the command is done, not when it started.
@@ -306,7 +322,7 @@ export function KittyApp({ arg, focused, maximized, handle, desktop }: AppRender
     } else if (key === "Tab") {
       const { line: completed, options } = complete(tree, cwd, input, COMMAND_NAMES);
       // Several candidates are listed under the line, as a shell lists them.
-      if (options.length > 1) append({ cwd, prompt, input, output: <Lines lines={[line(options.join("  "))]} /> });
+      if (options.length > 1) append({ cwd, prompt, input, output: <Lines lines={[line(options.join("  "))]} /> }, 1);
       setInput(completed);
     } else if (event.ctrlKey && key === "c") {
       // Copying a selection is still Ctrl+C's job.
