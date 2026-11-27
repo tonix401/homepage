@@ -23,6 +23,7 @@ import {
   type WorkspaceLanguage,
 } from "./utils/desktop";
 import { loadDesktop, saveDesktop } from "./utils/session";
+import { decodeDesktop, encodeDesktop, historyMode } from "./utils/urlState";
 import { genieInto, snapshotWindow, type WindowSnapshot } from "./utils/genie";
 import {
   animateThemeChanges,
@@ -52,9 +53,12 @@ function normalize(desktop: Desktop): Desktop {
   return { ...desktop, windows };
 }
 
-/** This tab's desktop as it was left, or a fresh one on a first visit. */
+/**
+ * The desktop a link names, else this tab's as it was left, else a fresh one
+ * on a first visit.
+ */
 function initialDesktop(): Desktop {
-  const stored = loadDesktop();
+  const stored = decodeDesktop(window.location.hash) ?? loadDesktop();
   return stored ? normalize(stored) : defaultDesktop();
 }
 
@@ -90,11 +94,39 @@ function App() {
   );
   const focused = focusedWindow(desktop);
 
-  // The desktop is nowhere else — there is no URL carrying any of it — so it
-  // is mirrored on every change. A few hundred bytes, nothing to debounce.
+  // The desktop is mirrored on every change, to `sessionStorage` for a reload
+  // and to the URL's hash for a link and for Back. A few hundred bytes,
+  // nothing to debounce. Layout changes and a window showing something else
+  // add a history entry; moving focus only rewrites the current one
+  // (`historyMode`), and so does a desktop the popstate handler just restored.
+  const shown = useRef(desktop);
+  const fromHistory = useRef(false);
   useEffect(() => {
     saveDesktop(desktop);
+    const hash = `#${encodeDesktop(desktop)}`;
+    const mode = fromHistory.current ? "replace" : historyMode(shown.current, desktop);
+    fromHistory.current = false;
+    shown.current = desktop;
+    if (window.location.hash === hash) return;
+    const url = window.location.pathname + window.location.search + hash;
+    if (mode === "push") window.history.pushState(null, "", url);
+    else window.history.replaceState(null, "", url);
   }, [desktop]);
+
+  // Back and Forward: the entry's hash is a desktop. Any other hash (an
+  // in-page anchor) names none and is left alone.
+  useEffect(() => {
+    const onPopState = () => {
+      const restored = decodeDesktop(window.location.hash);
+      if (!restored) return;
+      const next = normalize(restored);
+      if (encodeDesktop(next) === encodeDesktop(shown.current)) return;
+      fromHistory.current = true;
+      setDesktop(next);
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   const handleWorkspaceChange = useCallback((workspace: number) => {
     setDesktop((current) => switchWorkspace(current, workspace));

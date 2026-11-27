@@ -189,12 +189,18 @@ loader), including the shared `utils/files.ts` it pulls in.
 
 ### Desktop state
 
-**Nothing is in the URL.** The address bar stays `/` however many windows are
-open, on every workspace, in every language. The whole desktop is one object in
-`src/utils/desktop.ts`, mirrored to `sessionStorage` by `src/utils/session.ts`,
-and that is the only thing a reload has to restore (besides the colour theme,
-which is a preference rather than layout and lives in `localStorage` — see
-Themes):
+**The desktop is in the URL's hash.** `/#<base64url>` carries the desktop as a
+positional array (`src/utils/urlState.ts`: `encodeDesktop`, `decodeDesktop`,
+`historyMode`): `[1, language, fullscreen, workspace, [[n, focusIndex,
+[[id, app, arg], …]], …]]`, a third of the stored JSON. The first element is the
+format's version, bumped when the array changes; the window ids stay, so Back
+keeps unchanged windows the same windows. A link opens the layout it was copied from
+and Back and Forward walk through the layout. The whole desktop is one object in
+`src/utils/desktop.ts`, mirrored to `sessionStorage` by `src/utils/session.ts`
+and to the hash by `App`; on load the hash wins, then `sessionStorage`, then
+`defaultDesktop()`. Nothing else is in it (the colour theme is a preference
+rather than layout and lives in `localStorage` — see Themes; a kitty window's
+folder and scrollback, and files the visitor added, are not either):
 
 ```ts
 interface Desktop {
@@ -243,6 +249,17 @@ purpose: per tab, so two tabs are two independent desktops that cannot clobber
 each other's writes, and a layout does not outlive the visit that built it. A
 first visit, or a session from an older shape, gets `defaultDesktop()` — one
 editor on the default file, tiled on workspace 1. Bump `SESSION_KEY` when the shape changes.
+
+**History.** `App`'s effect on `desktop` pushes an entry when `historyMode`
+says so — a window opened, closed or moved, a workspace, language or fullscreen
+change, or a window showing something else (a file opened) — and replaces the
+current one otherwise, so moving focus does not make Back retrace every click.
+The `popstate` handler decodes the entry's hash, runs it through `normalize` and
+sets the desktop; it ignores a hash that names no desktop (an in-page anchor), and
+the effect then rewrites rather than pushes. A link with another `VERSION`, or a
+broken one, decodes to `null` and falls back to `sessionStorage`. A link names
+files by path, so one naming a file the viewer's tab lacks (an added one)
+degrades through `normalizeArg`.
 
 Stale payloads are not `session.ts`'s problem: it must not import the file
 tree, so `App` maps every restored window through `AppDefinition.normalizeArg`,
@@ -1225,6 +1242,7 @@ Note: `documentation/CONFIGURATION.md` does not exist in this fork; skip it.
 ### The desktop shape (`Desktop`, `WorkspaceRecord`, `WindowRecord`)
 - `src/utils/desktop.ts` — the types, the reducers, `repairDesktop`, `WORKSPACE_COUNT`, `WORKSPACE_LANGUAGES`, `MAX_WINDOWS`
 - `src/utils/session.ts` — the shape validation, and `SESSION_KEY` (bump it whenever the stored shape changes)
+- `src/utils/urlState.ts`, `src/utils/urlState.test.ts` — the hash encoding and the push-or-replace rule
 - `src/utils/desktop.test.ts` — the reducer and invariant cases
 - `src/utils/session.test.ts` — the round-trip and rejection cases
 - `CLAUDE.md` — the Desktop state section above

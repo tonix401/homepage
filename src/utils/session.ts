@@ -1,8 +1,9 @@
 /**
  * What the tab remembers across a reload.
  *
- * The whole desktop lives here and nowhere else — there is no URL to fall back
- * on, so this is the one thing standing between a reload and an empty screen.
+ * The whole desktop lives here and in the URL's hash (`urlState.ts`, which
+ * hands `parseDesktop` the shape stored here): a link wins on load, and this
+ * is what a reload falls back on when there is none.
  * `sessionStorage` rather than `localStorage`, on purpose: it is per tab, so
  * two tabs of the site are two independent desktops that cannot clobber each
  * other's writes, and a layout does not outlive the visit that built it.
@@ -33,7 +34,8 @@ import {
  *  never read rather than needing a migration. */
 export const SESSION_KEY = "homepage.session.v3";
 
-const VERSION = 2;
+/** The stored shape's version: in `sessionStorage`, and what `urlState.ts` hands `parseDesktop`. */
+export const STORED_VERSION = 2;
 
 interface StoredDesktop extends Desktop {
   v: number;
@@ -110,7 +112,7 @@ export function parseDesktop(raw: string | null): Desktop | null {
 
   const { v, workspace, language, fullscreen, workspaces, windows } =
     value as Partial<StoredDesktop>;
-  if (v !== VERSION) return null;
+  if (v !== STORED_VERSION) return null;
 
   return repairDesktop({
     workspace: typeof workspace === "number" ? workspace : DEFAULT_WORKSPACE,
@@ -133,7 +135,7 @@ export function loadDesktop(store: Storage | null = storage()): Desktop | null {
 export function saveDesktop(desktop: Desktop, store: Storage | null = storage()): void {
   if (!store) return;
   try {
-    store.setItem(SESSION_KEY, JSON.stringify({ v: VERSION, ...desktop }));
+    store.setItem(SESSION_KEY, JSON.stringify({ v: STORED_VERSION, ...desktop }));
   } catch {
     // Full, disabled, or a context that refuses to store anything. A lost
     // session is not worth a console warning on every navigation.
