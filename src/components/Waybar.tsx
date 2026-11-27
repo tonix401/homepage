@@ -5,20 +5,18 @@ import { useSystemStats } from "../utils/systemStats";
 import { holdOutline, snakeAround } from "../utils/snake";
 import { type Point } from "../utils/menuPlacement";
 import { Icon } from "./Icon";
-import { APP_ICONS } from "../apps/icons";
-import { type AppId } from "../apps/ids";
 
 interface WaybarProps {
   workspace: number;
   language: WorkspaceLanguage;
-  /** Which apps each workspace holds, in strip order. Missing means empty. */
-  workspaceApps: ReadonlyMap<number, readonly AppId[]>;
+  /** The icon of each window a workspace holds, in strip order. Missing means empty. */
+  workspaceIcons: ReadonlyMap<number, readonly string[]>;
   onWorkspaceChange: (workspace: number) => void;
   onLanguageChange: (language: WorkspaceLanguage) => void;
   /** The Arch segment: the editor, maximized, on its default page. */
   onHome: () => void;
   /** What the window-title segment reports; clicking it opens the launcher. */
-  focusedApp: AppId | null;
+  focusedIcon: string | null;
   focusedTitle: string | null;
   /** Opens the launcher menu at a point: here, just under this segment. */
   onAppMenu: (at: Point) => void;
@@ -184,11 +182,11 @@ function Cap({ fill, side }: { fill: Fill; side: "l" | "r" }) {
 export function Waybar({
   workspace,
   language,
-  workspaceApps,
+  workspaceIcons,
   onWorkspaceChange,
   onLanguageChange,
   onHome,
-  focusedApp,
+  focusedIcon,
   focusedTitle,
   onAppMenu,
   empty,
@@ -368,7 +366,7 @@ export function Waybar({
           // window is on screen but would otherwise not be announced at all.
           aria-label={focusedTitle ? `Applications — ${focusedTitle}` : "Applications"}
         >
-          <Icon className="wb-icon" path={focusedApp ? APP_ICONS[focusedApp] : icons.window} />
+          <Icon className="wb-icon" path={focusedIcon ?? icons.window} />
           <span className="wb-title">{focusedTitle ?? NO_WINDOW_LABEL}</span>
         </button>
         <Arrow from={FILL.containerHigh} to={FILL.none} dir="r" />
@@ -379,14 +377,11 @@ export function Waybar({
       <div className="wb-center" ref={wsRef} data-crowded={crowded || undefined}>
         {WS_LANGUAGES[shownLanguage].glyphs.map((glyph, idx) => {
           const ws = idx + 1;
-          const apps = workspaceApps.get(ws) ?? [];
-          const paths =
-            apps.length > WS_MAX_ICONS
-              ? [icons.windows]
-              : apps.map((app) => APP_ICONS[app]);
+          const windows = workspaceIcons.get(ws) ?? [];
+          const paths = windows.length > WS_MAX_ICONS ? [icons.windows] : windows;
           const state = ws === workspace
             ? "wb-ws-active"
-            : apps.length > 0
+            : windows.length > 0
               ? "wb-ws-occupied"
               : "wb-ws-empty";
           return (
@@ -398,8 +393,8 @@ export function Waybar({
               // and under `cn` or `roman` numerals this is the only place the
               // workspace's number exists at all.
               aria-label={
-                apps.length
-                  ? `Workspace ${ws} — ${apps.length} window${apps.length > 1 ? "s" : ""}`
+                windows.length
+                  ? `Workspace ${ws} — ${windows.length} window${windows.length > 1 ? "s" : ""}`
                   : `Workspace ${ws}`
               }
             >

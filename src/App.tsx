@@ -3,6 +3,7 @@ import "./App.css";
 import { ArchDesktop } from "./components/ArchDesktop";
 import { ArchStage } from "./components/ArchStage";
 import { APPS } from "./apps/registry";
+import { windowIcon } from "./apps/icons";
 import { DEFAULT_APP, type AppId } from "./apps/ids";
 import { type WindowHandle } from "./apps/types";
 import {
@@ -103,8 +104,8 @@ function App() {
     setDesktop((current) => setLanguage(current, language));
   }, []);
 
-  const handleLaunch = useCallback((app: AppId) => {
-    setDesktop((current) => openWindow(current, { app, arg: null }));
+  const handleLaunch = useCallback((app: AppId, arg: string | null) => {
+    setDesktop((current) => openWindow(current, { app, arg }));
   }, []);
 
   /**
@@ -199,15 +200,16 @@ function App() {
     [handles, focused?.id, desktop],
   );
 
-  /** What each workspace holds, for the icons in its Waybar pill. */
-  const workspaceApps = useMemo(
+  /** What each workspace holds, as the icons in its Waybar pill. */
+  const workspaceIcons = useMemo(
     () =>
       new Map(
         Object.entries(desktop.workspaces).map(([workspace, record]) => [
           Number(workspace),
           record.windows
-            .map((id) => desktop.windows[id]?.app)
-            .filter((app): app is AppId => app !== undefined),
+            .map((id) => desktop.windows[id])
+            .filter((window) => window !== undefined)
+            .map((window) => windowIcon(window.app, window.arg)),
         ]),
       ),
     [desktop],
@@ -228,12 +230,12 @@ function App() {
       onThemeChange={setTheme}
       subject={subject}
       onSubjectChange={setSubject}
-      workspaceApps={workspaceApps}
+      workspaceIcons={workspaceIcons}
       onWorkspaceChange={handleWorkspaceChange}
       onLanguageChange={handleLanguageChange}
       onLaunch={handleLaunch}
       onHome={handleHome}
-      focusedApp={focused?.app ?? null}
+      focusedIcon={focused ? windowIcon(focused.app, focused.arg) : null}
       focusedTitle={focused ? APPS[focused.app].title(focused.arg) : null}
       empty={windows.length === 0}
     >

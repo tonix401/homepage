@@ -1,0 +1,331 @@
+/*
+ * The Nerd Font glyphs the shell prints: the three Tom's starship puts after
+ * the prompt — the codicon dot (U+EA71), Font Awesome's play (U+F04B) and
+ * times (U+F00D) — and the icons eza puts before a name in `ls` (folder,
+ * empty folder, markdown, html, file, README, image, SVG, text). Cut from his own JetBrainsMono Nerd Font
+ * (OFL) to a file of under 2 KB, since the whole font is 2.5 MB. Regenerate
+ * with `pyftsubset` from fonttools, and keep `unicode-range` in step:
+ *
+ *   pyftsubset JetBrainsMonoNerdFont-Regular.ttf \
+ *     --unicodes=U+EA71,U+F04B,U+F00D,U+E5FF,U+F115,U+F48A,U+F13B,U+F15B,U+F00BA,U+F1C5,U+F0559,U+F15C \
+ *     --flavor=woff2 --layout-features='' --no-hinting --desubroutinize \
+ *     --name-IDs='*' --name-languages='*' --output-file=public/fonts/kitty-prompt.woff2
+ *
+ * Then bump the `?v=` in `src`: a page that already loaded the old subset
+ * keeps it under the same URL, and draws a new icon as nothing.
+ *
+ * One file for every weight: the patched Bold has the same icons, so a bold
+ * mark must not be smeared by synthetic bolding.
+ */
+@font-face {
+  font-family: "kitty-prompt";
+  src: url("/fonts/kitty-prompt.woff2?v=2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+  /* Only these characters come from it, so it can head every font stack. */
+  unicode-range: U+EA71, U+F04B, U+F00D, U+E5FF, U+F115, U+F48A, U+F13B, U+F15B, U+F00BA, U+F1C5, U+F0559, U+F15C;
+}
+
+/*
+ * kitty: a terminal emulator with its opacity turned down, in the bar's
+ * monospace, running a shell — or a program that has taken the window over.
+ *
+ * The colours are the theme's (`src/themes/`), the palette the bar and the
+ * focused-window border use: primary for the prompt, rules and jīzǐ's text,
+ * primary_container behind jīzǐ's cursor with on_primary_container on it,
+ * and the lowest surface underneath. Output the shell prints is in
+ * on_surface, coloured where a program asks with kitty's ANSI palette. The
+ * theme is on `<html>`, so a maximized terminal — which renders outside the
+ * desktop — still has it.
+ */
+.kitty {
+  --term-fg: var(--theme-primary);
+  --term-dim: color-mix(in srgb, var(--term-fg) 55%, transparent);
+  --term-cursor: var(--theme-primary-container);
+  --term-on-cursor: var(--theme-on-primary-container);
+  --term-rule: var(--theme-primary);
+  --term-bg: var(--theme-surface-lowest);
+  /* The window's inset, the same at the top as at the sides and bottom: the
+     top line is exactly this tall, and the shell and each program pad their
+     sides and bottom by it. 36px is Obsidian's title bar, so the window
+     buttons sit at the height they do in every other window. */
+  --kitty-gap: 36px;
+  /* kitty's ANSI colours, from Tom's matugen template, as fastfetch has them. */
+  --ansi-red: #f7768e;
+  --ansi-green: #9ece6a;
+  --ansi-yellow: #e0af68;
+  --ansi-blue: #7aa2f7;
+  --ansi-magenta: #bb9af7;
+  --ansi-cyan: #7dcfff;
+
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--term-bg);
+  color: var(--term-fg);
+  font-family: "kitty-prompt", var(--font-mono);
+  font-size: 16px;
+  line-height: 26px;
+}
+
+/*
+ * In a column the frame sets the size, and the wallpaper shows through — the
+ * reason a tiling-WM terminal looks the way it does. The column paints the
+ * editor's grey behind every window, so it has to go for this one. A maximized
+ * window has no wallpaper behind it, so it keeps the solid background above.
+ */
+.kitty--windowed {
+  height: 100%;
+  background: rgb(from var(--term-bg) r g b / 0.84);
+}
+
+.arch-column:has(> .kitty--windowed) {
+  background: transparent;
+}
+
+/* Files dragged over the prompt, which a drop will copy into the folder. */
+.kitty--dropping {
+  outline: 2px dashed var(--theme-primary);
+  outline-offset: -6px;
+}
+
+/* ── Top line: no title, only the window's buttons, in the top inset ────── */
+
+.kitty-topline {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: var(--kitty-gap);
+  padding-right: 6px;
+  user-select: none;
+}
+
+/* Beside the window's own buttons, while a program has the window. */
+.kitty-quit {
+  margin-left: auto;
+  align-self: stretch;
+  height: auto;
+}
+
+.kitty-quit + .win-btns {
+  margin-left: 0;
+}
+
+.kitty-quit svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── The shell: scrollback, then the prompt ────────────────────────────── */
+
+/* No scrollbar: a terminal has none, and `index.css` puts one on everything. */
+.kitty-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--kitty-gap) var(--kitty-gap);
+  color: var(--theme-on-surface);
+  line-height: 22px;
+  scrollbar-width: none;
+  cursor: text;
+  /* So fastfetch can tell when the logo leaves no room beside it. */
+  container-type: inline-size;
+}
+
+.kitty-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.kitty-line {
+  min-height: 1lh;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* starship's default blank line before every prompt but the first. */
+.kitty-block + .kitty-block {
+  margin-top: 1lh;
+}
+
+/*
+ * The prompt's powerline: segments on the theme's fills, joined by arrows
+ * drawn the way the Waybar draws its own — CSS standing in for the Nerd Font
+ * glyphs (U+E0B6 cap, U+E0B0 arrow), which the site does not load.
+ */
+.kitty-pl {
+  display: flex;
+  width: max-content;
+  max-width: 100%;
+  height: 1lh;
+  overflow: hidden;
+  white-space: pre;
+}
+
+.kitty-pl-seg {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  background: var(--seg-bg);
+  color: var(--seg-fg);
+}
+
+.kitty-pl-user {
+  --seg-bg: var(--theme-primary);
+  --seg-fg: var(--theme-on-primary);
+}
+
+.kitty-pl-dir {
+  --seg-bg: var(--theme-secondary);
+  --seg-fg: var(--theme-on-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kitty-pl-shell {
+  --seg-bg: var(--theme-surface-highest);
+  --seg-fg: var(--theme-on-surface);
+}
+
+.kitty-pl-time {
+  --seg-bg: var(--theme-surface);
+  --seg-fg: var(--theme-on-surface);
+}
+
+/*
+ * The pieces overlap by a pixel, each with solid colour under its edges. A
+ * segment is as wide as its text, so its edges fall part-way through a pixel,
+ * and two pieces merely touching there each half-cover that pixel and let the
+ * window show through as a hairline. Overlapped, every such pixel lies on the
+ * colour that is meant to be there.
+ */
+
+/* U+E0B6: a half circle, half as wide as the line is tall, plus the pixel
+   that runs under the first segment. */
+.kitty-pl-cap {
+  flex-shrink: 0;
+  width: calc(0.5lh + 1px);
+  margin-right: -1px;
+  background: var(--to);
+  border-radius: 0.5lh 0 0 0.5lh;
+}
+
+/*
+ * U+E0B0: the next segment's fill, with this one's pointing into it. It
+ * reaches a pixel into each neighbour: on the left a 2px strip of this
+ * segment's fill, under both the segment's edge and the triangle's; on the
+ * right the next fill, which the next segment then paints over.
+ */
+.kitty-pl-arrow {
+  position: relative;
+  flex-shrink: 0;
+  width: calc(0.5lh + 2px);
+  margin-inline: -1px;
+  background: linear-gradient(to right, var(--from) 2px, var(--to) 2px);
+}
+
+.kitty-pl-arrow::after {
+  content: "";
+  position: absolute;
+  inset: 0 1px;
+  background: var(--from);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+/* The second line's mark: the primary, or the error colour after a failure. */
+.kitty-char {
+  white-space: pre;
+  color: var(--theme-primary);
+  font-weight: 700;
+}
+
+.kitty-char--error {
+  color: var(--ansi-red);
+}
+
+.kitty-input-line {
+  display: flex;
+}
+
+/*
+ * A text field can't colour part of its text, so its own is transparent and a
+ * coloured copy (`highlight` in `utils/shell.ts`) sits exactly under it: same
+ * font, no padding, scrolled with it. The caret and a selection are the
+ * field's own.
+ */
+.kitty-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
+.kitty-mirror {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  white-space: pre;
+  pointer-events: none;
+}
+
+/* zsh-autosuggestions' grey, `ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE` in Tom's config. */
+.kitty-suggestion {
+  color: #555555;
+}
+
+.kitty-input {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: transparent;
+  font: inherit;
+  caret-color: var(--theme-primary);
+}
+
+/*
+ * `icat`: the picture in the scrollback, as kitty's graphics protocol
+ * draws it — at its own size, made smaller to fit the window, never larger.
+ */
+.kitty-icat {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+}
+
+/* The tones `utils/shell.ts` prints in. */
+.kitty-red { color: var(--ansi-red); }
+.kitty-green { color: var(--ansi-green); }
+.kitty-yellow { color: var(--ansi-yellow); }
+.kitty-blue { color: var(--ansi-blue); }
+.kitty-magenta { color: var(--ansi-magenta); }
+.kitty-cyan { color: var(--ansi-cyan); }
+.kitty-primary { color: var(--theme-primary); font-weight: 700; }
+.kitty-dim { color: var(--theme-outline); }
+.kitty-bold { font-weight: 700; }
+.kitty-underline { text-decoration: underline; }
+
+/*
+ * A phone (`src/utils/phone.ts`): a narrow terminal, so the insets shrink. The
+ * top line keeps room for the buttons, so only here is the top deeper than the
+ * sides.
+ */
+@media (max-width: 640px) {
+  .kitty {
+    --kitty-gap: 10px;
+  }
+
+  .kitty-topline {
+    height: 28px;
+  }
+
+  .kitty-scroll {
+    font-size: 14px;
+  }
+}

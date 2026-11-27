@@ -1,5 +1,5 @@
 /**
- * Maximize/restore and close, for an app that draws its own chrome — jīzǐ in
+ * Maximize/restore and close, for an app that draws its own chrome — kitty in
  * the theme's colours, Obsidian in its own (the `--win-btn-*` properties). A
  * maximized window covers the bar, so this restore button is the only way back
  * to the strip, and every app has to carry one. (Codium and Chromium draw

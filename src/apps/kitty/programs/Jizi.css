@@ -1,68 +1,13 @@
 /*
- * One colour on a dark, see-through background, in the bar's monospace — a
- * terminal emulator with its opacity turned down, running a file manager.
- *
- * The colours are the theme's (`src/themes/`), the palette the bar and the
- * focused-window border use: primary for text and rules, primary_container
- * behind the cursor with on_primary_container on it, and the lowest surface
- * underneath. The theme is on `<html>`, so a maximized terminal — which
- * renders outside the desktop — still has it.
+ * jīzǐ in kitty: kitty's colours and font (`Kitty.css`), one colour for
+ * everything, the cursor's row in primary_container.
  */
 .term {
-  --term-fg: var(--theme-primary);
-  --term-dim: color-mix(in srgb, var(--term-fg) 55%, transparent);
-  --term-cursor: var(--theme-primary-container);
-  --term-on-cursor: var(--theme-on-primary-container);
-  --term-rule: var(--theme-primary);
-  --term-bg: var(--theme-surface-lowest);
-
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
-  background: var(--term-bg);
-  color: var(--term-fg);
-  font-family: var(--font-mono);
-  font-size: 16px;
-  line-height: 26px;
   user-select: none;
-}
-
-/*
- * In a column the frame sets the size, and the wallpaper shows through — the
- * reason a tiling-WM terminal looks the way it does. The column paints the
- * editor's grey behind every window, so it has to go for this one. A maximized
- * window has no wallpaper behind it, so it keeps the solid background above.
- */
-.term--windowed {
-  height: 100%;
-  background: rgb(from var(--term-bg) r g b / 0.84);
-}
-
-.arch-column:has(> .term--windowed) {
-  background: transparent;
-}
-
-/* ── Top line: where the cursor is, and the window's own buttons ────────── */
-
-.term-topline {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  height: 34px;
-  padding: 4px 6px 0 26px;
-}
-
-.term-prompt {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.term-host {
-  font-weight: 700;
 }
 
 /* ── The three panes ───────────────────────────────────────────────────── */
@@ -74,7 +19,8 @@
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) minmax(0, 7fr);
-  padding: 8px 16px 16px;
+  /* kitty's inset, less the first pane's own 12px. */
+  padding: 0 calc(var(--kitty-gap) - 12px) var(--kitty-gap);
 }
 
 /* No scrollbars: a terminal has none, and `index.css` puts one on everything. */
@@ -122,6 +68,22 @@
   color: var(--term-dim);
 }
 
+/* Files dragged over it, which a drop adds to the folder being listed. */
+.term--dropping {
+  outline: 2px dashed var(--term-rule);
+  outline-offset: -4px;
+}
+
+/* What a drop could not add, along the bottom, as yazi's notifications say it. */
+.term-notice {
+  flex-shrink: 0;
+  padding: 0 12px;
+  color: var(--ansi-red);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* The one pane that holds prose, so the one place text is selectable. */
 .term-pane--preview {
   padding-left: 24px;
@@ -135,6 +97,14 @@
   overflow-wrap: anywhere;
 }
 
+/* Fit to the pane, never enlarged: yazi shows a picture no bigger than it is. */
+.term-preview-image {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 /*
  * A phone (`src/utils/phone.ts`): yazi in a narrow terminal. The paddings
  * halve, and the parent pane narrows to a few letters rather than going — it
@@ -143,7 +113,7 @@
 @media (max-width: 640px) {
   .term-panes {
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 3fr);
-    padding: 6px 8px 10px;
+    padding: 0 calc(var(--kitty-gap) - 4px) var(--kitty-gap);
   }
 
   .term-pane {

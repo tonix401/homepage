@@ -1,0 +1,66 @@
+/*
+ * imv: the image on its default background, black, with nothing around it —
+ * it draws no title bar. The window's buttons float in the top corner, as the
+ * one piece of chrome every window here has to carry.
+ */
+.imv {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #000;
+  user-select: none;
+}
+
+.imv--windowed {
+  height: 100%;
+}
+
+.imv-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+
+.imv-stage:active {
+  cursor: grabbing;
+}
+
+/* Centred on the stage, then moved, turned and scaled by the view. */
+.imv-image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  max-width: none;
+  transform-origin: center;
+}
+
+/* imv's overlay: white monospace on black at alpha c3, across the top. */
+.imv-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 2px 8px;
+  background: rgb(0 0 0 / 0.765);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.imv-buttons {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  height: 32px;
+  --win-btn-fg: rgb(255 255 255 / 0.55);
+  --win-btn-hover-fg: #fff;
+  --win-btn-hover-bg: rgb(255 255 255 / 0.15);
+}

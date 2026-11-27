@@ -9,13 +9,13 @@ const desktop: Desktop = {
   fullscreen: false,
   workspaces: {
     1: { windows: ["editor-a3f9c1", "browser-00000f"], focus: "browser-00000f" },
-    2: { windows: ["terminal-bbbbbb"], focus: "terminal-bbbbbb" },
+    2: { windows: ["kitty-bbbbbb"], focus: "kitty-bbbbbb" },
     3: { windows: [], focus: null },
   },
   windows: {
     "editor-a3f9c1": { id: "editor-a3f9c1", app: "editor", arg: "README.md" },
     "browser-00000f": { id: "browser-00000f", app: "browser", arg: null },
-    "terminal-bbbbbb": { id: "terminal-bbbbbb", app: "terminal", arg: "projects" },
+    "kitty-bbbbbb": { id: "kitty-bbbbbb", app: "kitty", arg: "jizi projects" },
   },
 };
 
@@ -73,32 +73,32 @@ describe("buildProcessTree", () => {
 
   it("marks only the focused window on the workspace on screen as current", () => {
     const current = allNodes(tree).filter((n) => n.windowId && n.current);
-    expect(current.map((n) => n.windowId)).toEqual(["terminal-bbbbbb"]);
+    expect(current.map((n) => n.windowId)).toEqual(["kitty-bbbbbb"]);
   });
 });
 
 describe("terminal programs", () => {
   const nested = buildProcessTree(desktop, (w) => ({
-    name: w.app === "terminal" ? "jizi" : w.app,
+    name: w.app === "kitty" ? "jizi" : w.app,
     threads: 1,
     memBytes: 1,
     cpu: 0,
-    host: w.app === "terminal" ? { name: "kitty", threads: 10, memBytes: 2 } : undefined,
+    host: w.app === "kitty" ? { name: "kitty", threads: 10, memBytes: 2 } : undefined,
   }));
   const ws2 = nested.children[0].children[1];
 
   it("puts the program under a kitty process, one pid along", () => {
     const [kitty] = ws2.children;
     expect(kitty.name).toBe("kitty");
-    expect(kitty.pid).toBe(pidFor("terminal-bbbbbb"));
-    expect(kitty.children.map((c) => [c.name, c.pid])).toEqual([["jizi", pidFor("terminal-bbbbbb") + 1]]);
+    expect(kitty.pid).toBe(pidFor("kitty-bbbbbb"));
+    expect(kitty.children.map((c) => [c.name, c.pid])).toEqual([["jizi", pidFor("kitty-bbbbbb") + 1]]);
   });
 
   it("keeps the window's id, and the focus mark, on the program", () => {
     const [kitty] = ws2.children;
-    expect(kitty.key).not.toBe("terminal-bbbbbb");
+    expect(kitty.key).not.toBe("kitty-bbbbbb");
     expect(kitty.current).toBeFalsy();
-    expect(kitty.children[0]).toMatchObject({ key: "terminal-bbbbbb", windowId: "terminal-bbbbbb", current: true });
+    expect(kitty.children[0]).toMatchObject({ key: "kitty-bbbbbb", windowId: "kitty-bbbbbb", current: true });
   });
 
   it("leaves apps that are not terminal programs where they were", () => {
@@ -116,7 +116,7 @@ describe("flattenTree", () => {
       "      │  ├─editor",
       "      │  └─browser",
       "      └─[-]─workspace 2",
-      "         └─terminal",
+      "         └─kitty",
     ]);
   });
 
@@ -127,7 +127,7 @@ describe("flattenTree", () => {
       "Hyprland",
       "workspace 1",
       "workspace 2",
-      "terminal",
+      "kitty",
     ]);
     expect(rows[2].prefix.endsWith("[+]─")).toBe(true);
   });

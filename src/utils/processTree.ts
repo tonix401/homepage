@@ -39,7 +39,7 @@ export interface WindowProcess {
   memBytes: number;
   cpu: number;
   /**
-   * The terminal a program runs in — kitty, for jīzǐ, btop and fastfetch. The
+   * The terminal a program runs in — kitty, for jīzǐ, btop and the shell. The
    * window is then the terminal's process, and the program its child.
    */
   host?: { name: string; threads: number; memBytes: number };

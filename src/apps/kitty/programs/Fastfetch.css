@@ -1,0 +1,84 @@
+/*
+ * fastfetch in kitty's scrollback: the logo and the info side by side, every
+ * line on kitty's grid, the keys in kitty's ANSI colours as Tom's own
+ * fastfetch prints them. Side by side as in a terminal, so a narrow window cuts
+ * the rules and ellipsizes the values; only one too narrow for the info at all
+ * (`.kitty-scroll` is the container) puts it under the logo.
+ */
+.ff {
+  display: flex;
+  align-items: flex-start;
+  gap: 0 3ch;
+  padding: 1lh 0;
+  color: var(--theme-primary);
+}
+
+.ff-logo {
+  margin: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--theme-primary);
+}
+
+.ff-info {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+@container (max-width: 64ch) {
+  .ff {
+    flex-wrap: wrap;
+  }
+
+  .ff-info {
+    flex-basis: 100%;
+  }
+}
+
+.ff-title {
+  padding-left: 2ch;
+  font-weight: 700;
+}
+
+/* The `╭──╮` / `╰──╯` lines Tom's config draws round each group. They are
+   decoration, so they may be cut rather than wrap in a narrow window. */
+.ff-rule {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ff-row {
+  display: grid;
+  grid-template-columns: 9ch 1ch minmax(0, 1fr);
+  gap: 0 1ch;
+  padding-left: 2ch;
+  white-space: nowrap;
+}
+
+.ff-key {
+  font-weight: 700;
+}
+
+.ff-sep {
+  color: var(--theme-outline);
+}
+
+.ff-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ff-colors {
+  display: flex;
+  gap: 1ch;
+  padding-left: 2ch;
+}
+
+/* A phone (`src/utils/phone.ts`): the info flush with the logo above it. */
+@media (max-width: 640px) {
+  .ff-title,
+  .ff-row,
+  .ff-colors {
+    padding-left: 0;
+  }
+}

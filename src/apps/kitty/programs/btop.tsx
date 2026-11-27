@@ -1,6 +1,7 @@
 /**
- * btop, as a window — running in a terminal, so it draws in the theme's
- * colours the way jīzǐ does, and the way btop draws with the matugen theme.
+ * btop — a full-screen program in kitty, run as `btop` (or `top`, `htop`) and
+ * left with `q`. It draws in the theme's colours the way jīzǐ does, and the
+ * way btop draws with the matugen theme.
  *
  * Four boxes, as btop lays them out. cpu, mem and net show what a page can
  * actually measure about itself — the tab's main-thread load, its JS heap,
@@ -13,24 +14,24 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import "./Btop.css";
-import folderFiles from "virtual:open-folder-files";
 import { defaultFile } from "virtual:open-folder-config";
-import { type AppId } from "../ids";
-import { type WindowRecord } from "../../utils/desktop";
-import { findDefaultFile } from "../../utils/files";
-import { homePath } from "../../utils/fileManager";
-import { readHeap, useSystemStats } from "../../utils/systemStats";
-import { sessionStart } from "../../utils/sessionStart";
+import { type AppId } from "../../ids";
+import { type WindowRecord } from "../../../utils/desktop";
+import { findDefaultFile } from "../../../utils/files";
+import { getTree } from "../../../utils/fileStore";
+import { homePath } from "../../../utils/fileManager";
+import { parseArg } from "../../../utils/shell";
+import { readHeap, useSystemStats } from "../../../utils/systemStats";
+import { sessionStart } from "../../../utils/sessionStart";
 import {
   type ProcNode,
   type WindowProcess,
   allNodes,
   buildProcessTree,
   flattenTree,
-} from "../../utils/processTree";
-import { brailleGraph } from "../../utils/brailleGraph";
-import { WindowButtons } from "../../components/WindowButtons";
-import { type AppRenderProps } from "../types";
+} from "../../../utils/processTree";
+import { brailleGraph } from "../../../utils/brailleGraph";
+import { type ScreenProps } from "./types";
 
 /** How many readings the graphs keep: more than any window is wide. */
 const HISTORY = 400;
@@ -42,18 +43,26 @@ const MB = 1024 * 1024;
  * other processes, so there is nothing real to show. btop's own row is the
  * exception: its cpu is the tab's real main-thread load.
  */
-const PROCESSES: Record<AppId, { name: string; threads: number; mem: number; inKitty?: boolean }> = {
+const PROCESSES: Record<Exclude<AppId, "kitty">, { name: string; threads: number; mem: number }> = {
   editor: { name: "codium", threads: 28, mem: 382 * MB },
   browser: { name: "chromium", threads: 34, mem: 412 * MB },
-  terminal: { name: "jizi", threads: 3, mem: 38 * MB, inKitty: true },
   notes: { name: "obsidian", threads: 22, mem: 291 * MB },
-  monitor: { name: "btop", threads: 1, mem: 6.2 * MB, inKitty: true },
-  fetch: { name: "fastfetch", threads: 1, mem: 4.1 * MB, inKitty: true },
   video: { name: "kdenlive", threads: 41, mem: 468 * MB },
+  imv: { name: "imv", threads: 6, mem: 47 * MB },
 };
 
-/** The terminal the TUI programs run in, and what it claims to use. */
+/** The terminal itself, the process every kitty window is. */
 const KITTY = { name: "kitty", threads: 10, memBytes: 58 * MB };
+
+/**
+ * What runs under kitty: the program in the foreground, or the shell at the
+ * prompt. fastfetch prints and is gone, so it never shows here.
+ */
+const IN_KITTY: Record<string, { threads: number; mem: number }> = {
+  zsh: { threads: 1, mem: 5.4 * MB },
+  jizi: { threads: 3, mem: 38 * MB },
+  btop: { threads: 1, mem: 6.2 * MB },
+};
 
 /** The apps whose payload is a file, and that show the default file for none. */
 const FILE_APPS: readonly AppId[] = ["editor", "browser", "notes", "video"];
@@ -164,7 +173,7 @@ function Box({
   );
 }
 
-export function BtopApp({ focused, maximized, handle, desktop }: AppRenderProps) {
+export function BtopScreen({ focused, windowId, desktop, exit }: ScreenProps) {
   const { cpu } = useSystemStats();
 
   // History, sampled once a second — `useSystemStats` only redraws when a
@@ -203,22 +212,31 @@ export function BtopApp({ focused, maximized, handle, desktop }: AppRenderProps)
 
   // ── The process tree ──────────────────────────────────────────────────
   const describe = (window: WindowRecord): WindowProcess => {
+    const ownCpu = window.id === windowId ? cpu : 0;
+    if (window.app === "kitty") {
+      // kitty, with its foreground program under it; jīzǐ's command line is
+      // the path under its cursor.
+      const foreground = parseArg(window.arg);
+      const name = foreground && foreground.program in IN_KITTY ? foreground.program : "zsh";
+      const proc = IN_KITTY[name];
+      return {
+        name,
+        args: name === "jizi" ? homePath(foreground?.args[0] ?? "") : undefined,
+        threads: proc.threads,
+        memBytes: proc.mem,
+        cpu: ownCpu,
+        host: KITTY,
+      };
+    }
     const proc = PROCESSES[window.app];
-    // The command line: the file a file app shows (the default file, for none),
-    // jīzǐ's directory, and nothing for a program that takes no argument.
+    // The command line: the file a file app shows (the default file, for
+    // none), or the image imv was started on.
     const args = FILE_APPS.includes(window.app)
-      ? (window.arg ?? findDefaultFile(folderFiles, defaultFile)?.path)
-      : window.app === "terminal"
-        ? homePath(window.arg ?? "")
+      ? (window.arg ?? findDefaultFile(getTree(), defaultFile)?.path)
+      : window.app === "imv"
+        ? (window.arg ?? undefined)
         : undefined;
-    return {
-      name: proc.name,
-      args,
-      threads: proc.threads,
-      memBytes: proc.mem,
-      cpu: window.id === handle.id ? cpu : 0,
-      host: proc.inKitty ? KITTY : undefined,
-    };
+    return { name: proc.name, args, threads: proc.threads, memBytes: proc.mem, cpu: ownCpu };
   };
   const tree = buildProcessTree(desktop, describe);
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
@@ -226,7 +244,7 @@ export function BtopApp({ focused, maximized, handle, desktop }: AppRenderProps)
   const processes = allNodes(tree).filter((n) => n.pid !== null).length;
 
   // Selection starts on btop itself, as a real one opens on its own process.
-  const [selectedKey, setSelectedKey] = useState(handle.id);
+  const [selectedKey, setSelectedKey] = useState(windowId);
   const index = Math.max(0, rows.findIndex((r) => r.node.key === selectedKey));
   const selected = rows[index];
 
@@ -242,9 +260,9 @@ export function BtopApp({ focused, maximized, handle, desktop }: AppRenderProps)
   // Keys for the focused window only, as jīzǐ answers them. The listener is
   // installed once per focus and reads the current rows through a ref, which
   // is brought up to date after every render, before any key can arrive.
-  const keys = useRef({ rows, index, collapsed, toggle });
+  const keys = useRef({ rows, index, collapsed, toggle, exit });
   useLayoutEffect(() => {
-    keys.current = { rows, index, collapsed, toggle };
+    keys.current = { rows, index, collapsed, toggle, exit };
   });
   useEffect(() => {
     if (!focused) return;
@@ -254,7 +272,7 @@ export function BtopApp({ focused, maximized, handle, desktop }: AppRenderProps)
       // element — a key sent to the window has the window itself — so check.
       const target = event.target;
       if (target instanceof HTMLElement && target.closest("input, textarea, select, [contenteditable]")) return;
-      const { rows, index, collapsed, toggle } = keys.current;
+      const { rows, index, collapsed, toggle, exit } = keys.current;
       const node = rows[index]?.node;
       const move = (to: number) => setSelectedKey(rows[Math.min(Math.max(to, 0), rows.length - 1)].node.key);
       switch (event.key) {
@@ -291,6 +309,10 @@ export function BtopApp({ focused, maximized, handle, desktop }: AppRenderProps)
         case "Enter":
           if (node) toggle(node);
           break;
+        case "q":
+        case "Escape":
+          exit();
+          break;
         default:
           return;
       }
@@ -322,14 +344,7 @@ export function BtopApp({ focused, maximized, handle, desktop }: AppRenderProps)
   const netHistory = useMemo(() => net.history.map((r) => r / netScale), [net.history, netScale]);
 
   return (
-    <div className={`btop${maximized ? "" : " btop--windowed"}`}>
-      <div className="btop-topline">
-        <span className="btop-prompt">
-          <span className="btop-host">tom@box</span> btop
-        </span>
-        <WindowButtons handle={handle} maximized={maximized} />
-      </div>
-
+    <div className="btop">
       <div className="btop-grid">
         <Box area="cpu" n={1} title="cpu" aside={<span className="btop-accent">1000ms</span>}>
           <div className="btop-cpu">
@@ -439,7 +454,8 @@ export function BtopApp({ focused, maximized, handle, desktop }: AppRenderProps)
           </div>
           <div className="btop-proc-foot">
             <span>
-              <span className="btop-accent">↑↓</span> select <span className="btop-accent">←→</span> fold
+              <span className="btop-accent">↑↓</span> select <span className="btop-accent">←→</span> fold{" "}
+              <span className="btop-accent">q</span> quit
             </span>
             <span className="btop-num">
               {index + 1}/{rows.length} · {processes} processes

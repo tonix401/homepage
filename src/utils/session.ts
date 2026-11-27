@@ -31,7 +31,7 @@ import {
 
 /** Bumped — key and all — whenever the stored shape changes, so stale data is
  *  never read rather than needing a migration. */
-export const SESSION_KEY = "homepage.session.v2";
+export const SESSION_KEY = "homepage.session.v3";
 
 const VERSION = 2;
 

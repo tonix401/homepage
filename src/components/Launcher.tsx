@@ -22,7 +22,6 @@ import {
 } from "react";
 import "./Launcher.css";
 import { Icon } from "./Icon";
-import { APP_ICONS } from "../apps/icons";
 import { LAUNCHABLE } from "../apps/registry";
 import { type AppId } from "../apps/ids";
 import { PALETTES } from "../themes/palettes";
@@ -39,7 +38,7 @@ interface LauncherProps {
   onThemeChange: (theme: ThemeId) => void;
   subject: SubjectId;
   onSubjectChange: (subject: SubjectId) => void;
-  onLaunch: (app: AppId) => void;
+  onLaunch: (app: AppId, arg: string | null) => void;
   onClose: () => void;
 }
 
@@ -63,16 +62,11 @@ const SUBMENUS: readonly { id: Submenu; name: string; icon: string }[] = [
 
 /** One row of the menu: an app, or the way into a submenu. */
 type Entry =
-  | { kind: "app"; id: AppId; name: string; icon: string }
+  | { kind: "app"; id: string; app: AppId; arg: string | null; name: string; icon: string }
   | { kind: "submenu"; id: Submenu; name: string; icon: string };
 
 const ENTRIES: readonly Entry[] = [
-  ...LAUNCHABLE.map((app): Entry => ({
-    kind: "app",
-    id: app.id,
-    name: app.name,
-    icon: APP_ICONS[app.id],
-  })),
+  ...LAUNCHABLE.map(({ key, ...launch }): Entry => ({ kind: "app", id: key, ...launch })),
   ...SUBMENUS.map((menu): Entry => ({ kind: "submenu", ...menu })),
 ];
 
@@ -195,7 +189,7 @@ function LauncherMenu({
       openSubmenu(entry.id, row, focus);
       return;
     }
-    onLaunch(entry.id);
+    onLaunch(entry.app, entry.arg);
     onClose();
   };
 

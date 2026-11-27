@@ -1,6 +1,6 @@
 /*
- * btop in a terminal: the theme's colours on its darkest surface, see-through
- * while tiled so the wallpaper shows behind it, as jīzǐ does. The palette is
+ * btop in kitty: the theme's colours on kitty's surface (`Kitty.css`), which is
+ * see-through while tiled so the wallpaper shows behind it. The palette is
  * how btop draws with a matugen theme — titles and meters in the primary, the
  * frames in the outline, memory and network in the tertiary.
  */
@@ -11,12 +11,10 @@
   --btop-accent: var(--theme-primary);
   --btop-second: var(--theme-tertiary);
 
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
-  background: var(--theme-surface-lowest);
   color: var(--btop-fg);
   font-family: var(--font-mono);
   /* jīzǐ's size, so the programs in kitty read alike. A tighter line than
@@ -25,29 +23,6 @@
   line-height: 1.5;
   user-select: none;
   container-type: inline-size;
-}
-
-.btop--windowed {
-  height: 100%;
-  background: color-mix(in srgb, var(--theme-surface-lowest) 84%, transparent);
-}
-
-/* The column paints the editor's grey behind every window; see Terminal.css. */
-.arch-column:has(> .btop--windowed) {
-  background: transparent;
-}
-
-.btop-topline {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  height: 34px;
-  padding: 4px 6px 0 18px;
-  color: var(--btop-accent);
-}
-
-.btop-host {
-  font-weight: 700;
 }
 
 .btop-accent {
@@ -80,7 +55,7 @@
     "mem proc"
     "net proc";
   gap: 14px 10px;
-  padding: 12px 14px 14px;
+  padding: 0 var(--kitty-gap) var(--kitty-gap);
 }
 
 /* A half-width window: the tree goes full width, where it is readable. */
@@ -119,7 +94,6 @@
       "mem"
       "net";
     gap: 10px;
-    padding: 8px 8px 10px;
   }
 
   .btop-grid .btop-proc-head,
@@ -166,8 +140,8 @@
   line-height: 1.5;
 }
 
-.btop--windowed .btop-box-title,
-.btop--windowed .btop-box-aside {
+.kitty--windowed .btop-box-title,
+.kitty--windowed .btop-box-aside {
   /* Over the see-through window, a solid patch would show as a box; the
      frame instead stops short, drawn by the title's own side borders. */
   background: color-mix(in srgb, var(--theme-surface-lowest) 92%, transparent);
@@ -385,6 +359,19 @@
   flex-shrink: 0;
   display: flex;
   justify-content: space-between;
+  gap: 0 2ch;
   padding: 4px 6px 0;
   color: var(--btop-dim);
+}
+
+/* The keys, then the count: the keys go first when the box is too narrow. */
+.btop-proc-foot > :first-child {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.btop-proc-foot > :last-child {
+  flex-shrink: 0;
 }

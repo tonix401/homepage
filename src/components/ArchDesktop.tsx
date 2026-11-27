@@ -20,15 +20,15 @@ interface ArchDesktopProps {
   /** What the wallpaper shows, from the launcher's Wallpapers submenu. */
   subject: SubjectId;
   onSubjectChange: (subject: SubjectId) => void;
-  /** Which apps each workspace holds, in strip order. */
-  workspaceApps: ReadonlyMap<number, readonly AppId[]>;
+  /** The icon of each window a workspace holds, in strip order. */
+  workspaceIcons: ReadonlyMap<number, readonly string[]>;
   onWorkspaceChange: (workspace: number) => void;
   onLanguageChange: (language: WorkspaceLanguage) => void;
   /** Launch an app from the launcher's list. */
-  onLaunch: (app: AppId) => void;
+  onLaunch: (app: AppId, arg: string | null) => void;
   /** The bar's Arch mark: the editor, maximized, on its default page. */
   onHome: () => void;
-  focusedApp: AppId | null;
+  focusedIcon: string | null;
   focusedTitle: string | null;
   /** True when this workspace holds no windows: the bar's launcher segment pulses. */
   empty: boolean;
@@ -43,12 +43,12 @@ export function ArchDesktop({
   onThemeChange,
   subject,
   onSubjectChange,
-  workspaceApps,
+  workspaceIcons,
   onWorkspaceChange,
   onLanguageChange,
   onLaunch,
   onHome,
-  focusedApp,
+  focusedIcon,
   focusedTitle,
   empty,
   children,
@@ -83,11 +83,11 @@ export function ArchDesktop({
       <Waybar
         workspace={workspace}
         language={language}
-        workspaceApps={workspaceApps}
+        workspaceIcons={workspaceIcons}
         onWorkspaceChange={onWorkspaceChange}
         onLanguageChange={onLanguageChange}
         onHome={onHome}
-        focusedApp={focusedApp}
+        focusedIcon={focusedIcon}
         focusedTitle={focusedTitle}
         onAppMenu={setLauncherAt}
         empty={empty}

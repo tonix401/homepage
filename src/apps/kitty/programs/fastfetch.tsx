@@ -1,9 +1,13 @@
 /**
- * fastfetch, as a window — laid out the way Tom's own fastfetch prints
- * (~/.config/matugen/templates/colors-fastfetch.jsonc): his outlined Arch
- * logo on the left; on the right the title, two groups of keys between
+ * fastfetch, printed into kitty's scrollback — the first thing a new kitty
+ * window runs, and `fastfetch` (or `neofetch`, `ff`) at its prompt. Laid out the way
+ * Tom's own fastfetch prints (~/.config/matugen/templates/colors-fastfetch.jsonc):
+ * the Arch logo on the left, as text the way fastfetch draws it in a terminal
+ * with no image support; on the right the title, two groups of keys between
  * `╭──╮` and `╰──╯` rules, keys in the terminal's ANSI colours and values in
- * the theme's primary, and a row of colour circles under it all.
+ * the theme's primary, and a row of colour circles under it all. Everything
+ * is characters: Tom's config puts Nerd Font icons beside the keys, and with
+ * no Nerd Font loaded fastfetch prints the keys alone.
  *
  * What it reports is the visitor's own browser, not Tom's machine, and only
  * what a page is told without asking: no permission prompt is ever raised,
@@ -15,18 +19,15 @@
 
 import { useEffect, useState } from "react";
 import "./Fastfetch.css";
-import { Icon } from "../../components/Icon";
-import { WindowButtons } from "../../components/WindowButtons";
-import { readHeap } from "../../utils/systemStats";
-import { sessionStart } from "../../utils/sessionStart";
+import { readHeap } from "../../../utils/systemStats";
+import { sessionStart } from "../../../utils/sessionStart";
 import {
   engineFromUserAgent,
   formatUptime,
   gpuName,
   osFromUserAgent,
   refreshRate,
-} from "../../utils/browserInfo";
-import { type AppRenderProps } from "../types";
+} from "../../../utils/browserInfo";
 
 /** The terminal's ANSI palette — kitty's, from Tom's matugen template. */
 const ANSI = {
@@ -40,23 +41,28 @@ const ANSI = {
 /** color0–color7, for fastfetch's colour circles. */
 const PALETTE = ["#1d202f", "#f7768e", "#9ece6a", "#e0af68", "#7aa2f7", "#bb9af7", "#7dcfff", "#a9b1d6"];
 
-/** Stand-ins for the Nerd Font glyphs, which the site does not load. */
-const icons = {
-  title: "M12 3 3.5 20.5c3-1.8 5.5-2.8 8.5-2.8s5.5 1 8.5 2.8z",
-  os: "M12 3 3.5 20.5c3-1.8 5.5-2.8 8.5-2.8s5.5 1 8.5 2.8z",
-  device: "M5 4h14v11H5zM2 19h20",
-  kernel: "M12 2 2 7l10 5 10-5zM2 17l10 5 10-5M2 12l10 5 10-5",
-  packages: "M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8",
-  terminal: "M4 17l6-5-6-5M12 19h8",
-  wm: "M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z",
-  cpu: "M9 3v2M15 3v2M9 19v2M15 19v2M3 9h2M3 15h2M19 9h2M19 15h2M5 5h14v14H5zM9 9h6v6H9z",
-  gpu: "M2 7h20v10H2zM6 11h.01M10 11h4M6 17v3M18 17v3",
-  memory: "M3 7h18v10H3zM7 11v2M11 11v2M15 11v2M19 11v2",
-  display: "M3 4h18v12H3zM8 20h8M12 16v4",
-  locale: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18",
-  uptime: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 7v5l3 2",
-  battery: "M2 8h16v8H2zM22 11v2M5 11h6v2H5z",
-};
+/** fastfetch's own Arch logo, the one it prints when it cannot show an image. */
+const ARCH_LOGO = [
+  "                  -`",
+  "                 .o+`",
+  "                `ooo/",
+  "               `+oooo:",
+  "              `+oooooo:",
+  "              -+oooooo+:",
+  "            `/:-:++oooo+:",
+  "           `/++++/+++++++:",
+  "          `/++++++++++++++:",
+  "         `/+++ooooooooooooo/`",
+  "        ./ooosssso++osssssso+`",
+  "       .oossssso-````/ossssss+`",
+  "      -osssssso.      :ssssssso.",
+  "     :osssssss/        osssso+++.",
+  "    /ossssssss/        +ssssooo/-",
+  "  `/ossssso+/:-        -:/+osssso+-",
+  " `+sso+:-`                 `.-/+oso:",
+  "`++:.                           `-/+/",
+  ".`                                 `/",
+].join("\n");
 
 /** The low- and high-entropy client hints; Chromium only, and asked without a prompt. */
 interface UAData {
@@ -136,7 +142,7 @@ function snapshot() {
   };
 }
 
-export function FastfetchApp({ maximized, handle }: AppRenderProps) {
+export function Fastfetch() {
   const [info] = useState(snapshot);
   const [hints, setHints] = useState<{ os?: string; arch?: string | null; model?: string; engine?: string }>({});
   const [battery, setBattery] = useState<Battery | null>(null);
@@ -197,26 +203,25 @@ export function FastfetchApp({ maximized, handle }: AppRenderProps) {
   const cpu = [hints.arch, info.threads && `${info.threads} threads`].filter(Boolean).join(" · ");
   const display = `${info.width}x${info.height}${hz ? ` @ ${hz} Hz` : ""}${info.scale !== 1 ? ` (scale ${+info.scale.toFixed(2)})` : ""}`;
 
-  const groups: { key: string; icon: string; colour: string; value: string | null }[][] = [
+  const groups: { key: string; colour: string; value: string | null }[][] = [
     [
-      { key: "OS", icon: icons.os, colour: ANSI.red, value: hints.os ?? info.os },
-      { key: "Device", icon: icons.device, colour: ANSI.yellow, value: hints.model ?? info.device },
-      { key: "Kernel", icon: icons.kernel, colour: ANSI.green, value: hints.engine ?? info.engine },
-      { key: "Packages", icon: icons.packages, colour: ANSI.cyan, value: `${info.packages} (loaded by this page)` },
+      { key: "OS", colour: ANSI.red, value: hints.os ?? info.os },
+      { key: "Device", colour: ANSI.yellow, value: hints.model ?? info.device },
+      { key: "Kernel", colour: ANSI.green, value: hints.engine ?? info.engine },
+      { key: "Packages", colour: ANSI.cyan, value: `${info.packages} (loaded by this page)` },
       // kitty is the terminal; jīzǐ is the file manager that runs inside it.
-      { key: "Terminal", icon: icons.terminal, colour: ANSI.blue, value: "kitty" },
-      { key: "WM", icon: icons.wm, colour: ANSI.magenta, value: "Hyprland" },
+      { key: "Terminal", colour: ANSI.blue, value: "kitty" },
+      { key: "WM", colour: ANSI.magenta, value: "Hyprland" },
     ],
     [
-      { key: "CPU", icon: icons.cpu, colour: ANSI.red, value: cpu || null },
-      { key: "GPU", icon: icons.gpu, colour: ANSI.yellow, value: info.gpu },
-      { key: "Memory", icon: icons.memory, colour: ANSI.green, value: info.memory },
-      { key: "Display", icon: icons.display, colour: ANSI.cyan, value: display },
-      { key: "Locale", icon: icons.locale, colour: ANSI.blue, value: info.locale },
-      { key: "Uptime", icon: icons.uptime, colour: ANSI.magenta, value: info.uptime },
+      { key: "CPU", colour: ANSI.red, value: cpu || null },
+      { key: "GPU", colour: ANSI.yellow, value: info.gpu },
+      { key: "Memory", colour: ANSI.green, value: info.memory },
+      { key: "Display", colour: ANSI.cyan, value: display },
+      { key: "Locale", colour: ANSI.blue, value: info.locale },
+      { key: "Uptime", colour: ANSI.magenta, value: info.uptime },
       {
         key: "Battery",
-        icon: icons.battery,
         colour: ANSI.red,
         value: battery
           ? `${Math.round(battery.level * 100)}% [${battery.charging ? "AC Connected" : "Discharging"}]`
@@ -226,65 +231,36 @@ export function FastfetchApp({ maximized, handle }: AppRenderProps) {
   ];
 
   return (
-    <div className={`ff${maximized ? "" : " ff--windowed"}`}>
-      <div className="ff-topline">
-        <span className="ff-host">tom@box</span>&nbsp;~
-        <WindowButtons handle={handle} maximized={maximized} />
-      </div>
+    <div className="ff">
+      <pre className="ff-logo" aria-hidden="true">
+        {ARCH_LOGO}
+      </pre>
 
-      <div className="ff-scroll">
-        <div className="ff-prompt">
-          <span className="ff-arrow">❯</span> fastfetch
-        </div>
-
-        <div className="ff-body">
-          {/* Tom's own logo, from his matugen template: the Arch mark as a
-              single stroked outline in the theme's primary. The viewBox is
-              the outline's own bounds, stroke included, rather than the
-              template's 100×100 page, so the CSS margins either side of the
-              logo are margins round the drawing itself. */}
-          <svg className="ff-logo" viewBox="0.589 0.797 95.357 95.357" aria-hidden="true">
-            <path
-              transform="translate(-7.1503347,-6.4349856)"
-              d="m 7.9893252,102.33945 c 0,0 19.2207708,-35.003357 33.3378308,-63.374852 1.162263,-2.066248 4.947689,2.601026 11.956677,4.674084 C 50.030098,39.781699 42.867753,34.948247 44.374189,32.236511 49.029646,21.332968 53.716899,12.478125 55.354611,7.4820665 59.554654,19.76364 79.425793,58.020522 91.7241,81.451336 c -0.906371,-0.289598 -5.834286,-3.084389 -9.819306,-3.732531 6.091464,4.099901 12.872781,9.504777 12.872781,9.504777 l 8.069135,15.115868 c 0,0 -27.812455,-15.368699 -37.156702,-15.598205 C 66.541242,74.326637 63.770811,62.937785 55.291203,62.900086 45.431351,62.856251 43.959713,80.559055 45.33625,86.61443 34.442634,87.891326 7.9893252,102.33945 7.9893252,102.33945 Z"
-            />
-          </svg>
-
-          <div className="ff-info">
-            <div className="ff-title">
-              <Icon className="ff-icon" path={icons.title} />
-              guest@{info.host}
-            </div>
-            {groups.map((group, g) => (
-              <div key={g} className="ff-group">
-                <div className="ff-rule">╭{"─".repeat(44)}╮</div>
-                {group
-                  .filter((row) => row.value !== null)
-                  .map((row) => (
-                    <div key={row.key} className="ff-row">
-                      <Icon className="ff-icon" path={row.icon} />
-                      <span className="ff-key" style={{ color: row.colour }}>
-                        {row.key}
-                      </span>
-                      <span className="ff-sep">:</span>
-                      <span className="ff-value">{row.value}</span>
-                    </div>
-                  ))}
-                <div className="ff-rule">╰{"─".repeat(44)}╯</div>
-              </div>
-            ))}
-            <div className="ff-colors" aria-hidden="true">
-              {PALETTE.map((colour) => (
-                <span key={colour} style={{ color: colour }}>
-                  ●
-                </span>
+      <div className="ff-info">
+        <div className="ff-title">guest@{info.host}</div>
+        {groups.map((group, g) => (
+          <div key={g} className="ff-group">
+            <div className="ff-rule">╭{"─".repeat(44)}╮</div>
+            {group
+              .filter((row) => row.value !== null)
+              .map((row) => (
+                <div key={row.key} className="ff-row">
+                  <span className="ff-key" style={{ color: row.colour }}>
+                    {row.key}
+                  </span>
+                  <span className="ff-sep">:</span>
+                  <span className="ff-value">{row.value}</span>
+                </div>
               ))}
-            </div>
+            <div className="ff-rule">╰{"─".repeat(44)}╯</div>
           </div>
-        </div>
-
-        <div className="ff-prompt">
-          <span className="ff-arrow">❯</span> <span className="ff-cursor" />
+        ))}
+        <div className="ff-colors" aria-hidden="true">
+          {PALETTE.map((colour) => (
+            <span key={colour} style={{ color: colour }}>
+              ●
+            </span>
+          ))}
         </div>
       </div>
     </div>

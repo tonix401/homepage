@@ -4,7 +4,7 @@
  * nothing fingerprinted beyond what the browser hands every site anyway.
  *
  * The parsing is here and pure, so the tests can feed it the strings real
- * browsers produce; `FastfetchApp` does the asking.
+ * browsers produce; `Fastfetch` (`apps/kitty/programs/fastfetch.tsx`) does the asking.
  */
 
 /** "Linux", "Windows 11", "macOS 14.5", "Android 15", "iOS 18.1". */
