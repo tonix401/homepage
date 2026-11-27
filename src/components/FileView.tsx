@@ -189,7 +189,9 @@ export function FileView({ file, mode, onNavigate, resolveFile, onScrollFraction
         });
         setTokenLines(result.tokens);
       } catch {
-        setTokenLines(null);
+        // A language the build bundled no grammar for — an added file's —
+        // stays plain text, at full strength rather than dimmed as loading.
+        setTokenLines([]);
       }
     }).catch(() => {});
     return () => {
@@ -219,6 +221,15 @@ export function FileView({ file, mode, onNavigate, resolveFile, onScrollFraction
     return () => window.removeEventListener("message", handler);
   }, [file, onNavigate, onScrollFraction]);
 
+  // A picture shows as itself in every mode: there is no source to read.
+  if (file.type === "image") {
+    return (
+      <div className="vscode-image-area" ref={scrollerRef} onScroll={handleScroll}>
+        <img src={file.src} alt={file.name} referrerPolicy="no-referrer" />
+      </div>
+    );
+  }
+
   if (mode === "preview" && file.type === "md") {
     return (
       <div className="vscode-md-area" ref={scrollerRef} onScroll={handleScroll}>
@@ -228,7 +239,9 @@ export function FileView({ file, mode, onNavigate, resolveFile, onScrollFraction
         <div className="vscode-md-content" key={file.path}>
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeRaw]}
+            // A visitor's own file came from anywhere, so its markdown is
+            // only markdown: no raw HTML of a stranger's in the page.
+            rehypePlugins={file.added ? [] : [rehypeRaw]}
             components={{
               a({ href, children, ...props }) {
                 const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {

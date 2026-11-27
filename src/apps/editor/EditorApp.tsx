@@ -11,7 +11,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import folderFiles from "virtual:open-folder-files";
 import { activities, defaultFile } from "virtual:open-folder-config";
 import { type FileNode } from "../../services/types";
 import { Header } from "../../components/Header";
@@ -27,6 +26,7 @@ import { Footer } from "../../components/Footer";
 import { EMPTY_FIND, type FindQuery, flattenFiles } from "../../utils/search";
 import { findDefaultFile, findFileByPath, resolvePath } from "../../utils/files";
 import { isPhone } from "../../utils/phone";
+import { useTree } from "../../utils/fileStore";
 import { type AppRenderProps } from "../types";
 
 export function EditorApp({ arg, focused, maximized, handle }: AppRenderProps) {
@@ -41,11 +41,12 @@ export function EditorApp({ arg, focused, maximized, handle }: AppRenderProps) {
   /** Bumped by Ctrl/Cmd+Shift+F; the Search view focuses its input. */
   const [searchSignal, setSearchSignal] = useState(0);
 
-  const files = useMemo(() => flattenFiles(folderFiles), []);
+  const tree = useTree();
+  const files = useMemo(() => flattenFiles(tree), [tree]);
   /** A payload naming a file that is not in the tree falls back to the first. */
   const selectedFile = useMemo(
-    () => (arg ? findFileByPath(folderFiles, arg) : null) ?? findDefaultFile(folderFiles, defaultFile),
-    [arg],
+    () => (arg ? findFileByPath(tree, arg) : null) ?? findDefaultFile(tree, defaultFile),
+    [arg, tree],
   );
 
   // Only the focused window answers the shortcuts: with three editors open,
@@ -100,15 +101,16 @@ export function EditorApp({ arg, focused, maximized, handle }: AppRenderProps) {
   const handleNavigate = useCallback(
     (href: string) => {
       if (!selectedFile) return;
-      const target = findFileByPath(folderFiles, resolvePath(selectedFile.path, href));
+      const target = findFileByPath(tree, resolvePath(selectedFile.path, href));
       if (target) handle.setArg(target.path);
     },
-    [selectedFile, handle],
+    [selectedFile, handle, tree],
   );
 
-  const resolveFile = useCallback((fromPath: string, href: string) => {
-    return findFileByPath(folderFiles, resolvePath(fromPath, href));
-  }, []);
+  const resolveFile = useCallback(
+    (fromPath: string, href: string) => findFileByPath(tree, resolvePath(fromPath, href)),
+    [tree],
+  );
 
   const activeActivity = typeof activePanel === "number" ? activities[activePanel] : null;
 
@@ -138,7 +140,7 @@ export function EditorApp({ arg, focused, maximized, handle }: AppRenderProps) {
         )}
         <Sidebar open={sidebarOpen}>
           {activePanel === "explorer" && (
-            <Explorer nodes={folderFiles} selectedFile={selectedFile} onSelect={handleSelect} />
+            <Explorer nodes={tree} selectedFile={selectedFile} onSelect={handleSelect} />
           )}
           {activeActivity?.panel === "search" && (
             <SearchPanel

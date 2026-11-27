@@ -14,9 +14,9 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import "./Browser.css";
-import folderFiles from "virtual:open-folder-files";
 import { defaultFile, menuItems } from "virtual:open-folder-config";
 import { findFileByPath, findDefaultFile, resolvePath } from "../../utils/files";
+import { useTree } from "../../utils/fileStore";
 import { flattenFiles, searchFiles } from "../../utils/search";
 import { type Bookmark, bookmarksFromMenu, bookmarksFromTree } from "../../utils/bookmarks";
 import { BookmarkBar } from "./BookmarkBar";
@@ -41,13 +41,14 @@ function addressOf(path: string | null): string {
 }
 
 export function BrowserApp({ arg, maximized, handle }: AppRenderProps) {
-  const files = useMemo(() => flattenFiles(folderFiles), []);
-  // The tree is a build-time constant, so both halves of the bar are derived
-  // once per window rather than on every navigation.
-  const treeBookmarks = useMemo(() => bookmarksFromTree(folderFiles), []);
-  const menuBookmarks = useMemo(() => bookmarksFromMenu(menuItems, folderFiles, defaultFile), []);
+  const tree = useTree();
+  const files = useMemo(() => flattenFiles(tree), [tree]);
+  // The tree changes only when a file is added or removed, so both halves of
+  // the bar are derived then rather than on every navigation.
+  const treeBookmarks = useMemo(() => bookmarksFromTree(tree), [tree]);
+  const menuBookmarks = useMemo(() => bookmarksFromMenu(menuItems, tree, defaultFile), [tree]);
   /** No payload means the home page, the default file, the same page `/` opens. */
-  const file = arg ? findFileByPath(folderFiles, arg) : findDefaultFile(folderFiles, defaultFile);
+  const file = arg ? findFileByPath(tree, arg) : findDefaultFile(tree, defaultFile);
 
   /**
    * This window's own back/forward, kept out of `window.history` on purpose.
@@ -91,7 +92,7 @@ export function BrowserApp({ arg, maximized, handle }: AppRenderProps) {
     if (!typed) return;
     // An exact path first, then whatever the site's own search would find, so
     // typing "homelab" lands on projects/Homelab.md the way an omnibox should.
-    const target = findFileByPath(folderFiles, typed) ?? searchFiles(files, typed)[0]?.file;
+    const target = findFileByPath(tree, typed) ?? searchFiles(files, typed)[0]?.file;
     if (!target) {
       setMissed(true);
       return;
@@ -99,7 +100,7 @@ export function BrowserApp({ arg, maximized, handle }: AppRenderProps) {
     setMissed(false);
     handle.setArg(target.path);
     omnibox.current?.blur();
-  }, [draft, files, handle]);
+  }, [draft, files, handle, tree]);
 
   const openBookmark = useCallback(
     (bookmark: Bookmark) => {
@@ -115,15 +116,16 @@ export function BrowserApp({ arg, maximized, handle }: AppRenderProps) {
   const followLink = useCallback(
     (href: string) => {
       if (!file) return;
-      const target = findFileByPath(folderFiles, resolvePath(file.path, href));
+      const target = findFileByPath(tree, resolvePath(file.path, href));
       if (target) handle.setArg(target.path);
     },
-    [file, handle],
+    [file, handle, tree],
   );
 
-  const resolveFile = useCallback((fromPath: string, href: string) => {
-    return findFileByPath(folderFiles, resolvePath(fromPath, href));
-  }, []);
+  const resolveFile = useCallback(
+    (fromPath: string, href: string) => findFileByPath(tree, resolvePath(fromPath, href)),
+    [tree],
+  );
 
   return (
     <div className={`brw-layout${maximized ? "" : " brw-layout--windowed"}`}>

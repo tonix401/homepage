@@ -1,6 +1,7 @@
 import { type Plugin } from "vite";
 import { type PALETTES } from "../themes/palettes.ts";
 import { findBrokenLinks } from "./linkCheck.ts";
+import { execFileSync } from "child_process";
 import { readdirSync, readFileSync, existsSync, statSync } from "fs";
 import { resolve, extname, relative } from "path";
 import {
@@ -297,10 +298,39 @@ export function readConfiguredTree(options: OpenFolderPluginOptions): TreeNode[]
   );
 }
 
+/**
+ * When each file under `dirPath` was last committed, keyed by its absolute
+ * path: one `git log` for the whole folder, newest commit first, so a path's
+ * first appearance is its latest change. Empty outside a checkout; CI checks
+ * out the full history, so the deployed dates are complete.
+ */
+export function commitDates(dirPath: string): Map<string, string> {
+  const dates = new Map<string, string>();
+  let log: string;
+  try {
+    log = execFileSync("git", ["-c", "core.quotePath=false", "log", "--format=%x00%cI", "--name-only", "--relative"], {
+      cwd: dirPath,
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+  } catch {
+    return dates;
+  }
+  for (const record of log.split("\0")) {
+    const [date, ...paths] = record.split("\n").filter(Boolean);
+    for (const path of paths) {
+      const abs = resolve(dirPath, path);
+      if (!dates.has(abs)) dates.set(abs, date);
+    }
+  }
+  return dates;
+}
+
 export function readTree(
   dirPath: string,
   collapsedFolders: ReadonlySet<string>,
   prefix: string = "",
+  dates: ReadonlyMap<string, string> = commitDates(dirPath),
 ): TreeNode[] {
   try {
     const entries = readdirSync(dirPath, { withFileTypes: true });
@@ -319,7 +349,7 @@ export function readTree(
           kind: "folder",
           name: folderName,
           defaultOpen: explicitOpen ?? !collapsedFolders.has(folderPath),
-          children: readTree(fullPath, collapsedFolders, folderPath),
+          children: readTree(fullPath, collapsedFolders, folderPath, dates),
         });
       } else {
         const displayName = stripSortPrefix(entry.name);
@@ -331,6 +361,7 @@ export function readTree(
           path: entryPath,
           type,
           content: readFileSync(fullPath, "utf-8"),
+          modified: dates.get(fullPath) ?? statSync(fullPath).mtime.toISOString(),
         });
       }
     }

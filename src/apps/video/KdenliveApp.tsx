@@ -16,10 +16,10 @@
 
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type Ref } from "react";
 import "./Kdenlive.css";
-import folderFiles from "virtual:open-folder-files";
 import { defaultFile, rootFolderName } from "virtual:open-folder-config";
 import { type FileNode } from "../../services/types";
 import { findFileByPath, findDefaultFile, resolvePath } from "../../utils/files";
+import { getTree, useTree } from "../../utils/fileStore";
 import { type Clip, buildTimeline, clipAt, formatTimecode, timeOf } from "../../utils/timeline";
 import { FileView } from "../../components/FileView";
 import { Icon } from "../../components/Icon";
@@ -82,12 +82,13 @@ const MonitorView = memo(function MonitorView({ file, seekRef, onScroll, onNavig
 });
 
 function resolveFile(fromPath: string, href: string) {
-  return findFileByPath(folderFiles, resolvePath(fromPath, href));
+  return findFileByPath(getTree(), resolvePath(fromPath, href));
 }
 
 export function KdenliveApp({ arg, focused, maximized, handle }: AppRenderProps) {
-  const timeline = useMemo(() => buildTimeline(folderFiles, rootFolderName), []);
-  const file = (arg ? findFileByPath(folderFiles, arg) : null) ?? findDefaultFile(folderFiles, defaultFile);
+  const tree = useTree();
+  const timeline = useMemo(() => buildTimeline(tree, rootFolderName), [tree]);
+  const file = (arg ? findFileByPath(tree, arg) : null) ?? findDefaultFile(tree, defaultFile);
   const clip = file ? (timeline.clips.find((c) => c.file.path === file.path) ?? null) : null;
 
   const [position, setPosition] = useState(() => clip?.start ?? 0);
@@ -151,7 +152,7 @@ export function KdenliveApp({ arg, focused, maximized, handle }: AppRenderProps)
   );
 
   const onMonitorNavigate = useCallback((fromPath: string, href: string) => {
-    const target = findFileByPath(folderFiles, resolvePath(fromPath, href));
+    const target = findFileByPath(getTree(), resolvePath(fromPath, href));
     if (target) live.current.handle.setArg(target.path);
   }, []);
 
@@ -306,7 +307,7 @@ export function KdenliveApp({ arg, focused, maximized, handle }: AppRenderProps)
 
       <div className="kd-upper">
         <section className="kd-dock kd-dock--bin">
-          <ProjectBin tree={folderFiles} timeline={timeline} currentPath={file?.path ?? null} onOpen={openClip} />
+          <ProjectBin tree={tree} timeline={timeline} currentPath={file?.path ?? null} onOpen={openClip} />
           <div className="kd-dock-tabs" aria-hidden="true">
             <span className="kd-dock-tab kd-dock-tab--on">Project Bin</span>
             <span className="kd-dock-tab">Compositions</span>

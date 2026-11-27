@@ -1,4 +1,4 @@
-import folderFiles from "virtual:open-folder-files";
+import { getTree } from "../../utils/fileStore";
 import { defaultFile } from "virtual:open-folder-config";
 import { pageName } from "../../utils/files";
 import { APP_NAMES } from "../icons";
@@ -9,7 +9,7 @@ export const browserApp: AppDefinition = {
   id: "browser",
   name: APP_NAMES.browser,
   title: (arg) => {
-    const name = pageName(folderFiles, arg, defaultFile);
+    const name = pageName(getTree(), arg, defaultFile);
     return name ? `${name} — ${APP_NAMES.browser}` : APP_NAMES.browser;
   },
   // Unlike the editor, a browser has something to say about a page that is

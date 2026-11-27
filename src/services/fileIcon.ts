@@ -30,6 +30,7 @@ export function fileIconData(type: FileType): SetiIconData {
     case "toml":   return { char: "", color: "#6d8086" };
     case "vue":    return { char: "", color: "#8dc149" };
     case "svelte": return { char: "", color: "#cc3e44" };
+    case "image":  return { char: "", color: "#a074c4" };
     default:       return { char: "", color: "#d4d7d6" };
   }
 }

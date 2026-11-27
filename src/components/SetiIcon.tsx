@@ -10,7 +10,9 @@ interface SetiIconProps {
 export function SetiIcon({ type, name, size = 20 }: SetiIconProps) {
   const { char, color } = name === "LICENCE.md"
     ? { char: "", color: "#cbcb41" }
-    : fileIconData(type);
+    : type === "image" && name?.toLowerCase().endsWith(".svg")
+      ? { char: "", color: "#a074c4" }
+      : fileIconData(type);
   return (
     <span
       aria-hidden="true"

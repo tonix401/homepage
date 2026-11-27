@@ -13,10 +13,10 @@
 
 import { useMemo, useState } from "react";
 import "./Notes.css";
-import folderFiles from "virtual:open-folder-files";
 import { defaultFile, rootFolderName } from "virtual:open-folder-config";
 import { type FileNode, type TreeNode } from "../../services/types";
 import { findFileByPath, findDefaultFile, resolvePath } from "../../utils/files";
+import { useTree } from "../../utils/fileStore";
 import { buildGraph, noteName } from "../../utils/graph";
 import { isPhone } from "../../utils/phone";
 import { FileView } from "../../components/FileView";
@@ -51,8 +51,9 @@ function ancestorsOf(path: string): string[] {
 }
 
 export function NotesApp({ arg, maximized, handle }: AppRenderProps) {
-  const note = arg ? findFileByPath(folderFiles, arg) : findDefaultFile(folderFiles, defaultFile);
-  const graph = useMemo(() => buildGraph(folderFiles), []);
+  const tree = useTree();
+  const note = arg ? findFileByPath(tree, arg) : findDefaultFile(tree, defaultFile);
+  const graph = useMemo(() => buildGraph(tree), [tree]);
 
   // Opens on the graph: it is the one view the other apps cannot show, so it
   // is what the window leads with. Picking a node or a file reads the note.
@@ -60,7 +61,7 @@ export function NotesApp({ arg, maximized, handle }: AppRenderProps) {
   // A drawer over the graph on a phone (Notes.css), so it starts put away
   // there: the graph is what the window leads with.
   const [sidebar, setSidebar] = useState(() => !isPhone());
-  const [openFolders, setOpenFolders] = useState(() => defaultOpenFolders(folderFiles));
+  const [openFolders, setOpenFolders] = useState(() => defaultOpenFolders(tree));
 
   // A note opened from anywhere — the graph, a link, a restored session —
   // reveals itself in the tree, once. Adjusted during the render that notices
@@ -84,12 +85,12 @@ export function NotesApp({ arg, maximized, handle }: AppRenderProps) {
 
   const followLink = (href: string) => {
     if (!note) return;
-    const target = findFileByPath(folderFiles, resolvePath(note.path, href));
+    const target = findFileByPath(tree, resolvePath(note.path, href));
     if (target) open(target);
   };
 
   const resolveFile = (fromPath: string, href: string) =>
-    findFileByPath(folderFiles, resolvePath(fromPath, href));
+    findFileByPath(tree, resolvePath(fromPath, href));
 
   const toggleFolder = (path: string) => {
     const next = new Set(openFolders);
@@ -135,7 +136,7 @@ export function NotesApp({ arg, maximized, handle }: AppRenderProps) {
           <aside className="obs-sidebar">
             <div className="obs-tree" role="tree" aria-label="Files">
               <Tree
-                nodes={folderFiles}
+                nodes={tree}
                 prefix=""
                 current={view === "note" ? (note?.path ?? null) : null}
                 openFolders={openFolders}

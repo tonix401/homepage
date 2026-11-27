@@ -12,7 +12,7 @@
  * function takes the tree it should read, so the tests can hand it one.
  */
 
-import { type TreeNode } from "../services/types";
+import { type FileNode, type TreeNode } from "../services/types";
 
 /** One row of a listing. `path` is what the window stores as its payload. */
 export interface Entry {
@@ -101,4 +101,50 @@ export function enterFolder(
   const entries = listDir(tree, folder);
   if (!entries || entries.length === 0) return null;
   return entries.find((e) => e.path === remembered)?.path ?? entries[0].path;
+}
+
+/** The last part of a path: what a file or folder is called. */
+export function baseName(path: string): string {
+  return path.slice(path.lastIndexOf("/") + 1);
+}
+
+/**
+ * `base` with the visitor's own folders and files added where their paths
+ * say, after each folder's own entries: the folders first, then the files,
+ * each in name order. An added folder may hold more of them; anything whose
+ * folder is missing is left out, and `base` itself is never changed. How
+ * `utils/fileStore.ts` puts a visitor's additions into the tree.
+ */
+export function mergeTree(base: readonly TreeNode[], folders: readonly string[], files: readonly FileNode[]): TreeNode[] {
+  if (folders.length === 0 && files.length === 0) return base as TreeNode[];
+  const inDir = new Map<string, { folders: string[]; files: FileNode[] }>();
+  const at = (dir: string) => inDir.get(dir) ?? inDir.set(dir, { folders: [], files: [] }).get(dir)!;
+  for (const path of folders) at(parentOf(path)).folders.push(path);
+  for (const file of files) at(parentOf(file.path)).files.push(file);
+  const walk = (nodes: readonly TreeNode[], dir: string): TreeNode[] => [
+    ...nodes.map((node) =>
+      node.kind === "folder" ? { ...node, children: walk(node.children, dir ? `${dir}/${node.name}` : node.name) } : node,
+    ),
+    ...(inDir.get(dir)?.folders ?? [])
+      .sort((a, b) => a.localeCompare(b))
+      .map((path): TreeNode => ({ kind: "folder", name: baseName(path), defaultOpen: true, added: true, children: walk([], path) })),
+    ...(inDir.get(dir)?.files ?? []).sort((a, b) => a.name.localeCompare(b.name)),
+  ];
+  return walk(base, "");
+}
+
+/**
+ * Why nothing can be written at `path`, or `null` when it can: into a folder
+ * that exists, over nothing or over a file the visitor added. The site's own
+ * files are root's, `rw-r--r--`, so writing one is refused.
+ */
+export function writeError(tree: TreeNode[], path: string): string | null {
+  const name = baseName(path);
+  if (!name || name === "." || name === "..") return "Is a directory";
+  const parent = parentOf(path);
+  if (parent !== "" && findEntry(tree, parent)?.node.kind !== "folder") return "No such file or directory";
+  const node = findEntry(tree, path)?.node;
+  if (node?.kind === "folder") return "Is a directory";
+  if (node && !node.added) return "Permission denied";
+  return null;
 }

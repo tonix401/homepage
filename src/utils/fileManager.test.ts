@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { type FileNode, type TreeNode } from "../services/types";
-import { cursorAt, enterFolder, findEntry, listDir, moveCursor, parentOf } from "./fileManager";
+import { cursorAt, enterFolder, findEntry, listDir, mergeTree, moveCursor, parentOf, writeError } from "./fileManager";
 
 function file(path: string): FileNode {
   return { kind: "file", name: path.split("/").pop()!, path, type: "md", content: "" };
@@ -103,5 +103,47 @@ describe("enterFolder", () => {
 
   it("is null for an empty folder, which has nowhere to put the cursor", () => {
     expect(enterFolder(tree, "projects/empty", undefined)).toBeNull();
+  });
+});
+
+describe("mergeTree", () => {
+  const added = (path: string): FileNode => ({ ...file(path), added: true });
+
+  it("appends added files after a folder's own entries, in name order", () => {
+    const merged = mergeTree(tree, [], [added("projects/b.png"), added("projects/a.md"), added("z.txt")]);
+    expect(listDir(merged, "")?.map((e) => e.path)).toEqual(["README.md", "work experience", "projects", "z.txt"]);
+    expect(listDir(merged, "projects")?.map((e) => e.name)).toEqual(["Homelab.md", "demos", "empty", "a.md", "b.png"]);
+  });
+
+  it("leaves out a file whose folder is missing, and never changes the base", () => {
+    const merged = mergeTree(tree, ["gone/deeper"], [added("gone/x.md")]);
+    expect(merged).toEqual(tree);
+    expect(listDir(tree, "projects")).toHaveLength(3);
+  });
+
+  it("returns the base itself when nothing was added", () => {
+    expect(mergeTree(tree, [], [])).toBe(tree);
+  });
+
+  it("puts added folders, and what is in them, before the added files", () => {
+    const merged = mergeTree(tree, ["pics", "pics/old", "projects/new"], [added("pics/old/a.png"), added("b.md")]);
+    expect(listDir(merged, "")?.map((e) => e.name)).toEqual(["README.md", "work experience", "projects", "pics", "b.md"]);
+    expect(listDir(merged, "pics/old")?.map((e) => e.path)).toEqual(["pics/old/a.png"]);
+    expect(findEntry(merged, "projects/new")?.node).toMatchObject({ kind: "folder", added: true, children: [] });
+  });
+});
+
+describe("writeError", () => {
+  it("allows a new name in an existing folder, and an added file to be replaced", () => {
+    expect(writeError(tree, "new.png")).toBeNull();
+    expect(writeError(tree, "projects/demos/new.png")).toBeNull();
+    expect(writeError(mergeTree(tree, [], [{ ...file("x.md"), added: true }]), "x.md")).toBeNull();
+  });
+
+  it("refuses the site's own files, folders and missing folders", () => {
+    expect(writeError(tree, "README.md")).toBe("Permission denied");
+    expect(writeError(tree, "projects")).toBe("Is a directory");
+    expect(writeError(tree, "nope/x.png")).toBe("No such file or directory");
+    expect(writeError(tree, "README.md/x.png")).toBe("No such file or directory");
   });
 });
