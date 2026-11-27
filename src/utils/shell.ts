@@ -870,6 +870,8 @@ export interface CommandInfo {
   aliases?: readonly string[];
   summary: string;
   section: Section;
+  /** Marked with a `*` and set in bold in `help`: the commands worth trying first. */
+  featured?: boolean;
 }
 
 /**
@@ -881,7 +883,9 @@ export function help(commands: readonly CommandInfo[]): Line[] {
   const width = Math.max(...commands.map((c) => c.name.length));
   const sorted = [...commands].sort((a, b) => a.name.localeCompare(b.name));
   const row = (c: CommandInfo): Line => [
-    { text: `  ${c.name.padEnd(width)}  `, tone: "primary" },
+    { text: c.featured ? "* " : "  ", tone: "primary", bold: c.featured },
+    { text: c.name.padEnd(width), tone: "primary", bold: c.featured },
+    { text: "  ", tone: "primary" },
     { text: c.summary },
     ...(c.aliases?.length ? [{ text: ` (also ${c.aliases.join(", ")})`, tone: "dim" as const }] : []),
   ];

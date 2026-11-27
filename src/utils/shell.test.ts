@@ -382,6 +382,18 @@ describe("suggest", () => {
   });
 });
 
+describe("help, featured commands", () => {
+  it("marks them with a star and sets the name in bold", () => {
+    const rows = help([
+      { name: "ls", summary: "list files", section: "Files" },
+      { name: "curl", summary: "download", section: "Files", featured: true },
+    ]);
+    expect(text(rows).slice(0, 3)).toEqual(["Files:", "* curl  download", "  ls    list files"]);
+    expect(rows[1][1]).toMatchObject({ text: "curl", bold: true });
+    expect(rows[2][1].bold).toBeFalsy();
+  });
+});
+
 describe("help", () => {
   it("groups the commands by section, in the sections' order, sorted by name", () => {
     const out = text(

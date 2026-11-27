@@ -306,7 +306,7 @@
 .kitty-blue { color: var(--ansi-blue); }
 .kitty-magenta { color: var(--ansi-magenta); }
 .kitty-cyan { color: var(--ansi-cyan); }
-.kitty-primary { color: var(--theme-primary); font-weight: 700; }
+.kitty-primary { color: var(--theme-primary); }
 .kitty-dim { color: var(--theme-outline); }
 .kitty-bold { font-weight: 700; }
 .kitty-underline { text-decoration: underline; }

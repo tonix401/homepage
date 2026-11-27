@@ -166,6 +166,7 @@ export const PROGRAMS: readonly Program[] = [
   },
   {
     name: "curl",
+    featured: true,
     summary: "download a URL: curl <url> [name | folder/ | folder/name]",
     section: "Files",
     run: ({ cwd, args, signal, wait, fail }) => {
@@ -309,6 +310,7 @@ export const PROGRAMS: readonly Program[] = [
   },
   {
     name: "git",
+    featured: true,
     summary: "this site's history: log, status, help",
     section: "System",
     run: ({ args, fail }) => {
@@ -368,6 +370,7 @@ export const PROGRAMS: readonly Program[] = [
   },
   {
     name: "fastfetch",
+    featured: true,
     aliases: ["neofetch", "ff"],
     summary: "this browser's system info",
     section: "System",
